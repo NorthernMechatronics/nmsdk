@@ -22,13 +22,17 @@ INCLUDES += -I$(AMBIQ_SDK)/CMSIS/ARM/Include
 INCLUDES += -I$(AMBIQ_SDK)/mcu/apollo3
 INCLUDES += -I$(AMBIQ_SDK)/mcu/apollo3/hal
 INCLUDES += -I$(AMBIQ_SDK)/mcu/apollo3/regs
-INCLUDES += -I$(SDKROOT)/bsp
+INCLUDES += -I$(AMBIQ_SDK)/utils
+INCLUDES += -I$(SDKROOT)/bsp/devices
 INCLUDES += -I.
 
 VPATH  = .
+VPATH += $(SDKROOT)/bsp/devices
 
-SRC  = am_bsp_pins.c
-SRC += am_bsp.c
+SRC  = am_bsp.c
+SRC += am_bsp_pins.c
+SRC += am_devices_button.c
+SRC += am_devices_led.c
 
 CSRC = $(filter %.c, $(SRC))
 ASRC = $(filter %.s, $(SRC))
@@ -67,6 +71,7 @@ $(CONFIG)/$(TARGET): $(OBJS)
 
 clean:
 	$(RM) -f $(TARGET_C) $(TARGET_H) $(CONFIG)/$(TARGET)
+	$(RM) -rf $(CONFIG)
 
 $(CONFIG)/%.d: ;
 
