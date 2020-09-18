@@ -15,7 +15,7 @@ INCLUDES  = -I$(FREERTOS)/Source/include
 INCLUDES += -I$(FREERTOS-PLUS)/Source/FreeRTOS-Plus-CLI
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
 
-VPATH  = $(FreeRTOS-Plus)/Source/FreeRTOS-Plus-CLI
+VPATH  = $(FREERTOS-PLUS)/Source/FreeRTOS-Plus-CLI
 VPATH += .
 
 SRC  = FreeRTOS_CLI.c
