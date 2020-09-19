@@ -1,5 +1,3 @@
-all:
-
 SDKROOT?=..
 include $(SDKROOT)/makedefs/nm_freertos.mk
 
@@ -11,5 +9,4 @@ ifndef FREERTOS-PLUS
   else
     $(error unable to locate FreeRTOS Plus source)
   endif
-
 endif

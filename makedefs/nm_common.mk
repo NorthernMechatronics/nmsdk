@@ -60,3 +60,6 @@ CFLAGS +=
 
 LFLAGS  = -mthumb -mcpu=$(CPU) -mfpu=$(FPU) -mfloat-abi=$(FABI)
 LFLAGS += -nostartfiles -static
+
+OCPFLAGS = -Obinary
+ODFLAGS  = -S

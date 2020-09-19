@@ -23,6 +23,7 @@ else
 endif
 
 all: $(BUILDDIR) am_hal am_utils freertos freertos-cli
+	@echo "****** Build Successful ******"
 
 $(BUILDDIR):
 	@mkdir -p $@
