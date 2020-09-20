@@ -1,3 +1,5 @@
 *.d
 *.o
 *.a
+am_bsp_pins.c
+am_bsp_pins.h
