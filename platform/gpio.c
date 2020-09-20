@@ -17,7 +17,6 @@
 //*****************************************************************************
 #include <am_mcu_apollo.h>
 #include <am_util.h>
-#include <am_bsp.h>
 
 #include <FreeRTOS.h>
 #include <FreeRTOS_CLI.h>
@@ -43,8 +42,8 @@ portBASE_TYPE prvGpioCommand(char * pcWriteBuffer, size_t xWriteBufferLen, const
 
 const CLI_Command_Definition_t prvGpioCommandDefinition =
 {
-	(const int8_t * const) "gpio",
-	(const int8_t * const)
+	(const char * const) "gpio",
+	(const char * const)
 		"gpio:\tApollo gpio control.\r\n"
 	,
 	prvGpioCommand,
@@ -371,7 +370,7 @@ static void GpioToggleSubcommand(char *pcWriteBuffer, size_t xWriteBufferLen, co
 {
 	const char *pcParameterString;
 	portBASE_TYPE xParameterStringLength;
-	uint32_t ui32Pin, ui32State;
+	uint32_t ui32Pin;
 
 	pcParameterString = FreeRTOS_CLIGetParameter(pcCommandString, 2, &xParameterStringLength);
 	if (pcParameterString == NULL)
