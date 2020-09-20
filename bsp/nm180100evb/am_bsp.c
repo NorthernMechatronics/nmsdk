@@ -90,6 +90,16 @@ am_devices_button_t am_bsp_psButtons[AM_BSP_NUM_BUTTONS] =
 };
 #endif
 
+const uint32_t am_bsp_psSpiChipSelect[AM_REG_IOM_NUM_MODULES] =
+{
+	AM_BSP_IOM0_CS3_CHNL,
+	AM_BSP_IOM1_CS_CHNL,
+	AM_BSP_IOM2_CS_CHNL,
+	AM_BSP_RADIO_NSS_CHNL,
+	0xFFFFFFFF,
+	AM_BSP_IOM5_CS_CHNL,
+};
+
 //*****************************************************************************
 //
 // Print interface tracking variable.

@@ -96,6 +96,7 @@ extern am_devices_button_t am_bsp_psButtons[AM_BSP_NUM_BUTTONS];
 #define AM_BSP_NUM_LEDS                   5
 extern am_devices_led_t am_bsp_psLEDs[AM_BSP_NUM_LEDS];
 
+extern const uint32_t am_bsp_psSpiChipSelect[AM_REG_IOM_NUM_MODULES];
 //*****************************************************************************
 //
 // PWM_LED peripheral assignments.
