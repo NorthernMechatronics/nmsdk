@@ -51,6 +51,8 @@ extern "C"
 {
 #endif
 
+#define configSUPPORT_STATIC_ALLOCATION         0
+
 #define configCOMMAND_INT_MAX_OUTPUT_SIZE       1024
 
 #define configUSE_PREEMPTION                    1
