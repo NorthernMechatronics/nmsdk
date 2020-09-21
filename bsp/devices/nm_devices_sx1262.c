@@ -157,7 +157,11 @@ static void sx1262_write_command (uint8_t cmd, const uint8_t* data, uint8_t len)
     Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_RADIO_NSS_CHNL;
 
     sx1262_block_on_busy();
-    am_hal_iom_blocking_transfer(gSpiHandle, &Transaction);
+    uint32_t status = am_hal_iom_blocking_transfer(gSpiHandle, &Transaction);
+
+    if (status != AM_HAL_STATUS_SUCCESS)
+    {
+    }
 }
 
 static void sx1262_write_registers (uint16_t addr, const uint8_t* data, uint8_t len)
@@ -224,9 +228,13 @@ static uint8_t sx1262_read_command (uint8_t cmd, uint8_t* data, uint8_t len)
     Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_RADIO_NSS_CHNL;
 
     sx1262_block_on_busy();
-    am_hal_iom_blocking_transfer(gSpiHandle, &Transaction);
+    uint32_t status = am_hal_iom_blocking_transfer(gSpiHandle, &Transaction);
 
-    return 0;
+    if (status != AM_HAL_STATUS_SUCCESS)
+    {
+    	return LORA_RADIO_STATUS_FAIL;
+    }
+    return LORA_RADIO_STATUS_SUCCESS;
 }
 
 static void sx1262_read_registers (uint16_t addr, uint8_t* data, uint8_t len)
@@ -622,6 +630,8 @@ static void sx1262_receive (void *pHandle, lora_radio_transfer_t *psTransaction)
 
 uint32_t lora_radio_initialize(void **ppHandle)
 {
+	uint32_t status = AM_HAL_STATUS_SUCCESS;
+
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NRESET, g_AM_HAL_GPIO_OUTPUT);
     am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
     am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_SET);
@@ -629,6 +639,11 @@ uint32_t lora_radio_initialize(void **ppHandle)
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_BUSY, g_AM_HAL_GPIO_INPUT);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_DIO1, g_AM_HAL_GPIO_INPUT);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_DIO3, g_AM_HAL_GPIO_INPUT);
+
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_CLK,  g_AM_BSP_GPIO_RADIO_CLK);
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_MISO, g_AM_BSP_GPIO_RADIO_MISO);
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_MOSI, g_AM_BSP_GPIO_RADIO_MOSI);
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NSS, g_AM_BSP_GPIO_RADIO_NSS);
 
     am_hal_gpio_interrupt_clear(AM_HAL_GPIO_BIT(AM_BSP_GPIO_RADIO_DIO1));
     am_hal_gpio_interrupt_clear(AM_HAL_GPIO_BIT(AM_BSP_GPIO_RADIO_DIO3));
@@ -641,15 +656,29 @@ uint32_t lora_radio_initialize(void **ppHandle)
     sSpiConfig.ui32ClockFreq = AM_HAL_IOM_4MHZ;
     sSpiConfig.eSpiMode = AM_HAL_IOM_SPI_MODE_0;
 
-    am_hal_iom_initialize(3, &gSpiHandle);
-    am_hal_iom_power_ctrl(gSpiHandle, AM_HAL_SYSCTRL_WAKE, false);
-    am_hal_iom_configure(gSpiHandle, &sSpiConfig);
-    am_bsp_iom_pins_enable(3, AM_HAL_IOM_SPI_MODE);
-    am_hal_iom_enable(gSpiHandle);
+    if (am_hal_iom_initialize(3, &gSpiHandle) != AM_HAL_STATUS_SUCCESS)
+    {
+    	return LORA_RADIO_STATUS_FAIL;
+    }
+
+    if (am_hal_iom_power_ctrl(gSpiHandle, AM_HAL_SYSCTRL_WAKE, false) != AM_HAL_STATUS_SUCCESS)
+    {
+    	return LORA_RADIO_STATUS_FAIL;
+    }
+
+    if (am_hal_iom_configure(gSpiHandle, &sSpiConfig) != AM_HAL_STATUS_SUCCESS)
+    {
+    	return LORA_RADIO_STATUS_FAIL;
+    }
+
+    if (am_hal_iom_enable(gSpiHandle) != AM_HAL_STATUS_SUCCESS)
+    {
+    	return LORA_RADIO_STATUS_FAIL;
+    }
 
     lora_radio_reset(&ppHandle);
 
-    sx1262_get_device_status();
+//    status = sx1262_get_device_status();
 
     am_hal_gpio_interrupt_enable(AM_HAL_GPIO_BIT(AM_BSP_GPIO_RADIO_DIO1));
     am_hal_gpio_interrupt_enable(AM_HAL_GPIO_BIT(AM_BSP_GPIO_RADIO_DIO3));
@@ -658,8 +687,8 @@ uint32_t lora_radio_initialize(void **ppHandle)
     //set priority below 0 to facilitate *FromISR FreeRTOS APIs
     NVIC_SetPriority(GPIO_IRQn,IRQ_GPIO_PRIORITY);
 
-    sx1262_config_regulator();
     sx1262_set_mode(CMD_SETSTANDBY, STDBY_RC);
+    sx1262_config_regulator();
     sx1262_set_dio2_rf_switch_ctrl(1);
     sx1262_init_packet_type();
 
