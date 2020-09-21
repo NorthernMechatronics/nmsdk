@@ -32,6 +32,7 @@ SRC  = am_bsp.c
 SRC += am_bsp_pins.c
 SRC += am_devices_button.c
 SRC += am_devices_led.c
+SRC += nm_sx1262.c
 
 CSRC = $(filter %.c, $(SRC))
 ASRC = $(filter %.s, $(SRC))
