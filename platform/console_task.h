@@ -15,10 +15,10 @@ extern "C" {
 
 extern TaskHandle_t console_task_handle;
 
-extern void g_console_task_setup(void);
 extern void g_console_task(void *pvp);
 extern void g_console_print(const char *str);
 extern void g_console_write(const char *str, size_t len);
+extern char g_console_read_char();
 
 #if defined(__cplusplus)
 }

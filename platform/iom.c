@@ -413,11 +413,11 @@ static void IomReadSubcommand(char *pcWriteBuffer, size_t xWriteBufferLen, const
 
 	sTransaction.eDirection = AM_HAL_IOM_RX;
 	sTransaction.ui32NumBytes = length;
-	sTransaction.pui32RxBuffer = buffer;
+	sTransaction.pui32RxBuffer = (uint32_t *)buffer;
 
 	am_hal_iom_blocking_transfer(g_sIomHandler[port], &sTransaction);
 
-	uint8_t num[16];
+	char num[16];
 	strcat(pcWriteBuffer, "Read:\r\n");
 	size_t i = 0;
 	for (i = 0; i < length - 1; i++)
