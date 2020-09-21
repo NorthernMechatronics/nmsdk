@@ -13,7 +13,7 @@
 #include <am_util.h>
 #include <am_bsp.h>
 
-#include "nm_sx1262.h"
+#include "nm_devices_lora.h"
 
 #define RSSI_OFF 64
 #define SNR_SCALEUP 4
