@@ -1,12 +1,6 @@
-/*
- * sx1262.c
- *
- *  Created on: Aug 4, 2019
- *      Author: joshua
- */
-
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include <machine/endian.h>
 
 #include <am_mcu_apollo.h>
@@ -15,133 +9,136 @@
 
 #include "nm_devices_lora.h"
 
-#define RSSI_OFF 64
-#define SNR_SCALEUP 4
+#define RSSI_OFF                    64
+#define SNR_SCALEUP                 4
 
-#define CMD_SETSLEEP				0x84
-#define CMD_SETSTANDBY				0x80
-#define CMD_SETFS					0xC1
-#define CMD_SETTX					0x83
-#define CMD_SETRX					0x82
-#define CMD_STOPTIMERONPREAMBLE		0x9F
-#define CMD_SETRXDUTYCYCLE			0x94
-#define CMD_SETCAD					0xC5
-#define CMD_SETTXCONTINUOUSWAVE		0xD1
-#define CMD_SETTXINFINITEPREAMBLE	0xD2
-#define CMD_SETREGULATORMODE		0x96
-#define CMD_CALIBRATE				0x89
-#define CMD_CALIBRATEIMAGE			0x98
-#define CMD_SETPACONFIG				0x95
-#define CMD_SETRXTXFALLBACKMODE		0x93
+#define CMD_SETSLEEP                0x84
+#define CMD_SETSTANDBY              0x80
+#define CMD_SETFS                   0xC1
+#define CMD_SETTX                   0x83
+#define CMD_SETRX                   0x82
+#define CMD_STOPTIMERONPREAMBLE     0x9F
+#define CMD_SETRXDUTYCYCLE          0x94
+#define CMD_SETCAD                  0xC5
+#define CMD_SETTXCONTINUOUSWAVE     0xD1
+#define CMD_SETTXINFINITEPREAMBLE   0xD2
+#define CMD_SETREGULATORMODE        0x96
+#define CMD_CALIBRATE               0x89
+#define CMD_CALIBRATEIMAGE          0x98
+#define CMD_SETPACONFIG             0x95
+#define CMD_SETRXTXFALLBACKMODE     0x93
 
 // Commands to Access the Radio Registers and FIFO Buffer
-#define CMD_WRITEREGISTER		0x0D
-#define CMD_READREGISTER		0x1D
-#define CMD_WRITEBUFFER			0x0E
-#define CMD_READBUFFER			0x1E
+#define CMD_WRITEREGISTER           0x0D
+#define CMD_READREGISTER            0x1D
+#define CMD_WRITEBUFFER             0x0E
+#define CMD_READBUFFER              0x1E
 
 // Commands Controlling the Radio IRQs and DIOs
-#define CMD_SETDIOIRQPARAMS		0x08
-#define CMD_GETIRQSTATUS		0x12
-#define CMD_CLEARIRQSTATUS		0x02
-#define CMD_SETDIO2ASRFSWITCHCTRL	0x9D
-#define CMD_SETDIO3ASTCXOCTRL		0x97
+#define CMD_SETDIOIRQPARAMS         0x08
+#define CMD_GETIRQSTATUS            0x12
+#define CMD_CLEARIRQSTATUS          0x02
+#define CMD_SETDIO2ASRFSWITCHCTRL   0x9D
+#define CMD_SETDIO3ASTCXOCTRL       0x97
 
 // Commands Controlling the RF and Packets Settings
-#define CMD_SETRFFREQUENCY		0x86
-#define CMD_SETPACKETTYPE		0x8A
-#define CMD_GETPACKETTYPE		0x11
-#define CMD_SETTXPARAMS			0x8E
-#define CMD_SETMODULATIONPARAMS		0x8B
-#define CMD_SETPACKETPARAMS		0x8C
-#define CMD_SETCADPARAMS		0x88
-#define CMD_SETBUFFERBASEADDRESS	0x8F
-#define CMD_SETLORASYMBNUMTIMEOUT	0xA0
+#define CMD_SETRFFREQUENCY          0x86
+#define CMD_SETPACKETTYPE           0x8A
+#define CMD_GETPACKETTYPE           0x11
+#define CMD_SETTXPARAMS             0x8E
+#define CMD_SETMODULATIONPARAMS     0x8B
+#define CMD_SETPACKETPARAMS         0x8C
+#define CMD_SETCADPARAMS            0x88
+#define CMD_SETBUFFERBASEADDRESS    0x8F
+#define CMD_SETLORASYMBNUMTIMEOUT   0xA0
 
 // Commands Returning the Radio Status
-#define CMD_GETSTATUS			0xC0
-#define CMD_GETRSSIINST			0x15
-#define CMD_GETRXBUFFERSTATUS		0x13
-#define CMD_GETPACKETSTATUS		0x14
-#define CMD_GETDEVICEERRORS		0x17
-#define CMD_CLEARDEVICEERRORS		0x07
-#define CMD_GETSTATS			0x10
-#define CMD_RESETSTATS			0x00
+#define CMD_GETSTATUS               0xC0
+#define CMD_GETRSSIINST             0x15
+#define CMD_GETRXBUFFERSTATUS       0x13
+#define CMD_GETPACKETSTATUS         0x14
+#define CMD_GETDEVICEERRORS         0x17
+#define CMD_CLEARDEVICEERRORS       0x07
+#define CMD_GETSTATS                0x10
+#define CMD_RESETSTATS              0x00
 
 
 // ----------------------------------------
 // List of Registers
 
-#define REG_WHITENINGMSB	0x06B8
-#define REG_WHITENINGLSB	0x06B9
-#define REG_CRCINITVALMSB	0x06BC
-#define REG_CRCINITVALLSB	0x06BD
-#define REG_CRCPOLYVALMSB	0x06BE
-#define REG_CRCPOLYVALLSB	0x06BF
-#define REG_SYNCWORD0		0x06C0
-#define REG_SYNCWORD1		0x06C1
-#define REG_SYNCWORD2		0x06C2
-#define REG_SYNCWORD3		0x06C3
-#define REG_SYNCWORD4		0x06C4
-#define REG_SYNCWORD5		0x06C5
-#define REG_SYNCWORD6		0x06C6
-#define REG_SYNCWORD7		0x06C7
-#define REG_NODEADDRESS		0x06CD
-#define REG_BROADCASTADDR	0x06CE
-#define REG_LORASYNCWORDMSB	0x0740
-#define REG_LORASYNCWORDLSB	0x0741
-#define REG_RANDOMNUMBERGEN0	0x0819
-#define REG_RANDOMNUMBERGEN1	0x081A
-#define REG_RANDOMNUMBERGEN2	0x081B
-#define REG_RANDOMNUMBERGEN3	0x081C
-#define REG_RXGAIN		0x08AC
-#define REG_OCPCONFIG		0x08E7
-#define REG_XTATRIM		0x0911
-#define REG_XTBTRIM		0x0912
+#define REG_WHITENINGMSB        0x06B8
+#define REG_WHITENINGLSB        0x06B9
+#define REG_CRCINITVALMSB       0x06BC
+#define REG_CRCINITVALLSB       0x06BD
+#define REG_CRCPOLYVALMSB       0x06BE
+#define REG_CRCPOLYVALLSB       0x06BF
+#define REG_SYNCWORD0           0x06C0
+#define REG_SYNCWORD1           0x06C1
+#define REG_SYNCWORD2           0x06C2
+#define REG_SYNCWORD3           0x06C3
+#define REG_SYNCWORD4           0x06C4
+#define REG_SYNCWORD5           0x06C5
+#define REG_SYNCWORD6           0x06C6
+#define REG_SYNCWORD7           0x06C7
+#define REG_NODEADDRESS         0x06CD
+#define REG_BROADCASTADDR       0x06CE
+#define REG_LORASYNCWORDMSB     0x0740
+#define REG_LORASYNCWORDLSB     0x0741
+#define REG_RANDOMNUMBERGEN0    0x0819
+#define REG_RANDOMNUMBERGEN1    0x081A
+#define REG_RANDOMNUMBERGEN2    0x081B
+#define REG_RANDOMNUMBERGEN3    0x081C
+#define REG_RXGAIN              0x08AC
+#define REG_OCPCONFIG           0x08E7
+#define REG_XTATRIM             0x0911
+#define REG_XTBTRIM             0x0912
 
 // sleep modes
-#define SLEEP_COLD		0x00 // (no rtc timeout)
-#define SLEEP_WARM		0x04 // (no rtc timeout)
+#define SLEEP_COLD          0x00 // (no rtc timeout)
+#define SLEEP_WARM          0x04 // (no rtc timeout)
 
 // standby modes
-#define STDBY_RC		0x00
-#define STDBY_XOSC		0x01
+#define STDBY_RC            0x00
+#define STDBY_XOSC          0x01
 
 // regulator modes
-#define REGMODE_LDO		0x00
-#define REGMODE_DCDC		0x01
+#define REGMODE_LDO         0x00
+#define REGMODE_DCDC        0x01
 
 // packet types
-#define PACKET_TYPE_FSK		0x00
-#define PACKET_TYPE_LORA	0x01
+#define PACKET_TYPE_FSK     0x00
+#define PACKET_TYPE_LORA    0x01
 
 // crc types
-#define CRC_OFF			0x01
-#define CRC_1_BYTE		0x00
-#define CRC_2_BYTE		0x02
-#define CRC_1_BYTE_INV		0x04
-#define CRC_2_BYTE_INV		0x06
+#define CRC_OFF             0x01
+#define CRC_1_BYTE          0x00
+#define CRC_2_BYTE          0x02
+#define CRC_1_BYTE_INV      0x04
+#define CRC_2_BYTE_INV      0x06
 
 //irq priority
-#define IRQ_GPIO_PRIORITY	(4)
+#define IRQ_GPIO_PRIORITY   (4)
 
-static am_hal_iom_config_t g_sSpiConfig;
 static void * gSpiHandle;
 
-#define MAX_BUFFER_SIZE 255
-static uint8_t pui8ReceiveBuffer[MAX_BUFFER_SIZE];
+static uint8_t pui8ReceiveBuffer[LORA_RADIO_MAX_PHYSICAL_PACKET];
 static lora_radio_physical_packet_t sLoRaPhysicalPacket;
+
+#define MAX_CALLBACK 12
+static uint32_t gui32LoRaRadioCallbackListLength;
+static lora_radio_irq_handler_t psLoRaRadioCallbackList[MAX_CALLBACK];
 
 static void lora_radio_isr(void);
 
+
 static void sx1262_block_on_busy(void)
 {
-	uint32_t state = 1;
+    uint32_t state = 1;
 
-	while (state)
-	{
-		am_hal_gpio_state_read(AM_BSP_GPIO_RADIO_BUSY, AM_HAL_GPIO_INPUT_READ, &state);
-	}
+    while (state)
+    {
+        am_hal_gpio_state_read(AM_BSP_GPIO_RADIO_BUSY, AM_HAL_GPIO_INPUT_READ, &state);
+    }
 }
 
 static void sx1262_write_command (uint8_t cmd, const uint8_t* data, uint8_t len)
@@ -153,7 +150,7 @@ static void sx1262_write_command (uint8_t cmd, const uint8_t* data, uint8_t len)
     Transaction.eDirection      = AM_HAL_IOM_TX;
     Transaction.ui32NumBytes    = len;
     Transaction.pui32TxBuffer   = (uint32_t *)data;
-    Transaction.bContinue 		= false;
+    Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
@@ -165,16 +162,16 @@ static void sx1262_write_command (uint8_t cmd, const uint8_t* data, uint8_t len)
 
 static void sx1262_write_registers (uint16_t addr, const uint8_t* data, uint8_t len)
 {
-	uint32_t instruction = (CMD_WRITEREGISTER << 16) | addr;
+    uint32_t instruction = (CMD_WRITEREGISTER << 16) | addr;
 
-	am_hal_iom_transfer_t Transaction;
+    am_hal_iom_transfer_t Transaction;
 
     Transaction.ui32InstrLen    = 3;
     Transaction.ui32Instr       = instruction;
     Transaction.eDirection      = AM_HAL_IOM_TX;
     Transaction.ui32NumBytes    = len;
     Transaction.pui32TxBuffer   = (uint32_t *)data;
-    Transaction.bContinue 		= false;
+    Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
@@ -182,11 +179,6 @@ static void sx1262_write_registers (uint16_t addr, const uint8_t* data, uint8_t 
 
     sx1262_block_on_busy();
     am_hal_iom_blocking_transfer(gSpiHandle, &Transaction);
-}
-
-static void sx1262_write_register (uint16_t addr, uint8_t val)
-{
-    sx1262_write_registers(addr, &val, 1);
 }
 
 static void sx1262_write_buffer (uint8_t off, const uint8_t* data, uint8_t len)
@@ -198,7 +190,7 @@ static void sx1262_write_buffer (uint8_t off, const uint8_t* data, uint8_t len)
     Transaction.eDirection      = AM_HAL_IOM_TX;
     Transaction.ui32NumBytes    = len;
     Transaction.pui32TxBuffer   = (uint32_t *)data;
-    Transaction.bContinue 		= false;
+    Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
@@ -225,7 +217,7 @@ static uint8_t sx1262_read_command (uint8_t cmd, uint8_t* data, uint8_t len)
     Transaction.eDirection      = AM_HAL_IOM_RX;
     Transaction.ui32NumBytes    = len;
     Transaction.pui32RxBuffer   = (uint32_t *)data;
-    Transaction.bContinue 		= false;
+    Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
@@ -239,18 +231,17 @@ static uint8_t sx1262_read_command (uint8_t cmd, uint8_t* data, uint8_t len)
 
 static void sx1262_read_registers (uint16_t addr, uint8_t* data, uint8_t len)
 {
-	//uint16_t offset = (addr >> 8) | ((addr & 0xFF) << 8);
-	uint16_t offset = __bswap16(addr);
-	uint32_t instruction = (offset << 8) | CMD_READREGISTER;
+    uint16_t offset = __bswap16(addr); // offset = (addr >> 8) | ((addr & 0xFF) << 8)
+    uint32_t instruction = (offset << 8) | CMD_READREGISTER;
 
-	am_hal_iom_transfer_t Transaction;
+    am_hal_iom_transfer_t Transaction;
 
     Transaction.ui32InstrLen    = 0;
     Transaction.ui32Instr       = 0;
     Transaction.eDirection      = AM_HAL_IOM_TX;
     Transaction.ui32NumBytes    = 4;
     Transaction.pui32TxBuffer   = (uint32_t *)&instruction;
-    Transaction.bContinue 		= true;
+    Transaction.bContinue       = true;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
@@ -264,20 +255,13 @@ static void sx1262_read_registers (uint16_t addr, uint8_t* data, uint8_t len)
     Transaction.eDirection      = AM_HAL_IOM_RX;
     Transaction.ui32NumBytes    = len;
     Transaction.pui32RxBuffer   = (uint32_t *)data;
-    Transaction.bContinue 		= false;
+    Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
     Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_RADIO_NSS_CHNL;
 
     am_hal_iom_blocking_transfer(gSpiHandle, &Transaction);
-}
-
-static uint8_t sx1262_read_register (uint16_t addr)
-{
-    uint8_t val;
-    sx1262_read_registers(addr, &val, 1);
-    return val;
 }
 
 static void sx1262_read_buffer (uint8_t off, uint8_t* data, uint8_t len)
@@ -291,7 +275,7 @@ static void sx1262_read_buffer (uint8_t off, uint8_t* data, uint8_t len)
     Transaction.eDirection      = AM_HAL_IOM_RX;
     Transaction.ui32NumBytes    = len;
     Transaction.pui32RxBuffer   = (uint32_t *)data;
-    Transaction.bContinue 		= false;
+    Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
@@ -301,7 +285,6 @@ static void sx1262_read_buffer (uint8_t off, uint8_t* data, uint8_t len)
     am_hal_iom_blocking_transfer(gSpiHandle, &Transaction);
 }
 
-// read payload from fifo, return length
 static uint8_t sx1262_read_fifo (uint8_t *buf)
 {
     // get buffer status
@@ -319,31 +302,31 @@ static uint8_t sx1262_read_fifo (uint8_t *buf)
 
 void sx1262_set_mode(uint8_t mode, uint32_t ui32Parameter)
 {
-	switch(mode)
-	{
-	case CMD_SETSLEEP:
-	case CMD_SETSTANDBY:
-	    sx1262_write_command(mode, (uint8_t *)&ui32Parameter, 1);
-	    break;
-	case CMD_SETFS:
-	case CMD_SETTXCONTINUOUSWAVE:
-	    sx1262_write_command(mode, NULL, 0);
-	    break;
-	case CMD_SETTX:
-	case CMD_SETRX:
-	{
-	    uint8_t timeout[3] = { (ui32Parameter >> 16) & 0xFF,
-	    						(ui32Parameter >> 8) & 0xFF,
-								ui32Parameter & 0xFF};
-	    sx1262_write_command(mode, timeout, 3);
-	}
-		break;
-	}
+    switch(mode)
+    {
+    case CMD_SETSLEEP:
+    case CMD_SETSTANDBY:
+        sx1262_write_command(mode, (uint8_t *)&ui32Parameter, 1);
+        break;
+    case CMD_SETFS:
+    case CMD_SETTXCONTINUOUSWAVE:
+        sx1262_write_command(mode, NULL, 0);
+        break;
+    case CMD_SETTX:
+    case CMD_SETRX:
+    {
+        uint8_t timeout[3] = { (ui32Parameter >> 16) & 0xFF,
+                                (ui32Parameter >> 8) & 0xFF,
+                                ui32Parameter & 0xFF};
+        sx1262_write_command(mode, timeout, 3);
+    }
+        break;
+    }
 }
 
 static void sx1262_config_regulator ()
 {
-	uint8_t mode = REGMODE_DCDC;
+    uint8_t mode = REGMODE_DCDC;
     sx1262_write_command(CMD_SETREGULATORMODE, &mode, 1);
 }
 
@@ -355,123 +338,123 @@ static void sx1262_set_dio2_rf_switch_ctrl (uint8_t enable) {
 // set radio to PACKET_TYPE_LORA or PACKET_TYPE_FSK mode
 static void sx1262_init_packet_type ()
 {
-	uint8_t type = PACKET_TYPE_LORA;
+    uint8_t type = PACKET_TYPE_LORA;
     sx1262_write_command(CMD_SETPACKETTYPE, &type, 1);
 }
 
 // calibrate the image rejection
 static void CalibrateImage (uint32_t freq) {
     static const struct {
-		uint32_t min;
-		uint32_t max;
-		uint8_t freq[2];
+        uint32_t min;
+        uint32_t max;
+        uint8_t freq[2];
     } bands[] = {
-		{ 430000000, 440000000, (uint8_t[]) { 0x6B, 0x6F } },
-		{ 470000000, 510000000, (uint8_t[]) { 0x75, 0x81 } },
-		{ 779000000, 787000000, (uint8_t[]) { 0xC1, 0xC5 } },
-		{ 863000000, 870000000, (uint8_t[]) { 0xD7, 0xDB } },
-		{ 902000000, 928000000, (uint8_t[]) { 0xE1, 0xE9 } },
+        { 430000000, 440000000, (uint8_t[]) { 0x6B, 0x6F } },
+        { 470000000, 510000000, (uint8_t[]) { 0x75, 0x81 } },
+        { 779000000, 787000000, (uint8_t[]) { 0xC1, 0xC5 } },
+        { 863000000, 870000000, (uint8_t[]) { 0xD7, 0xDB } },
+        { 902000000, 928000000, (uint8_t[]) { 0xE1, 0xE9 } },
     };
 
     for (int i = 0; i < sizeof(bands) / sizeof(bands[0]); i++)
     {
-		if (freq >= bands[i].min && freq <= bands[i].max)
-		{
-			sx1262_write_command(CMD_CALIBRATEIMAGE, bands[i].freq, 2);
-		}
+        if (freq >= bands[i].min && freq <= bands[i].max)
+        {
+            sx1262_write_command(CMD_CALIBRATEIMAGE, bands[i].freq, 2);
+        }
     }
 }
 
 static void sx1262_set_frequency (uint32_t freq)
 {
-	CalibrateImage(freq);
+    CalibrateImage(freq);
 
-	uint32_t v = (uint32_t)(((uint64_t) freq << 25) / 32000000);
-	uint32_t f = __bswap32(v);
+    uint32_t v = (uint32_t)(((uint64_t) freq << 25) / 32000000);
+    uint32_t f = __bswap32(v);
 
-	sx1262_write_command(CMD_SETRFFREQUENCY, (uint8_t *)&f, 4);
+    sx1262_write_command(CMD_SETRFFREQUENCY, (uint8_t *)&f, 4);
 }
 
 static void sx1262_config_modulation(lora_radio_modulation_t *psModulationParameters)
 {
-	uint8_t param[4];
-	param[0] = psModulationParameters->eSpreadingFactor;
-	switch (psModulationParameters->eBandwidth)
-	{
-	case LORA_RADIO_BW_7:
-		param[1] = 0x00;
-		psModulationParameters->eLowDataRateOptimization = 0x01;
-		break;
-	case LORA_RADIO_BW_10:
-		param[1] = 0x08;
-		psModulationParameters->eLowDataRateOptimization = 0x01;
-		break;
-	case LORA_RADIO_BW_15:
-		param[1] = 0x01;
-		psModulationParameters->eLowDataRateOptimization = 0x01;
-		break;
-	case LORA_RADIO_BW_20:
-		param[1] = 0x09;
-		psModulationParameters->eLowDataRateOptimization = 0x01;
-		break;
-	case LORA_RADIO_BW_31:
-		param[1] = 0x02;
-		psModulationParameters->eLowDataRateOptimization = 0x01;
-		break;
-	case LORA_RADIO_BW_41:
-		param[1] = 0x0A;
-		if (psModulationParameters->eSpreadingFactor >= LORA_RADIO_SF9)
-		{
-			psModulationParameters->eLowDataRateOptimization = 0x01;
-		}
-		else
-		{
-			psModulationParameters->eLowDataRateOptimization = 0x00;
-		}
-		break;
-	case LORA_RADIO_BW_62:
-		param[1] = 0x03;
-		if (psModulationParameters->eSpreadingFactor >= LORA_RADIO_SF10)
-		{
-			psModulationParameters->eLowDataRateOptimization = 0x01;
-		}
-		else
-		{
-			psModulationParameters->eLowDataRateOptimization = 0x00;
-		}
-		break;
-	case LORA_RADIO_BW_125:
-		if (psModulationParameters->eSpreadingFactor >= LORA_RADIO_SF11)
-		{
-			psModulationParameters->eLowDataRateOptimization = 0x01;
-		}
-		else
-		{
-			psModulationParameters->eLowDataRateOptimization = 0x00;
-		}
-		param[1] = 0x04;
-		break;
-	case LORA_RADIO_BW_250:
-		if (psModulationParameters->eSpreadingFactor >= LORA_RADIO_SF12)
-		{
-			psModulationParameters->eLowDataRateOptimization = 0x01;
-		}
-		else
-		{
-			psModulationParameters->eLowDataRateOptimization = 0x00;
-		}
-		param[1] = 0x05;
-		break;
-	case LORA_RADIO_BW_500:
-		param[1] = 0x06;
-		psModulationParameters->eLowDataRateOptimization = 0x00;
-		break;
-	}
+    uint8_t param[4];
+    param[0] = psModulationParameters->eSpreadingFactor;
+    switch (psModulationParameters->eBandwidth)
+    {
+    case LORA_RADIO_BW_7:
+        param[1] = 0x00;
+        psModulationParameters->eLowDataRateOptimization = 0x01;
+        break;
+    case LORA_RADIO_BW_10:
+        param[1] = 0x08;
+        psModulationParameters->eLowDataRateOptimization = 0x01;
+        break;
+    case LORA_RADIO_BW_15:
+        param[1] = 0x01;
+        psModulationParameters->eLowDataRateOptimization = 0x01;
+        break;
+    case LORA_RADIO_BW_20:
+        param[1] = 0x09;
+        psModulationParameters->eLowDataRateOptimization = 0x01;
+        break;
+    case LORA_RADIO_BW_31:
+        param[1] = 0x02;
+        psModulationParameters->eLowDataRateOptimization = 0x01;
+        break;
+    case LORA_RADIO_BW_41:
+        param[1] = 0x0A;
+        if (psModulationParameters->eSpreadingFactor >= LORA_RADIO_SF9)
+        {
+            psModulationParameters->eLowDataRateOptimization = 0x01;
+        }
+        else
+        {
+            psModulationParameters->eLowDataRateOptimization = 0x00;
+        }
+        break;
+    case LORA_RADIO_BW_62:
+        param[1] = 0x03;
+        if (psModulationParameters->eSpreadingFactor >= LORA_RADIO_SF10)
+        {
+            psModulationParameters->eLowDataRateOptimization = 0x01;
+        }
+        else
+        {
+            psModulationParameters->eLowDataRateOptimization = 0x00;
+        }
+        break;
+    case LORA_RADIO_BW_125:
+        if (psModulationParameters->eSpreadingFactor >= LORA_RADIO_SF11)
+        {
+            psModulationParameters->eLowDataRateOptimization = 0x01;
+        }
+        else
+        {
+            psModulationParameters->eLowDataRateOptimization = 0x00;
+        }
+        param[1] = 0x04;
+        break;
+    case LORA_RADIO_BW_250:
+        if (psModulationParameters->eSpreadingFactor >= LORA_RADIO_SF12)
+        {
+            psModulationParameters->eLowDataRateOptimization = 0x01;
+        }
+        else
+        {
+            psModulationParameters->eLowDataRateOptimization = 0x00;
+        }
+        param[1] = 0x05;
+        break;
+    case LORA_RADIO_BW_500:
+        param[1] = 0x06;
+        psModulationParameters->eLowDataRateOptimization = 0x00;
+        break;
+    }
 
-	param[2] = psModulationParameters->eCodingRate + 1;
-	param[3] = psModulationParameters->eLowDataRateOptimization;
+    param[2] = psModulationParameters->eCodingRate + 1;
+    param[3] = psModulationParameters->eLowDataRateOptimization;
 
-	sx1262_write_command(CMD_SETMODULATIONPARAMS, param, 4);
+    sx1262_write_command(CMD_SETMODULATIONPARAMS, param, 4);
 }
 
 static void sx1262_config_packet(lora_radio_packet_t *psPacketParameters)
@@ -489,14 +472,12 @@ static void sx1262_config_packet(lora_radio_packet_t *psPacketParameters)
     sx1262_write_command(CMD_SETPACKETPARAMS, param, 6);
 }
 
-// clear irq register
 static void sx1262_interrupt_clear (uint16_t mask)
 {
     uint8_t buf[2] = { mask >> 8, mask & 0xFF };
     sx1262_write_command(CMD_CLEARIRQSTATUS, buf, 2);
 }
 
-// stop timer on preamble detection or header/syncword detection
 static void sx1262_stop_timer_on_preamble (uint8_t enable) {
     sx1262_write_command(CMD_STOPTIMERONPREAMBLE, &enable, 1);
 }
@@ -547,15 +528,15 @@ static void sx1262_interrupt_enable (uint16_t mask)
 // set tx power (in dBm)
 static void sx1262_set_power (int8_t i8Power)
 {
-	// high power PA: -9 ... +22 dBm
+    // high power PA: -9 ... +22 dBm
     if (i8Power > 22)
     {
-    	i8Power = 22;
+        i8Power = 22;
     }
 
     if (i8Power < -9)
     {
-    	i8Power = -9;
+        i8Power = -9;
     }
 
     // set PA config (and reset OCP to 140mA)
@@ -576,8 +557,8 @@ static void sx1262_set_syncword (uint16_t ui16SyncWord)
 
 static void sx1262_transmit(void *pHandle, lora_radio_transfer_t *psTransaction)
 {
-	lora_radio_modulation_t *psModulationParameters = psTransaction->psModulationParameters;
-	lora_radio_packet_t *psPacketParameters = psTransaction->psPacketParameters;
+    lora_radio_modulation_t *psModulationParameters = psTransaction->psModulationParameters;
+    lora_radio_packet_t *psPacketParameters = psTransaction->psPacketParameters;
 
     sx1262_set_mode(CMD_SETSTANDBY, STDBY_RC);
 
@@ -610,8 +591,8 @@ static void sx1262_transmit_carrier (void *pHandle, lora_radio_transfer_t *psTra
 
 static void sx1262_receive (void *pHandle, lora_radio_transfer_t *psTransaction)
 {
-	lora_radio_modulation_t *psModulationParameters = psTransaction->psModulationParameters;
-	lora_radio_packet_t *psPacketParameters = psTransaction->psPacketParameters;
+    lora_radio_modulation_t *psModulationParameters = psTransaction->psModulationParameters;
+    lora_radio_packet_t *psPacketParameters = psTransaction->psPacketParameters;
 
     sx1262_set_mode(CMD_SETSTANDBY, STDBY_RC);
 
@@ -628,8 +609,8 @@ static void sx1262_receive (void *pHandle, lora_radio_transfer_t *psTransaction)
     /*
     if (psPacketParameters->ePacketLength == LORA_RADIO_PACKET_LENGTH_FIXED)
     {
-    	sx1262_stop_timer_on_preamble(0);
-    	sx1262_set_symbol_timeout(psTransaction->ui32Timeout & 0xFF);
+        sx1262_stop_timer_on_preamble(0);
+        sx1262_set_symbol_timeout(psTransaction->ui32Timeout & 0xFF);
     }
     */
 
@@ -641,7 +622,7 @@ static void sx1262_receive (void *pHandle, lora_radio_transfer_t *psTransaction)
 
 uint32_t lora_radio_initialize(void **ppHandle)
 {
-	lora_radio_reset(&ppHandle);
+    lora_radio_reset(&ppHandle);
 
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_BUSY, g_AM_HAL_GPIO_INPUT);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_DIO1, g_AM_HAL_GPIO_INPUT);
@@ -653,19 +634,20 @@ uint32_t lora_radio_initialize(void **ppHandle)
     am_hal_gpio_interrupt_register(AM_BSP_GPIO_RADIO_DIO1, lora_radio_isr);
     am_hal_gpio_interrupt_register(AM_BSP_GPIO_RADIO_DIO3, lora_radio_isr);
 
-    g_sSpiConfig.eInterfaceMode = AM_HAL_IOM_SPI_MODE;
-    g_sSpiConfig.ui32ClockFreq = AM_HAL_IOM_4MHZ;
-    g_sSpiConfig.eSpiMode = AM_HAL_IOM_SPI_MODE_0;
+    am_hal_iom_config_t sSpiConfig;
+    sSpiConfig.eInterfaceMode = AM_HAL_IOM_SPI_MODE;
+    sSpiConfig.ui32ClockFreq = AM_HAL_IOM_4MHZ;
+    sSpiConfig.eSpiMode = AM_HAL_IOM_SPI_MODE_0;
 
-	am_hal_iom_initialize(3, &gSpiHandle);
-	am_hal_iom_power_ctrl(gSpiHandle, AM_HAL_SYSCTRL_WAKE, false);
-	am_hal_iom_configure(gSpiHandle, &g_sSpiConfig);
-	am_bsp_iom_pins_enable(3, AM_HAL_IOM_SPI_MODE);
-	am_hal_iom_enable(gSpiHandle);
+    am_hal_iom_initialize(3, &gSpiHandle);
+    am_hal_iom_power_ctrl(gSpiHandle, AM_HAL_SYSCTRL_WAKE, false);
+    am_hal_iom_configure(gSpiHandle, &sSpiConfig);
+    am_bsp_iom_pins_enable(3, AM_HAL_IOM_SPI_MODE);
+    am_hal_iom_enable(gSpiHandle);
 
-	sx1262_get_device_status();
+    sx1262_get_device_status();
 
-	am_hal_gpio_interrupt_enable(AM_HAL_GPIO_BIT(AM_BSP_GPIO_RADIO_DIO1));
+    am_hal_gpio_interrupt_enable(AM_HAL_GPIO_BIT(AM_BSP_GPIO_RADIO_DIO1));
     am_hal_gpio_interrupt_enable(AM_HAL_GPIO_BIT(AM_BSP_GPIO_RADIO_DIO3));
     NVIC_EnableIRQ(GPIO_IRQn);
 
@@ -677,7 +659,7 @@ uint32_t lora_radio_initialize(void **ppHandle)
     sx1262_set_dio2_rf_switch_ctrl(1);
     sx1262_init_packet_type();
 
-	return LORA_RADIO_STATUS_SUCCESS;
+    return LORA_RADIO_STATUS_SUCCESS;
 }
 
 uint32_t lora_radio_deinitialize(void *pHandle)
@@ -685,17 +667,17 @@ uint32_t lora_radio_deinitialize(void *pHandle)
     am_hal_gpio_interrupt_disable(AM_HAL_GPIO_BIT(AM_BSP_GPIO_RADIO_DIO1));
     am_hal_gpio_interrupt_disable(AM_HAL_GPIO_BIT(AM_BSP_GPIO_RADIO_DIO3));
 
-	am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NRESET, g_AM_HAL_GPIO_DISABLE);
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NRESET, g_AM_HAL_GPIO_DISABLE);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_BUSY, g_AM_HAL_GPIO_DISABLE);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_DIO1, g_AM_HAL_GPIO_DISABLE);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_DIO3, g_AM_HAL_GPIO_DISABLE);
 
     am_hal_iom_uninitialize(gSpiHandle);
-	am_hal_iom_power_ctrl(gSpiHandle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
-	am_bsp_iom_pins_disable(3, AM_HAL_IOM_SPI_MODE);
-	am_hal_iom_disable(gSpiHandle);
+    am_hal_iom_power_ctrl(gSpiHandle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+    am_bsp_iom_pins_disable(3, AM_HAL_IOM_SPI_MODE);
+    am_hal_iom_disable(gSpiHandle);
 
-	return LORA_RADIO_STATUS_SUCCESS;
+    return LORA_RADIO_STATUS_SUCCESS;
 }
 
 uint32_t lora_radio_reset(void *pHandle)
@@ -718,84 +700,78 @@ uint32_t lora_radio_reset(void *pHandle)
 
 uint32_t lora_radio_power_ctrl(void *pHandle, lora_radio_power_state_e ePowerState)
 {
-	switch(ePowerState)
-	{
-	case LORA_RADIO_SLEEP:
-		sx1262_set_mode(CMD_SETSLEEP, SLEEP_WARM);
-		break;
-	case LORA_RADIO_DEEPSLEEP:
-		sx1262_set_mode(CMD_SETSLEEP, SLEEP_COLD);
-		break;
-	case LORA_RADIO_STANDBY:
-	    sx1262_set_mode(CMD_SETSTANDBY, STDBY_RC);
-	    break;
-	default:
-		return LORA_RADIO_STATUS_INVALID_ARG;
-	}
+    switch(ePowerState)
+    {
+    case LORA_RADIO_SLEEP:
+        sx1262_set_mode(CMD_SETSLEEP, SLEEP_WARM);
+        break;
+    case LORA_RADIO_DEEPSLEEP:
+        sx1262_set_mode(CMD_SETSLEEP, SLEEP_COLD);
+        break;
+    case LORA_RADIO_STANDBY:
+        sx1262_set_mode(CMD_SETSTANDBY, STDBY_RC);
+        break;
+    default:
+        return LORA_RADIO_STATUS_INVALID_ARG;
+    }
 
     return LORA_RADIO_STATUS_SUCCESS;
 }
 
 uint32_t lora_radio_transfer(void *pHandle, lora_radio_transfer_t *psTransaction)
 {
-	switch(psTransaction->eMode)
-	{
-	case LORA_RADIO_TX:
-		sx1262_transmit(pHandle, psTransaction);
-		break;
-	case LORA_RADIO_RX:
-		sx1262_receive(pHandle, psTransaction);
-		break;
-	case LORA_RADIO_TXCARRIER:
-		sx1262_transmit_carrier(pHandle, psTransaction);
-		break;
-	default:
-		return LORA_RADIO_STATUS_INVALID_ARG;
-	}
+    switch(psTransaction->eMode)
+    {
+    case LORA_RADIO_TX:
+        sx1262_transmit(pHandle, psTransaction);
+        break;
+    case LORA_RADIO_RX:
+        sx1262_receive(pHandle, psTransaction);
+        break;
+    case LORA_RADIO_TXCARRIER:
+        sx1262_transmit_carrier(pHandle, psTransaction);
+        break;
+    default:
+        return LORA_RADIO_STATUS_INVALID_ARG;
+    }
 
     return LORA_RADIO_STATUS_SUCCESS;
 }
 
-#define MAX_IRQ_HANDLERS 12
-uint8_t gui8LoRaRadioIrqHandlerListSize;
-lora_radio_irq_handler_t psLoRaRadioIrqHandlerList[MAX_IRQ_HANDLERS];
-
 void lora_radio_callback_list_init()
 {
-    memset(psLoRaRadioIrqHandlerList, 0, MAX_IRQ_HANDLERS * sizeof(lora_radio_irq_handler_t));
-    gui8LoRaRadioIrqHandlerListSize = 0;
+    memset(psLoRaRadioCallbackList, 0, MAX_CALLBACK * sizeof(lora_radio_irq_handler_t));
+    gui32LoRaRadioCallbackListLength = 0;
 }
 
 void lora_radio_callback_list_deinit()
 {
-    memset(psLoRaRadioIrqHandlerList, 0, MAX_IRQ_HANDLERS * sizeof(lora_radio_irq_handler_t));
-    gui8LoRaRadioIrqHandlerListSize = 0;
+    memset(psLoRaRadioCallbackList, 0, MAX_CALLBACK * sizeof(lora_radio_irq_handler_t));
+    gui32LoRaRadioCallbackListLength = 0;
 }
 
 uint32_t lora_radio_callback_register(lora_radio_irq_e eIrq, lora_radio_callback_t pfnCallback)
 {
-    // FIXME:  This is not thread safe
-    if (gui8LoRaRadioIrqHandlerListSize >= MAX_IRQ_HANDLERS)
+    if (gui32LoRaRadioCallbackListLength >= MAX_CALLBACK)
     {
         return LORA_RADIO_STATUS_FAIL;
     }
-    psLoRaRadioIrqHandlerList[gui8LoRaRadioIrqHandlerListSize].eIRQ = eIrq;
-    psLoRaRadioIrqHandlerList[gui8LoRaRadioIrqHandlerListSize].pfnCallback = pfnCallback;
-    gui8LoRaRadioIrqHandlerListSize++;
+    psLoRaRadioCallbackList[gui32LoRaRadioCallbackListLength].eIRQ = eIrq;
+    psLoRaRadioCallbackList[gui32LoRaRadioCallbackListLength].pfnCallback = pfnCallback;
+    gui32LoRaRadioCallbackListLength++;
 
     return LORA_RADIO_STATUS_SUCCESS;
 }
 
 uint32_t lora_radio_callback_deregister(lora_radio_irq_e eIrq, lora_radio_callback_t pfnCallback)
 {
-    // FIXME:  This is not thread safe
     uint8_t i = 0;
     uint8_t ui8Found = 0;
 
-    for (i = 0; i < gui8LoRaRadioIrqHandlerListSize; i++)
+    for (i = 0; i < gui32LoRaRadioCallbackListLength; i++)
     {
-        if ((psLoRaRadioIrqHandlerList[i].eIRQ == eIrq)
-         && (psLoRaRadioIrqHandlerList[i].pfnCallback == pfnCallback))
+        if ((psLoRaRadioCallbackList[i].eIRQ == eIrq)
+         && (psLoRaRadioCallbackList[i].pfnCallback == pfnCallback))
         {
             ui8Found = 1;
             break;
@@ -804,13 +780,13 @@ uint32_t lora_radio_callback_deregister(lora_radio_irq_e eIrq, lora_radio_callba
 
     if (ui8Found)
     {
-        while (i < (gui8LoRaRadioIrqHandlerListSize - 1))
+        while (i < (gui32LoRaRadioCallbackListLength - 1))
         {
-            psLoRaRadioIrqHandlerList[i].eIRQ = psLoRaRadioIrqHandlerList[i+1].eIRQ;
-            psLoRaRadioIrqHandlerList[i].pfnCallback = psLoRaRadioIrqHandlerList[i+1].pfnCallback;
+            psLoRaRadioCallbackList[i].eIRQ = psLoRaRadioCallbackList[i+1].eIRQ;
+            psLoRaRadioCallbackList[i].pfnCallback = psLoRaRadioCallbackList[i+1].pfnCallback;
             i++;
         }
-        gui8LoRaRadioIrqHandlerListSize--;
+        gui32LoRaRadioCallbackListLength--;
 
         return LORA_RADIO_STATUS_SUCCESS;
     }
@@ -820,37 +796,36 @@ uint32_t lora_radio_callback_deregister(lora_radio_irq_e eIrq, lora_radio_callba
 
 static void lora_radio_isr(void)
 {
-	uint8_t i, ui8PacketLength;
-	uint16_t ui16IrqStatus = sx1262_interrupt_status_get();
+    uint8_t i, ui8PacketLength;
+    uint16_t ui16IrqStatus = sx1262_interrupt_status_get();
 
-	// FIXME:  This is not thread safe.
-	if (ui16IrqStatus & LORA_RADIO_RXDONE)
-	{
-		ui8PacketLength = sx1262_read_fifo(pui8ReceiveBuffer);
-		sLoRaPhysicalPacket.pui8Payload = pui8ReceiveBuffer;
-		sLoRaPhysicalPacket.ui8PayloadLength = ui8PacketLength;
+    if (ui16IrqStatus & LORA_RADIO_RXDONE)
+    {
+        ui8PacketLength = sx1262_read_fifo(pui8ReceiveBuffer);
+        sLoRaPhysicalPacket.pui8Payload = pui8ReceiveBuffer;
+        sLoRaPhysicalPacket.ui8PayloadLength = ui8PacketLength;
 
-		sx1262_get_packet_status(&sLoRaPhysicalPacket.i8Rssi,
-								&sLoRaPhysicalPacket.i8Snr,
-								&sLoRaPhysicalPacket.i8Rscp);
-	}
+        sx1262_get_packet_status(&sLoRaPhysicalPacket.i8Rssi,
+                                &sLoRaPhysicalPacket.i8Snr,
+                                &sLoRaPhysicalPacket.i8Rscp);
+    }
 
-	for (i = 0; i < gui8LoRaRadioIrqHandlerListSize; i++)
-	{
-		if ((psLoRaRadioIrqHandlerList[i].eIRQ & ui16IrqStatus) && (ui16IrqStatus & LORA_RADIO_RXDONE))
-		{
-			// callback will still trigger if ui8PacketLength is zero
-			// if ((ui8PacketLength > 0) && (psLoRaRadioIrqHandlerList[i].pfnCallback))
-			if (psLoRaRadioIrqHandlerList[i].pfnCallback)
-				psLoRaRadioIrqHandlerList[i].pfnCallback(&sLoRaPhysicalPacket);
-		}
-		else if (psLoRaRadioIrqHandlerList[i].eIRQ & ui16IrqStatus)
-		{
-			if (psLoRaRadioIrqHandlerList[i].pfnCallback)
-				psLoRaRadioIrqHandlerList[i].pfnCallback(NULL);
-		}
-	}
+    for (i = 0; i < gui32LoRaRadioCallbackListLength; i++)
+    {
+        if ((psLoRaRadioCallbackList[i].eIRQ & ui16IrqStatus) && (ui16IrqStatus & LORA_RADIO_RXDONE))
+        {
+            // callback will still trigger if ui8PacketLength is zero
+            // if ((ui8PacketLength > 0) && (psLoRaRadioCallbackList[i].pfnCallback))
+            if (psLoRaRadioCallbackList[i].pfnCallback)
+                psLoRaRadioCallbackList[i].pfnCallback(&sLoRaPhysicalPacket);
+        }
+        else if (psLoRaRadioCallbackList[i].eIRQ & ui16IrqStatus)
+        {
+            if (psLoRaRadioCallbackList[i].pfnCallback)
+                psLoRaRadioCallbackList[i].pfnCallback(NULL);
+        }
+    }
 
-	sx1262_interrupt_enable(0);
-	sx1262_interrupt_clear(LORA_RADIO_IRQ_ALL);
+    sx1262_interrupt_enable(0);
+    sx1262_interrupt_clear(LORA_RADIO_IRQ_ALL);
 }
