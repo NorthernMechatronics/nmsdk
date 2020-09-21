@@ -4,10 +4,11 @@ include $(SDKROOT)/makedefs/nm_common.mk
 
 ifdef DEBUG
     TARGET  := libam_bsp-dev.a
+    CONFIG  := debug
 else
     TARGET  := libam_bsp.a
+    CONFIG  := release
 endif
-CONFIG  := build
 COMPILERNAME := gcc
 PROJECT      := libam_bsp_gcc
 
