@@ -254,7 +254,10 @@ static void IomCloseSubcommand(char *pcWriteBuffer, size_t xWriteBufferLen, cons
 
 	int port = -1;
 	if (pcParameterString == NULL)
-		port = -1;
+    {
+		strcat(pcWriteBuffer, "error: missing port number\r\n");
+		return;
+    }
 	else
 	{
 		pcPortString = pcParameterString;
