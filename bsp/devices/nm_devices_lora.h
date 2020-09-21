@@ -87,9 +87,6 @@ typedef struct
 }
 lora_radio_irq_handler_t;
 
-extern uint8_t gui8LoRaRadioIrqHandlerListSize;
-extern lora_radio_irq_handler_t psLoRaRadioIrqHandlerList[];
-
 typedef enum
 {
     LORA_RADIO_LDR_OPT_OFF = 0,
