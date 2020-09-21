@@ -622,7 +622,9 @@ static void sx1262_receive (void *pHandle, lora_radio_transfer_t *psTransaction)
 
 uint32_t lora_radio_initialize(void **ppHandle)
 {
-    lora_radio_reset(&ppHandle);
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NRESET, g_AM_HAL_GPIO_OUTPUT);
+    am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
+    am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_SET);
 
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_BUSY, g_AM_HAL_GPIO_INPUT);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_DIO1, g_AM_HAL_GPIO_INPUT);
@@ -644,6 +646,8 @@ uint32_t lora_radio_initialize(void **ppHandle)
     am_hal_iom_configure(gSpiHandle, &sSpiConfig);
     am_bsp_iom_pins_enable(3, AM_HAL_IOM_SPI_MODE);
     am_hal_iom_enable(gSpiHandle);
+
+    lora_radio_reset(&ppHandle);
 
     sx1262_get_device_status();
 
@@ -682,10 +686,6 @@ uint32_t lora_radio_deinitialize(void *pHandle)
 
 uint32_t lora_radio_reset(void *pHandle)
 {
-    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NRESET, g_AM_HAL_GPIO_OUTPUT);
-    am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
-    am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_SET);
-
     am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_CLEAR);
     am_util_delay_us(100);
     am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_SET);
