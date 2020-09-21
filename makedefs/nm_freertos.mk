@@ -10,3 +10,5 @@ ifndef FREERTOS
     $(error unable to locate FreeRTOS source)
   endif
 endif
+
+DEFINES += -DAM_FREERTOS

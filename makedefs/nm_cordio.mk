@@ -10,3 +10,9 @@ ifndef CORDIO
     $(error unable to locate Cordio source)
   endif
 endif
+
+CORDIO_STACK    = $(CORDIO)/ble-host
+CORDIO_PROFILES = $(CORDIO)/ble-profiles
+CORDIO_WSF      = $(CORDIO)/wsf
+
+DEFINES += -DSEC_ECC_CFG=SEC_ECC_CFG_UECC
