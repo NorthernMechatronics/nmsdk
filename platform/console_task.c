@@ -197,6 +197,11 @@ static void s_clearln(uint8_t pos) {
  ******************************************************************************/
 void g_console_print(const char *str) { g_console_write(str, strlen(str)); }
 
+void g_console_prompt()
+{
+  g_console_print(cmd_prompt);
+}
+
 /******************************************************************************
  * g_console_write
  * ---------------
