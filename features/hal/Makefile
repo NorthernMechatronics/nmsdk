@@ -7,6 +7,7 @@ ifdef DEBUG
 else
     TARGET       := libam_hal
     CONFIG       := release
+    CFLAGS += -DAM_HAL_DISABLE_API_VALIDATION
 endif
 
 COMPILERNAME := gcc
