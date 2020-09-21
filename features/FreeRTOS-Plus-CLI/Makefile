@@ -1,5 +1,5 @@
 SDKROOT?=../..
-include $(SDKROOT)/makedefs/nm_freertos-plus.mk
+include $(SDKROOT)/makedefs/nm_freertos.mk
 
 ifdef DEBUG
     TARGET       := libfreertos-cli-dev
@@ -12,10 +12,10 @@ COMPILERNAME := gcc
 PROJECT      := libfreertos-cli_gcc
 
 INCLUDES  = -I$(FREERTOS)/Source/include
-INCLUDES += -I$(FREERTOS-PLUS)/Source/FreeRTOS-Plus-CLI
+INCLUDES += -I$(SDKROOT)/features/FreeRTOS-Plus-CLI
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
 
-VPATH  = $(FREERTOS-PLUS)/Source/FreeRTOS-Plus-CLI
+VPATH  = $(SDKROOT)/features/FreeRTOS-Plus-CLI
 VPATH += .
 
 SRC  = FreeRTOS_CLI.c
