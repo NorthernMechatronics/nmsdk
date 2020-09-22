@@ -8,7 +8,7 @@ Platform Details: [![Hardware](https://img.shields.io/badge/hardware-wiki-green.
 The NMSDK is a platform library for the Northern Mechatronics NM180100 LoRa BLE module.  It provides support for LoRa direct, LoRa real-time, LoRaWAN, and BLE wireless connectivity as well as a FreeRTOS framework for rapid application development across a wide range of use cases and environments.
 
 Architecturally speaking, the SDK consists of three layers
-![architecture](http://gitlab.northernmechatronics.com:50250/nmi/software/nmsdk/blob/master/SDK_architecture.png)
+![architecture](doc/SDK_architecture.png)
 
 
 ## Supported Host Platforms
