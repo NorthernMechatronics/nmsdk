@@ -28,7 +28,7 @@ lora_radio_modulation_t gsLoRaModulationParameter;
 
 lora_radio_packet_t gsLoRaPacketParameter;
 
-const lora_radio_modulation_t defaultLoRaModulationParameter =
+static const lora_radio_modulation_t defaultLoRaModulationParameter =
 {
 	.eSpreadingFactor = LORA_RADIO_SF10,
 	.eBandwidth       = LORA_RADIO_BW_125,
@@ -36,7 +36,7 @@ const lora_radio_modulation_t defaultLoRaModulationParameter =
 	.eLowDataRateOptimization = LORA_RADIO_LDR_OPT_OFF
 };
 
-const lora_radio_packet_t defaultLoRaPacketParameter =
+static const lora_radio_packet_t defaultLoRaPacketParameter =
 {
 	.ui16PreambleLength = 0x0008,
 	.ePacketLength = LORA_RADIO_PACKET_LENGTH_VARIABLE,

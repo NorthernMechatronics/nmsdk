@@ -28,7 +28,7 @@ extern uint32_t lora_radio_transmit_period;
 extern lora_radio_modulation_t gsLoRaModulationParameter;
 extern lora_radio_packet_t gsLoRaPacketParameter;
 
-void lora_direct_radio_configuration_reset();
+void lora_direct_radio_configuration_reset() __attribute((weak));
 
 #if defined(__cplusplus)
 }
