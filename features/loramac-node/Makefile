@@ -27,12 +27,14 @@ INCLUDES += -I$(LORAMAC)/src/boards
 INCLUDES += -I$(LORAMAC)/src/mac
 INCLUDES += -I$(LORAMAC)/src/mac/region
 INCLUDES += -I$(LORAMAC)/src/system
+INCLUDES += -I$(LORAMAC)/src/peripherals/soft-se
 
 VPATH  = $(LORAMAC)/src/radio/sx126x
 VPATH += $(LORAMAC)/src/boards/mcu
 VPATH += $(LORAMAC)/src/mac
 VPATH += $(LORAMAC)/src/mac/region
 VPATH += $(LORAMAC)/src/system
+VPATH += $(LORAMAC)/src/peripherals/soft-se
 
 INCLUDES += -I./src/boards/nm180100
 INCLUDES += -I.
@@ -72,6 +74,15 @@ SRC += delay-board.c
 SRC += gpio-board.c
 SRC += rtc-board.c
 SRC += sx1262-board.c
+
+SRC += aes.c
+SRC += cmac.c
+SRC += soft-se.c
+SRC += soft-se-hal.c
+
+SRC += delay.c
+SRC += systime.c
+SRC += timer.c
 
 CSRC = $(filter %.c, $(SRC))
 ASRC = $(filter %.s, $(SRC))

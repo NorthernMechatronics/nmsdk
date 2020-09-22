@@ -44,6 +44,7 @@ static am_hal_iom_config_t sx1262_spi_cfg;
 static void *sx1262_spi_handle;
 static am_hal_gpio_handler_t sx1262_isr_chain = NULL;
 
+static RadioOperatingModes_t OperatingMode;
 
 /******************************************************************************
  * Local functions
@@ -556,4 +557,19 @@ bool SX126xCheckRfFrequency(uint32_t frequency)
 {
   am_util_debug_printf("SX126xCheckRfFrequency(%u)\r\n", frequency);
   return true;
+}
+
+RadioOperatingModes_t SX126xGetOperatingMode(void)
+{
+    return OperatingMode;
+}
+
+void SX126xSetOperatingMode(RadioOperatingModes_t mode)
+{
+    OperatingMode = mode;
+}
+
+void SX126xIoRfSwitchInit(void)
+{
+    SX126xSetDio2AsRfSwitchCtrl(true);
 }
