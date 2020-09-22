@@ -6,6 +6,7 @@ The NMSDK is a platform library for the Northern Mechatronics NM180100 LoRa BLE 
 The SDK provides a centralized interface between the application layer and other radio stacks.  This allows each feature to evolve independently.
 
 License : [![License](https://img.shields.io/badge/license-BSD_3-blue.svg)]
+(http://gitlab.northernmechatronics.com:50250/nmi/software/nmsdk/blob/master/LICENSE)
 Platform Details: [![Hardware](https://img.shields.io/badge/hardware-wiki-green.svg)]
 
 ## Supported Host Platforms
