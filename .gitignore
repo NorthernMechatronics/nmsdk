@@ -1,3 +1,6 @@
+.settings/
+.cproject
+.project
 *.d
 *.o
 *.a
