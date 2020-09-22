@@ -79,6 +79,10 @@ INCLUDES += -I$(CORDIO_PROFILES)/sources/profiles/wpc
 INCLUDES += -I$(CORDIO_PROFILES)/sources/profiles/wspc
 INCLUDES += -I$(CORDIO_PROFILES)/sources/profiles/wsps
 
+INCLUDES += -I$(CORDIO_PROFILES)/sources/apps
+INCLUDES += -I$(CORDIO_PROFILES)/sources/apps/app
+INCLUDES += -I$(CORDIO_PROFILES)/sources/apps/app/common
+
 INCLUDES += -I.
 
 VPATH  = $(CORDIO_STACK)/sources/hci/ambiq
@@ -133,6 +137,9 @@ VPATH += $(CORDIO_PROFILES)/sources/profiles/wdxs
 VPATH += $(CORDIO_PROFILES)/sources/profiles/wpc
 VPATH += $(CORDIO_PROFILES)/sources/profiles/wspc
 VPATH += $(CORDIO_PROFILES)/sources/profiles/wsps
+
+VPATH += $(CORDIO_PROFILES)/sources/apps/app
+VPATH += $(CORDIO_PROFILES)/sources/apps/app/common
 
 VPATH += $(CORDIO_PROFILES)/sources/services
 
@@ -306,10 +313,36 @@ SRC += tipc_main.c
 SRC += udsc_main.c
 SRC += uricfg_main.c
 SRC += wdxc_main.c
+SRC += wdxc_ft.c
+SRC += wdxc_stream.c
 SRC += wdxs_main.c
+SRC += wdxs_au.c
+SRC += wdxs_dc.c
+SRC += wdxs_ft.c
+SRC += wdxs_phy.c
+SRC += wdxs_stream.c
 SRC += wpc_main.c
 SRC += wspc_main.c
 SRC += wsps_main.c
+
+SRC += app_disc.c
+SRC += app_main.c
+SRC += app_master.c
+SRC += app_master_leg.c
+SRC += app_server.c
+SRC += app_slave.c
+SRC += app_slave_leg.c
+SRC += app_terminal.c
+
+SRC += app_db.c
+SRC += app_hw.c
+SRC += app_ui.c
+SRC += ui_console.c
+SRC += ui_lcd.c
+SRC += ui_main.c
+SRC += ui_platform.c
+SRC += ui_timer.c
+
 
 CSRC = $(filter %.c, $(SRC))
 ASRC = $(filter %.s, $(SRC))
