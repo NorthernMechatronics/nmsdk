@@ -44,6 +44,11 @@ From an architectural perspective, the SDK consists of three layers.
 
 ```git clone https://github.com/packetcraft-inc/stacks.git```
 
+* Clone the [LoRaWAN](https://github.com/Lora-net/LoRaMac-node) stack
+
+```git clone https://github.com/Lora-net/LoRaMac-node.git```
+
+
 ### Build
 * Define the following variables: NM_SDK, AMBIQ_SDK, FREERTOS, CORDIO
 
