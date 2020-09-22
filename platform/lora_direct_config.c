@@ -45,8 +45,12 @@ static const lora_radio_packet_t defaultLoRaPacketParameter =
 	.eIQ           = LORA_RADIO_IQ_INVERTED
 };
 
-void lora_direct_radio_configuration_reset()
+/*
+ * Application must implement the following:
+ *
+void lora_direct_radio_configuration_reset(void)
 {
 	memcpy(&gsLoRaModulationParameter, &defaultLoRaModulationParameter, sizeof(lora_radio_modulation_t));
 	memcpy(&gsLoRaPacketParameter, &defaultLoRaPacketParameter, sizeof(lora_radio_packet_t));
 }
+*/
