@@ -25,20 +25,26 @@ From an architectural perspective, the SDK consists of three layers.
 | platform | NM platform service code |
 
 ## Build Instructions
-1.  Clone the [NMSDK](ssh://git@gitlab.northernmechatronics.com:50251/nmi/software/nmsdk.git).
+### Pre-requisites
+* git
+* make
+
+### Installation
+* Clone the [NMSDK](http://gitlab.northernmechatronics.com:50250/nmi/software/nmsdk).
 
 ```git clone ssh://git@gitlab.northernmechatronics.com:50251/nmi/software/nmsdk.git```
 
-2.  Download and install [AmbiqSuite](https://ambiq.com/apollo3-blue-low-power-mcu-family/#documents).
+* Download and install [AmbiqSuite](https://ambiq.com/apollo3-blue-low-power-mcu-family/#documents).
 
-3.  Clone [FreeRTOS](https://github.com/FreeRTOS/FreeRTOS).  Make sure to clone with the `--recurse-submodules` argument.
+* Clone [FreeRTOS](https://github.com/FreeRTOS/FreeRTOS).  Make sure to clone with the `--recurse-submodules` argument.
 
 ```git clone https://github.com/FreeRTOS/FreeRTOS.git --recurse-submodules```  
 
-4.  If the bundled BLE stack from Ambiq is not used, then clone [Cordio](https://github.com/packetcraft-inc/stacks).  This will require additional porting effort which is currently not supported.  However, this enables BLE mesh networking on the NM180100 which is not available with the bundled stack from Ambiq.
+* If the bundled BLE stack from Ambiq is not used, then clone [Cordio](https://github.com/packetcraft-inc/stacks).  This will require additional porting effort which is currently not supported.  However, this enables BLE mesh networking on the NM180100 which is not available with the bundled stack from Ambiq.
 
 ```git clone https://github.com/packetcraft-inc/stacks.git```
 
-5.  Define the following variables: NM_SDK, AMBIQ_SDK, FREERTOS, CORDIO
+### Build
+* Define the following variables: NM_SDK, AMBIQ_SDK, FREERTOS, CORDIO
 
-6.  Type `make` for release and `make DEBUG=1` for debug.
+* Type `make` for release and `make DEBUG=1` for debug.
