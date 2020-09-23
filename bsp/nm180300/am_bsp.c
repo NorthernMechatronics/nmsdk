@@ -379,6 +379,13 @@ am_bsp_iom_pins_enable(uint32_t ui32Module, am_hal_iom_mode_e eIOMMode)
             am_hal_gpio_pinconfig(AM_BSP_GPIO_IOM2_CS,   g_AM_BSP_GPIO_IOM2_CS);
             break;
 
+        case ((3 << 2) | AM_HAL_IOM_SPI_MODE):
+            am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_CLK,  g_AM_BSP_GPIO_RADIO_CLK);
+            am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_MISO, g_AM_BSP_GPIO_RADIO_MISO);
+            am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_MOSI, g_AM_BSP_GPIO_RADIO_MOSI);
+            am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NSS,   g_AM_BSP_GPIO_RADIO_NSS);
+            break;
+
         case ((0 << 2) | AM_HAL_IOM_I2C_MODE):
             am_hal_gpio_pinconfig(AM_BSP_GPIO_IOM0_SCL,  g_AM_BSP_GPIO_IOM0_SCL);
             am_hal_gpio_pinconfig(AM_BSP_GPIO_IOM0_SDA,  g_AM_BSP_GPIO_IOM0_SDA);
@@ -448,6 +455,13 @@ am_bsp_iom_pins_disable(uint32_t ui32Module, am_hal_iom_mode_e eIOMMode)
         case ((0 << 2) | AM_HAL_IOM_I2C_MODE):
             am_hal_gpio_pinconfig(AM_BSP_GPIO_IOM0_SCL,  g_AM_HAL_GPIO_DISABLE);
             am_hal_gpio_pinconfig(AM_BSP_GPIO_IOM0_SDA,  g_AM_HAL_GPIO_DISABLE);
+            break;
+
+        case ((3 << 2) | AM_HAL_IOM_SPI_MODE):
+            am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_CLK,  g_AM_HAL_GPIO_DISABLE);
+            am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_MISO, g_AM_HAL_GPIO_DISABLE);
+            am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_MOSI, g_AM_HAL_GPIO_DISABLE);
+            am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NSS,   g_AM_HAL_GPIO_DISABLE);
             break;
 
         case ((1 << 2) | AM_HAL_IOM_I2C_MODE):
