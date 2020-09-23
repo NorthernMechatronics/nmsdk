@@ -234,14 +234,14 @@ pin
 pin
     name            = COM_UART_TX
     desc            = This pin is the COM_UART transmit pin.
-    pinnum          = 22
+    pinnum          = 1
     func_sel        = AM_HAL_PIN_22_UART0TX
-    drvstrength     = 2
+    drvstrength     = 12
 
 pin
     name            = COM_UART_RX
     desc            = This pin is the COM_UART receive pin.
-    pinnum          = 23
+    pinnum          = 2
     func_sel        = AM_HAL_PIN_23_UART0RX
 
 # *****************************************************************************
