@@ -304,9 +304,9 @@ am_bsp_itm_printf_enable(void)
 
     //
     // Enable the ITM and TPIU
-    // Set the BAUD clock for 2M
+    // Set the BAUD clock for 1M
     //
-    TPIUcfg.ui32SetItmBaud = AM_HAL_TPIU_BAUD_2M;
+    TPIUcfg.ui32SetItmBaud = AM_HAL_TPIU_BAUD_1M;
     am_hal_tpiu_enable(&TPIUcfg);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_ITM_SWO, g_AM_BSP_GPIO_ITM_SWO);
 
