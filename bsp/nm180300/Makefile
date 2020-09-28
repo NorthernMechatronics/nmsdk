@@ -45,6 +45,7 @@ DEPS = $(CSRC:%.c=$(CONFIG)/%.d)
 DEPS+= $(ASRC:%.s=$(CONFIG)/%.d)
 
 CFLAGS += $(INCLUDES)
+CFLAGS += $(DEFINES)
 
 all: directories $(CONFIG)/$(TARGET)
 

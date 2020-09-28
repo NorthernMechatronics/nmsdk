@@ -45,6 +45,7 @@ DEFINES += -DPART_apollo3
 ifdef DEBUG
   DEFINES += -DAM_ASSERT_INVALID_THRESHOLD=0
   DEFINES += -DAM_DEBUG_ASSERT
+  DEFINES += -DAM_DEBUG_PRINTF
 endif
 
 CFLAGS  = -mthumb -mcpu=$(CPU) -mfpu=$(FPU) -mfloat-abi=$(FABI)

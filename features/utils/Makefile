@@ -4,6 +4,7 @@ include $(SDKROOT)/makedefs/nm_common.mk
 ifdef DEBUG
     TARGET       := libam_utils-dev
     CONFIG       := debug
+    DEFINES     += -DAM_DEBUG_PRINTF
 else
     TARGET       := libam_utils
     CONFIG       := release
@@ -40,6 +41,7 @@ DEPS  = $(CSRC:%.c=$(CONFIG)/%.d)
 DEPS += $(ASRC:%.s=$(CONFIG)/%.d)
 
 CFLAGS += $(INCLUDES)
+CFLAGS += $(DEFINES)
 
 all: directories $(CONFIG)/$(TARGET).a
 

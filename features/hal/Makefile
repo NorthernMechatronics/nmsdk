@@ -2,12 +2,12 @@ SDKROOT?=../..
 include $(SDKROOT)/makedefs/nm_common.mk
 
 ifdef DEBUG
-    TARGET       := libam_hal-dev
-    CONFIG       := debug
+    TARGET   := libam_hal-dev
+    CONFIG   := debug
 else
-    TARGET       := libam_hal
-    CONFIG       := release
-    CFLAGS += -DAM_HAL_DISABLE_API_VALIDATION
+    TARGET   := libam_hal
+    CONFIG   := release
+    DEFINES  += -DAM_HAL_DISABLE_API_VALIDATION
 endif
 
 COMPILERNAME := gcc
@@ -66,6 +66,7 @@ DEPS = $(CSRC:%.c=$(CONFIG)/%.d)
 DEPS+= $(ASRC:%.s=$(CONFIG)/%.d)
 
 CFLAGS += $(INCLUDES)
+CFLAGS += $(DEFINES)
 
 all: directories $(CONFIG)/$(TARGET).a
 

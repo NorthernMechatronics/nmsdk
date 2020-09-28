@@ -4,8 +4,8 @@ include $(SDKROOT)/makedefs/nm_cordio.mk
 include $(SDKROOT)/makedefs/nm_uecc.mk
 
 ifdef DEBUG
-    TARGET       := libcordio-dev
-    CONFIG       := debug
+    TARGET  := libcordio-dev
+    CONFIG  := debug
 else
     TARGET       := libcordio
     CONFIG       := release
@@ -343,6 +343,16 @@ SRC += ui_main.c
 SRC += ui_platform.c
 SRC += ui_timer.c
 
+SRC += uECC.c
+SRC += uECC_ll.c
+
+DEFINES += -DSEC_ECC_CFG=SEC_ECC_CFG_UECC
+DEFINES += -DAM_CUSTOM_BDADDR
+DEFINES += -DBLE_MENU
+ifdef DEBUG
+    DEFINES += -DAM_DEBUG_PRINTF
+    DEFINES += -DWSF_TRACE_ENABLED
+endif
 
 CSRC = $(filter %.c, $(SRC))
 ASRC = $(filter %.s, $(SRC))
@@ -354,6 +364,8 @@ DEPS  = $(CSRC:%.c=$(CONFIG)/%.d)
 DEPS += $(ASRC:%.s=$(CONFIG)/%.d)
 
 CFLAGS += $(INCLUDES)
+CFLAGS += $(DEFINES)
+CFLAGS += -fomit-frame-pointer
 
 all: directories $(CONFIG)/$(TARGET).a
 
