@@ -75,10 +75,10 @@ SRC += gpio-board.c
 SRC += rtc-board.c
 SRC += sx1262-board.c
 
-SRC += aes.c
-SRC += cmac.c
-SRC += soft-se.c
-SRC += soft-se-hal.c
+#SRC += aes.c
+#SRC += cmac.c
+#SRC += soft-se.c
+#SRC += soft-se-hal.c
 
 SRC += delay.c
 SRC += systime.c
