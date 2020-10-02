@@ -75,6 +75,8 @@ extern void g_loramac_reset(void);
  ******************************************************************************/
 extern loramac_app_state_e g_loramac_state_machine(void);
 
+extern void g_loramac_set_class(DeviceClass_t loramac_class);
+
 /******************************************************************************
  * g_loramac_get_buffer
  * --------------------

@@ -80,6 +80,8 @@ loramac_app_buffer_s;
  ******************************************************************************/
 static loramac_app_state_e app_state = APP_STATE_NULL;
 
+static DeviceClass_t app_class = CLASS_A;
+
 static LoRaMacPrimitives_t loramac_evt_fn;
 static LoRaMacCallback_t loramac_cb;
 
@@ -456,6 +458,14 @@ static void s_mcps_ind(McpsIndication_t *mcps_ind)
   if(mcps_ind->RxData == true)
   {
     // Do something with the data
+	  switch(mcps_ind->Port)
+	  {
+	  case 1:
+	  case 2:
+		  break;
+	  case 224:
+		  break;
+	  }
   }
 
   const char *slotStrings[] = {"1", "2", "C", "C Multicast", "B Ping-Slot", "B Multicast Ping-Slot" };
@@ -525,6 +535,8 @@ static void s_mlme_cnf(MlmeConfirm_t *mlme_cnf)
         s_join_network();
       }
       break;
+    case MLME_LINK_CHECK:
+    	break;
 
     default:
       break;
@@ -761,6 +773,15 @@ loramac_app_state_e g_loramac_state_machine(void)
     case APP_STATE_SEND:
       if(ul_data->queued == true)
       {
+    	  mib_req.Type = MIB_DEVICE_CLASS;
+    	  LoRaMacMibGetRequestConfirm(&mib_req);
+
+    	  if (mib_req.Param.Class != app_class)
+    	  {
+    		  mib_req.Param.Class = app_class;
+    		  LoRaMacMibSetRequestConfirm(&mib_req);
+    	  }
+
         if(s_loramac_send_frame())
         {
           app_state = APP_STATE_SCHEDULE;
@@ -805,6 +826,11 @@ loramac_app_state_e g_loramac_state_machine(void)
   }
 
   return app_state;
+}
+
+void g_loramac_set_class(DeviceClass_t loramac_class)
+{
+	app_class = loramac_class;
 }
 
 /******************************************************************************

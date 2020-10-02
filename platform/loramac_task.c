@@ -46,6 +46,7 @@
 /******************************************************************************
  * Application header files
  ******************************************************************************/
+#include "build_timestamp.h"
 #include "loramac_app.h"
 
 
@@ -156,15 +157,16 @@ static void s_loramac_cmd_help(char *out, size_t out_len, const char *cmd)
   else if(strncmp(param, "set", 4) == 0)
   {
     strcat(out, "usage: loramac set <option>\r\n");
-    strcat(out, "  <option> is one of [ port <num> | confirmed | unconfirmed ]");
+    strcat(out, "  <option> is one of [ port <num> | ack | noack | class <mode> ]\r\n");
     strcat(out, "  port <num>   Set the port number (range: 0-255)\r\n");
-    strcat(out, "  confirmed    Use confirmed mode send\n");
-    strcat(out, "  unconfirmed  Use unconfirmed mode send\r\n");
+    strcat(out, "  ack      Acknowledge mode on\r\n");
+    strcat(out, "  noack    Acknowledge mode off\r\n");
+    strcat(out, "  class <value> Set the class (valid values are: A, B, C)\r\n");
+    strcat(out, "Note that class change occurs in the next transmission\r\n");
   }
   else if(strncmp(param, "send", 4) == 0)
   {
-    strcat(out, "usage: loramac send <type> <string>\r\n");
-    strcat(out, "  <type> is one of [ text | hex ]");
+    strcat(out, "usage: loramac send <string>\r\n");
   }
 }
 
@@ -384,6 +386,39 @@ static portBASE_TYPE s_loramac_cmd(char *out, size_t out_len, const char *cmd)
       }
       strcat(out, "Setting port.\r\n");
     }
+    else if (strncmp(param, "class", param_len) == 0)
+    {
+    	param = FreeRTOS_CLIGetParameter(cmd, 3, &param_len);
+    	if ((param == NULL) || (param_len > 1))
+    	{
+    	    strcat(out, "Missing class value\r\n");
+    	    return pdFALSE;
+    	}
+    	else
+    	{
+    		DeviceClass_t loramac_class;
+
+    		switch(tolower(param[0]))
+    		{
+    		case 'a':
+    			loramac_class = CLASS_A;
+    			break;
+    		case 'b':
+    			loramac_class = CLASS_B;
+    			break;
+    		case 'c':
+    			loramac_class = CLASS_C;
+    			break;
+    		default:
+    			loramac_class = 0xFF;
+    			break;
+    		}
+        	if (loramac_class != 0xFF)
+        	{
+        		g_loramac_set_class(loramac_class);
+        	}
+    	}
+    }
   }
   else if(strncmp(param, "send", param_len) == 0)
   {
@@ -410,7 +445,6 @@ static portBASE_TYPE s_loramac_cmd(char *out, size_t out_len, const char *cmd)
     {
       am_util_string_strncpy(buf, param, param_len);
       len = param_len;
-      //len = am_util_string_strlen(buf);
     }
     msg.data[0] = (uint32_t) buf;
     msg.data[1] = (uint32_t) ((loramac_ack_mode << 16) | (loramac_app_port << 8) | len);
