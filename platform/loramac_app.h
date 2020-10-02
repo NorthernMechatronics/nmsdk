@@ -22,14 +22,26 @@
  ******************************************************************************/
 typedef enum
 {
-  APP_STATE_NULL,
-  APP_STATE_INIT,
+  APP_STATE_START,
   APP_STATE_JOIN,
   APP_STATE_SEND,
-  APP_STATE_SCHEDULE,
-  APP_STATE_IDLE
+  APP_STATE_REQ_DEVICE_TIME,
+  APP_STATE_REQ_PINGSLOT_ACK,
+  APP_STATE_REQ_BEACON_TIMING,
+  APP_STATE_BEACON_ACQUISITION,
+  APP_STATE_SWITCH_CLASS,
+  APP_STATE_CYCLE,
+  APP_STATE_SLEEP,
+  APP_STATE_NULL = 0xFF,
 }
 loramac_app_state_e;
+
+typedef enum
+{
+	APP_TIMING_BEACON,
+	APP_TIMING_DEVICE,
+}
+loramac_app_timing_e;
 
 typedef void (*loramac_app_buf_done_fn)(void *buf, bool normal);
 

@@ -5,15 +5,18 @@
 
 typedef enum
 {
-    CHECK_DISABLE_CMD = 0, // (ii)
-    STATE_1,               // (iii, iv)
-    ENABLE_CONFIRMATION,   // (v)
-    DISABLE_CONFIRMATION,  // (vi)
-    STATE_4,               // (vii)
-    LINK_CHECK,            // (viii)
-    EXIT_TEST,             // (ix)
-    TXCW,                  // (x)
-    REQ_DEVICE_TIME,       // (Send Device Time Request)
+    COMPLIANCE_EXIT = 0,        // (ii)
+    COMPLIANCE_ACTIVE,          // (iii, iv)
+    COMPLIANCE_ACK_ENABLE,      // (v)
+    COMPLIANCE_ACK_DISABLE,     // (vi)
+    COMPLIANCE_RX,              // (vii)
+    COMPLIANCE_LINK_CHECK,      // (viii)
+    COMPLIANCE_EXIT_AND_REJOIN, // (ix)
+    COMPLIANCE_TXCW,            // (x)
+    COMPLIANCE_REQ_DEVICE_TIME, // (Send Device Time Request)
+	COMPLIANCE_SWITCH_CLASS,
+	COMPLIANCE_REQ_PING_SLOT_INFO,
+	COMPLIANCE_REQ_BEACON_TIMING,
 } loramac_compliance_state_e;
 
 typedef struct

@@ -79,6 +79,8 @@ static loramac_compliance_status_t loramac_compliance_status;
 
 static loramac_app_state_e app_state = APP_STATE_NULL;
 static DeviceClass_t app_class = CLASS_A;
+static loramac_app_timing_e app_timing = APP_TIMING_DEVICE;
+
 static uint32_t loramac_app_tx_timeout = APP_TX_NEXT_TIMEOUT;
 static uint32_t loramac_app_tx_timeout_rnd = APP_TX_NEXT_TIMEOUT_RND;
 
@@ -199,7 +201,7 @@ static void s_join_network(void)
     if (status == LORAMAC_STATUS_OK)
     {
         am_util_debug_printf("###### ===== JOINING ==== ######\n");
-        app_state = APP_STATE_IDLE;
+        app_state = APP_STATE_SLEEP;
     }
     else
     {
@@ -207,7 +209,7 @@ static void s_join_network(void)
         {
             am_util_debug_printf("Next Tx in  : %lu [ms]\n", mlme_req.ReqReturn.DutyCycleWaitTime);
         }
-        app_state = APP_STATE_SCHEDULE;
+        app_state = APP_STATE_CYCLE;
     }
 }
 
@@ -471,8 +473,11 @@ static void s_mcps_ind(McpsIndication_t *mcps_ind)
             if (loramac_compliance_status.Running == false)
             {
                 // Check compliance test enable command (i)
-                if ((mcps_ind->BufferSize == 4) && (mcps_ind->Buffer[0] == 0x01) && (mcps_ind->Buffer[1] == 0x01) &&
-                    (mcps_ind->Buffer[2] == 0x01) && (mcps_ind->Buffer[3] == 0x01))
+                if ((mcps_ind->BufferSize == 4) &&
+                	(mcps_ind->Buffer[0] == 0x01) &&
+					(mcps_ind->Buffer[1] == 0x01) &&
+                    (mcps_ind->Buffer[2] == 0x01) &&
+					(mcps_ind->Buffer[3] == 0x01))
                 {
                     loramac_compliance_status.IsTxConfirmed = false;
                     loramac_compliance_status.AppPort = LORAMAC_COMPLIANCE_TEST_PORT;
@@ -482,7 +487,7 @@ static void s_mcps_ind(McpsIndication_t *mcps_ind)
                     loramac_compliance_status.DemodMargin = 0;
                     loramac_compliance_status.NbGateways = 0;
                     loramac_compliance_status.Running = true;
-                    loramac_compliance_status.State = STATE_1;
+                    loramac_compliance_status.State = COMPLIANCE_ACTIVE;
 
                     MibRequestConfirm_t mib_req;
                     mib_req.Type = MIB_ADR;
@@ -501,7 +506,7 @@ static void s_mcps_ind(McpsIndication_t *mcps_ind)
                 loramac_compliance_status.State = mcps_ind->Buffer[0];
                 switch (loramac_compliance_status.State)
                 {
-                case CHECK_DISABLE_CMD: {
+                case COMPLIANCE_EXIT: {
                     loramac_compliance_status.DownLinkCounter = 0;
                     loramac_compliance_status.Running = false;
 
@@ -517,21 +522,21 @@ static void s_mcps_ind(McpsIndication_t *mcps_ind)
                 }
                 break;
 
-                case STATE_1:
+                case COMPLIANCE_ACTIVE:
                     loramac_compliance_status.AppDataSize = 2;
                     break;
 
-                case ENABLE_CONFIRMATION:
+                case COMPLIANCE_ACK_ENABLE:
                     loramac_compliance_status.IsTxConfirmed = true;
-                    loramac_compliance_status.State = STATE_1;
+                    loramac_compliance_status.State = COMPLIANCE_ACTIVE;
                     break;
 
-                case DISABLE_CONFIRMATION:
+                case COMPLIANCE_ACK_DISABLE:
                     loramac_compliance_status.IsTxConfirmed = false;
-                    loramac_compliance_status.State = STATE_1;
+                    loramac_compliance_status.State = COMPLIANCE_ACTIVE;
                     break;
 
-                case STATE_4:
+                case COMPLIANCE_RX:
                     loramac_compliance_status.AppDataSize = mcps_ind->BufferSize;
                     loramac_compliance_status.AppDataBuffer[0] = 4;
                     for (uint8_t i = 1; i < MIN(loramac_compliance_status.AppDataSize, MAX_APP_DATA_SIZE); i++)
@@ -540,16 +545,16 @@ static void s_mcps_ind(McpsIndication_t *mcps_ind)
                     }
                     break;
 
-                case LINK_CHECK: {
+                case COMPLIANCE_LINK_CHECK: {
                     MlmeReq_t mlme_req;
                     mlme_req.Type = MLME_LINK_CHECK;
                     LoRaMacStatus_t status = LoRaMacMlmeRequest(&mlme_req);
                     am_util_debug_printf("\n###### ===== MLME-Request - MLME_LINK_CHECK ==== ######\n");
-                    am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[status]);
+                    am_util_debug_printf("STATUS      : %s\n", loramac_req_stat_str[status]);
                 }
                 break;
 
-                case EXIT_TEST: {
+                case COMPLIANCE_EXIT_AND_REJOIN: {
 
                     loramac_compliance_status.DownLinkCounter = 0;
                     loramac_compliance_status.Running = false;
@@ -568,7 +573,7 @@ static void s_mcps_ind(McpsIndication_t *mcps_ind)
                 }
                 break;
 
-                case TXCW: {
+                case COMPLIANCE_TXCW: {
                     if (mcps_ind->BufferSize == 3)
                     {
                         MlmeReq_t mlme_req;
@@ -576,7 +581,7 @@ static void s_mcps_ind(McpsIndication_t *mcps_ind)
                         mlme_req.Req.TxCw.Timeout = (uint16_t)((mcps_ind->Buffer[1] << 8) | mcps_ind->Buffer[2]);
                         LoRaMacStatus_t status = LoRaMacMlmeRequest(&mlme_req);
                         am_util_debug_printf("\n###### ===== MLME-Request - MLME_TXCW ==== ######\n");
-                        am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[status]);
+                        am_util_debug_printf("STATUS      : %s\n", loramac_req_stat_str[status]);
                     }
                     else if (mcps_ind->BufferSize == 7)
                     {
@@ -589,20 +594,55 @@ static void s_mcps_ind(McpsIndication_t *mcps_ind)
                         mlme_req.Req.TxCw.Power = mcps_ind->Buffer[6];
                         LoRaMacStatus_t status = LoRaMacMlmeRequest(&mlme_req);
                         am_util_debug_printf("\n###### ===== MLME-Request - MLME_TXCW1 ==== ######\n");
-                        am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[status]);
+                        am_util_debug_printf("STATUS      : %s\n", loramac_req_stat_str[status]);
                     }
-                    loramac_compliance_status.State = STATE_1;
+                    loramac_compliance_status.State = COMPLIANCE_ACTIVE;
                 }
                 break;
 
-                case REQ_DEVICE_TIME: {
+                case COMPLIANCE_REQ_DEVICE_TIME: {
                     MlmeReq_t mlme_req;
                     mlme_req.Type = MLME_DEVICE_TIME;
                     LoRaMacStatus_t status = LoRaMacMlmeRequest(&mlme_req);
                     am_util_debug_printf("\n###### ===== MLME-Request - MLME_DEVICE_TIME ==== ######\n");
-                    am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[status]);
+                    am_util_debug_printf("STATUS      : %s\n", loramac_req_stat_str[status]);
+                    app_state = APP_STATE_SEND;
                 }
                 break;
+
+                case COMPLIANCE_SWITCH_CLASS: {
+                	MibRequestConfirm_t mib_req;
+
+                	mib_req.Type = MIB_DEVICE_CLASS;
+                	mib_req.Param.Class = (DeviceClass_t)mcps_ind->Buffer[1];
+                	LoRaMacMibSetRequestConfirm(&mib_req);
+
+                	app_state = APP_STATE_SEND;
+                }
+                break;
+
+                case COMPLIANCE_REQ_PING_SLOT_INFO: {
+                    MlmeReq_t mib_req;
+
+                    mib_req.Type = MLME_PING_SLOT_INFO;
+
+                    mib_req.Req.PingSlotInfo.PingSlot.Value = mcps_ind->Buffer[1];
+
+                    LoRaMacMlmeRequest( &mib_req );
+                    app_state = APP_STATE_SEND;
+                    app_state = APP_STATE_SEND;
+                }
+                break;
+
+                case COMPLIANCE_REQ_BEACON_TIMING: {
+					MlmeReq_t mlme_req;
+
+					mlme_req.Type = MLME_BEACON_TIMING;
+
+					LoRaMacMlmeRequest( &mlme_req );
+					app_state = APP_STATE_SEND;
+				}
+				break;
 
                 default:
                     break;
@@ -658,7 +698,7 @@ static void s_mlme_cnf(MlmeConfirm_t *mlme_cnf)
     am_util_debug_printf("STATUS      : %s\n\n", loramac_mlstat_str[mlme_cnf->Status]);
     switch (mlme_cnf->MlmeRequest)
     {
-    case MLME_JOIN:
+    case MLME_JOIN: {
         if (mlme_cnf->Status == LORAMAC_EVENT_INFO_STATUS_OK)
         {
             MibRequestConfirm_t mib_get;
@@ -672,14 +712,31 @@ static void s_mlme_cnf(MlmeConfirm_t *mlme_cnf)
             mib_get.Type = MIB_CHANNELS_DATARATE;
             LoRaMacMibGetRequestConfirm(&mib_get);
             am_util_debug_printf("DATA RATE   : DR_%d\n", mib_get.Param.ChannelsDatarate);
-            app_state = APP_STATE_SEND;
+
+            if (app_class == CLASS_B)
+            {
+            	if (app_timing == APP_TIMING_BEACON)
+            	{
+            		app_state = APP_STATE_REQ_BEACON_TIMING;
+            	}
+            	else
+            	{
+            		app_state = APP_STATE_REQ_DEVICE_TIME;
+            	}
+            }
+            else
+            {
+            	app_state = APP_STATE_SEND;
+            }
         }
         else
         {
             s_join_network();
         }
-        break;
-    case MLME_LINK_CHECK:
+    }
+    break;
+
+    case MLME_LINK_CHECK: {
         if (mlme_cnf->Status == LORAMAC_EVENT_INFO_STATUS_OK)
         {
             if (loramac_compliance_status.Running == true)
@@ -689,7 +746,28 @@ static void s_mlme_cnf(MlmeConfirm_t *mlme_cnf)
                 loramac_compliance_status.NbGateways = mlme_cnf->NbGateways;
             }
         }
-        break;
+    }
+    break;
+
+    case MLME_DEVICE_TIME: {
+    	// TODO
+    }
+    break;
+
+    case MLME_BEACON_TIMING: {
+    	// TODO
+    }
+    break;
+
+    case MLME_BEACON_ACQUISITION: {
+    	// TODO
+    }
+    break;
+
+    case MLME_PING_SLOT_INFO: {
+    	// TODO
+    }
+    break;
 
     default:
         break;
@@ -718,6 +796,14 @@ static void s_mlme_ind(MlmeIndication_t *mlme_ind)
         next_tx_expiry_fn(NULL);
         break;
 
+    case MLME_BEACON_LOST:
+    	// TODO
+    	break;
+
+    case MLME_BEACON:
+    	// TODO
+    	break;
+
     default:
         break;
     }
@@ -732,6 +818,105 @@ static void s_mlme_ind(MlmeIndication_t *mlme_ind)
 static void s_on_mac_process_notify(void)
 {
     app_can_sleep = false;
+}
+
+bool loramac_multicast_init(LoRaMacRegion_t region, DeviceClass_t DeviceClass,
+							  uint32_t ui32MulticastAddress,
+							  uint8_t *pui8AppSessionKey,
+							  uint8_t *pui8NetworkSessionKey,
+							  uint16_t ui8Periodicity)
+{
+	if (DeviceClass == CLASS_A)
+	{
+		return false;
+	}
+
+	//                               AS923,     AU915,     CN470,     CN779,     EU433,     EU868,     KR920,     IN865,     US915,     RU864
+    const uint32_t frequencies[] = { 923200000, 923300000, 505300000, 786000000, 434665000, 869525000, 921900000, 866550000, 923300000, 869100000 };
+    const int8_t dataRates[]     = { DR_2,      DR_2,      DR_0,      DR_0,      DR_0,      DR_0,      DR_0,      DR_0,      DR_0,      DR_0 };
+
+    McChannelParams_t channel =
+    {
+        .IsRemotelySetup = false,
+        .Class = DeviceClass,
+        .IsEnabled = true,
+        .GroupID = MULTICAST_0_ADDR,
+        .Address = ui32MulticastAddress,
+        .McKeys =
+        {
+            .Session =
+            {
+                .McAppSKey = pui8AppSessionKey,
+                .McNwkSKey = pui8NetworkSessionKey,
+            },
+        },
+        .FCountMin = 0,
+        .FCountMax = UINT32_MAX,
+    };
+
+    if (DeviceClass == CLASS_B)
+    {
+    	channel.RxParams.ClassB.Frequency = frequencies[region];
+    	channel.RxParams.ClassB.Datarate = dataRates[region];
+    	channel.RxParams.ClassB.Periodicity = ui8Periodicity;
+    }
+    else if (DeviceClass == CLASS_C)
+    {
+    	channel.RxParams.ClassC.Frequency = frequencies[region];
+    	channel.RxParams.ClassC.Datarate = dataRates[region];
+    }
+
+    LoRaMacStatus_t status = LoRaMacMcChannelSetup( &channel );
+    if( status == LORAMAC_STATUS_OK )
+    {
+        uint8_t mcChannelSetupStatus = 0x00;
+        if( LoRaMacMcChannelSetupRxParams( channel.GroupID, &channel.RxParams, &mcChannelSetupStatus ) == LORAMAC_STATUS_OK )
+        {
+            if( ( mcChannelSetupStatus & 0xFC ) == 0x00 )
+            {
+                am_util_debug_printf("MC #%d setup, OK\n", ( mcChannelSetupStatus & 0x03 ) );
+            }
+            else
+            {
+                am_util_debug_printf("MC #%d setup, ERROR - ", ( mcChannelSetupStatus & 0x03 ) );
+                if( ( mcChannelSetupStatus & 0x10 ) == 0x10 )
+                {
+                    am_util_debug_printf("MC group UNDEFINED - ");
+                }
+                else
+                {
+                    am_util_debug_printf("MC group OK - ");
+                }
+
+                if( ( mcChannelSetupStatus & 0x08 ) == 0x08 )
+                {
+                    am_util_debug_printf("MC Freq ERROR - ");
+                }
+                else
+                {
+                    am_util_debug_printf("MC Freq OK - ");
+                }
+                if( ( mcChannelSetupStatus & 0x04 ) == 0x04 )
+                {
+                    am_util_debug_printf("MC datarate ERROR\n");
+                }
+                else
+                {
+                    am_util_debug_printf("MC datarate OK\n");
+                }
+            }
+        }
+        else
+        {
+        	am_util_debug_printf( "MC Rx params setup, error: %s \n", loramac_req_stat_str[status] );
+        }
+    }
+    else
+    {
+    	am_util_debug_printf( "MC setup, error: %s \n", loramac_req_stat_str[status] );
+    }
+
+	return true;
 }
 
 /******************************************************************************
@@ -829,7 +1014,7 @@ bool g_loramac_init(LoRaMacRegion_t region)
     {
         app_buf[i].available = true;
     }
-    app_state = APP_STATE_INIT;
+    app_state = APP_STATE_START;
     return true;
 }
 
@@ -862,7 +1047,7 @@ loramac_app_state_e g_loramac_state_machine(void)
     LoRaMacProcess();
     switch (app_state)
     {
-    case APP_STATE_INIT:
+    case APP_STATE_START:
         TimerInit(&next_tx_timer, next_tx_expiry_fn);
 
         mib_req.Type = MIB_PUBLIC_NETWORK;
@@ -899,7 +1084,7 @@ loramac_app_state_e g_loramac_state_machine(void)
             }
             else
             {
-                app_state = APP_STATE_IDLE;
+                app_state = APP_STATE_SLEEP;
             }
         }
         break;
@@ -919,9 +1104,25 @@ loramac_app_state_e g_loramac_state_machine(void)
         LoRaMacMibGetRequestConfirm(&mib_req);
         am_util_debug_printf("PIN         : ");
         s_dump_hex(NULL, mib_req.Param.SePin, 4, '-');
+    	// TODO: set class B app state
 
         s_join_network();
         break;
+    case APP_STATE_REQ_DEVICE_TIME:
+    	// TODO
+    	break;
+
+    case APP_STATE_REQ_BEACON_TIMING:
+    	// TODO
+    	break;
+
+    case APP_STATE_BEACON_ACQUISITION:
+    	// TODO
+    	break;
+
+    case APP_STATE_REQ_PINGSLOT_ACK:
+    	// TODO
+    	break;
 
     case APP_STATE_SEND:
         if (ul_data->queued == true)
@@ -937,21 +1138,21 @@ loramac_app_state_e g_loramac_state_machine(void)
 
             if (s_loramac_send_frame())
             {
-                app_state = APP_STATE_SCHEDULE;
+                app_state = APP_STATE_CYCLE;
             }
             else
             {
-                app_state = APP_STATE_IDLE;
+                app_state = APP_STATE_SLEEP;
             }
         }
         else
         {
-            app_state = APP_STATE_IDLE;
+            app_state = APP_STATE_SLEEP;
         }
         break;
 
-    case APP_STATE_SCHEDULE:
-        app_state = APP_STATE_IDLE;
+    case APP_STATE_CYCLE:
+        app_state = APP_STATE_SLEEP;
 
         if (loramac_compliance_status.Running == true)
         {
@@ -966,7 +1167,7 @@ loramac_app_state_e g_loramac_state_machine(void)
         TimerStart(&next_tx_timer);
         break;
 
-    case APP_STATE_IDLE: {
+    case APP_STATE_SLEEP: {
         CRITICAL_SECTION_BEGIN();
         if (app_can_sleep)
         {
@@ -982,7 +1183,7 @@ loramac_app_state_e g_loramac_state_machine(void)
     break;
 
     default:
-        app_state = APP_STATE_INIT;
+        app_state = APP_STATE_START;
         break;
     }
 
@@ -1046,7 +1247,7 @@ void g_loramac_enqueue_uplink(bool ack_mode, uint8_t port, uint8_t *buf, uint8_t
                 if (loramac_compliance_status.LinkCheck == true)
                 {
                     loramac_compliance_status.LinkCheck = false;
-                    loramac_compliance_status.State = STATE_1;
+                    loramac_compliance_status.State = COMPLIANCE_ACTIVE;
                     
                     item->len = 3;
                     item->buf[0] = 5;
@@ -1057,12 +1258,12 @@ void g_loramac_enqueue_uplink(bool ack_mode, uint8_t port, uint8_t *buf, uint8_t
                 {
                     switch (loramac_compliance_status.State)
                     {
-                    case STATE_4:
-                        loramac_compliance_status.State = STATE_1;
+                    case COMPLIANCE_RX:
+                        loramac_compliance_status.State = COMPLIANCE_ACTIVE;
                         item->len = loramac_compliance_status.AppDataSize;
                         memcpy(item->buf, loramac_compliance_status.AppDataBuffer, item->len);
                         break;
-                    case STATE_1:
+                    case COMPLIANCE_ACTIVE:
                         item->len = 2;
                         item->buf[0] = loramac_compliance_status.DownLinkCounter >> 8;
                         item->buf[1] = loramac_compliance_status.DownLinkCounter;
@@ -1071,7 +1272,7 @@ void g_loramac_enqueue_uplink(bool ack_mode, uint8_t port, uint8_t *buf, uint8_t
                 }
             }
 
-            if (app_state == APP_STATE_IDLE)
+            if (app_state == APP_STATE_SLEEP)
             {
                 app_state = APP_STATE_SEND;
             }
