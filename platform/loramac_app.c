@@ -5,20 +5,20 @@
  *
  ******************************************************************************/
 
-
 /******************************************************************************
  * Standard header files
  ******************************************************************************/
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 /******************************************************************************
  * Ambiq Micro header files
  ******************************************************************************/
-#include <am_mcu_apollo.h>
 #include <am_bsp.h>
+#include <am_mcu_apollo.h>
 #include <am_util.h>
 
 /******************************************************************************
@@ -30,57 +30,57 @@
 /******************************************************************************
  * LoRaMac-node adaptation header files
  ******************************************************************************/
-#include <utilities.h>
 #include <board.h>
 #include <gpio.h>
+#include <utilities.h>
 
 /******************************************************************************
  * Application header files
  ******************************************************************************/
 #include "loramac_app.h"
 
+#include "loramac_compliance.h"
 
 /******************************************************************************
  * Macros
  ******************************************************************************/
-#define APP_TX_NEXT_TIMEOUT             (5000)
-#define APP_TX_NEXT_TIMEOUT_RND         (1000)
-#define MAX_APP_TX_QUEUE_SIZE           (3)
-#define MAX_APP_BUFFERS                 (3)
-
+#define APP_TX_NEXT_TIMEOUT (5000)
+#define APP_TX_NEXT_TIMEOUT_RND (1000)
+#define MAX_APP_TX_QUEUE_SIZE (3)
+#define MAX_APP_BUFFERS (3)
 
 /******************************************************************************
  * Type definitions
  ******************************************************************************/
 typedef struct
 {
-  bool                        queued;
-  bool                        sent;
-  uint8_t                     *buf;
-  uint8_t                     len;
-  loramac_app_buf_done_fn     done;
+    bool queued;
+    bool sent;
+    uint8_t *buf;
+    uint8_t len;
+    loramac_app_buf_done_fn done;
 
-  bool                        ack_mode;
-  uint8_t                     port;
+    bool ack_mode;
+    uint8_t port;
 
-  uint8_t                     next;
-}
-loramac_app_data_s;
+    uint8_t next;
+} loramac_app_data_s;
 
 typedef struct
 {
-  bool                        available;
-  uint8_t                     buf[MAX_APP_DATA_SIZE];
-}
-loramac_app_buffer_s;
-
+    bool available;
+    uint8_t buf[MAX_APP_DATA_SIZE];
+} loramac_app_buffer_s;
 
 /******************************************************************************
  * Local declarations
  ******************************************************************************/
-static loramac_app_state_e app_state = APP_STATE_NULL;
+static loramac_compliance_status_t loramac_compliance_status;
 
+static loramac_app_state_e app_state = APP_STATE_NULL;
 static DeviceClass_t app_class = CLASS_A;
+static uint32_t loramac_app_tx_timeout = APP_TX_NEXT_TIMEOUT;
+static uint32_t loramac_app_tx_timeout_rnd = APP_TX_NEXT_TIMEOUT_RND;
 
 static LoRaMacPrimitives_t loramac_evt_fn;
 static LoRaMacCallback_t loramac_cb;
@@ -97,55 +97,48 @@ static loramac_app_buffer_s app_buf[MAX_APP_BUFFERS];
 static loramac_app_data_s ul_data_queue[MAX_APP_TX_QUEUE_SIZE];
 static loramac_app_data_s *ul_data = &ul_data_queue[0];
 
-static const char *loramac_req_stat_str[] =
-{
-  "OK",
-  "BUSY",
-  "SERVICE_UNKNOWN",
-  "PARAMETER_INVALID",
-  "FREQUENCY_INVALID",
-  "DATARATE_INVALID",
-  "FREQ_AND_DR_INVALID",
-  "NO_NETWORK_JOINED",
-  "LENGTH_ERROR",
-  "REGION_NOT_SUPPORTED",
-  "SKIPPED_APP_DATA",
-  "DUTYCYCLE_RESTRICTED",
-  "NO_CHANNEL_FOUND",
-  "NO_FREE_CHANNEL_FOUND",
-  "BUSY_BEACON_RESERVED_TIME",
-  "BUSY_PING_SLOT_WINDOW_TIME",
-  "BUSY_UPLINK_COLLISION",
-  "CRYPTO_ERROR",
-  "FCNT_HANDLER_ERROR",
-  "MAC_COMMAD_ERROR",
-  "CLASS_B_ERROR",
-  "CONFIRM_QUEUE_ERROR",
-  "MC_GROUP_UNDEFINED",
-  "ERROR"
-};
+static const char *loramac_req_stat_str[] = {"OK",
+                                             "BUSY",
+                                             "SERVICE_UNKNOWN",
+                                             "PARAMETER_INVALID",
+                                             "FREQUENCY_INVALID",
+                                             "DATARATE_INVALID",
+                                             "FREQ_AND_DR_INVALID",
+                                             "NO_NETWORK_JOINED",
+                                             "LENGTH_ERROR",
+                                             "REGION_NOT_SUPPORTED",
+                                             "SKIPPED_APP_DATA",
+                                             "DUTYCYCLE_RESTRICTED",
+                                             "NO_CHANNEL_FOUND",
+                                             "NO_FREE_CHANNEL_FOUND",
+                                             "BUSY_BEACON_RESERVED_TIME",
+                                             "BUSY_PING_SLOT_WINDOW_TIME",
+                                             "BUSY_UPLINK_COLLISION",
+                                             "CRYPTO_ERROR",
+                                             "FCNT_HANDLER_ERROR",
+                                             "MAC_COMMAD_ERROR",
+                                             "CLASS_B_ERROR",
+                                             "CONFIRM_QUEUE_ERROR",
+                                             "MC_GROUP_UNDEFINED",
+                                             "ERROR"};
 
-static const char* loramac_mlstat_str[] =
-{
-  "OK",
-  "ERROR",
-  "TX_TIMEOUT",
-  "RX1_TIMEOUT",
-  "RX2_TIMEOUT",
-  "RX1_ERROR",
-  "RX2_ERROR",
-  "JOIN_FAIL",
-  "DOWNLINK_REPEATED",
-  "TX_DR_PAYLOAD_SIZE_ERROR",
-  "DOWNLINK_TOO_MANY_FRAMES_LOSS",
-  "ADDRESS_FAIL",
-  "MIC_FAIL",
-  "MULTICAST_FAIL",
-  "BEACON_LOCKED",
-  "BEACON_LOST",
-  "BEACON_NOT_FOUND"
-};
-
+static const char *loramac_mlstat_str[] = {"OK",
+                                           "ERROR",
+                                           "TX_TIMEOUT",
+                                           "RX1_TIMEOUT",
+                                           "RX2_TIMEOUT",
+                                           "RX1_ERROR",
+                                           "RX2_ERROR",
+                                           "JOIN_FAIL",
+                                           "DOWNLINK_REPEATED",
+                                           "TX_DR_PAYLOAD_SIZE_ERROR",
+                                           "DOWNLINK_TOO_MANY_FRAMES_LOSS",
+                                           "ADDRESS_FAIL",
+                                           "MIC_FAIL",
+                                           "MULTICAST_FAIL",
+                                           "BEACON_LOCKED",
+                                           "BEACON_LOST",
+                                           "BEACON_NOT_FOUND"};
 
 /******************************************************************************
  * Local functions
@@ -163,27 +156,27 @@ static const char* loramac_mlstat_str[] =
  ******************************************************************************/
 static void s_dump_hex(char *prefix, uint8_t *buf, uint8_t len, char sp)
 {
-  uint8_t width = (len < 16) ? len : 16;
+    uint8_t width = (len < 16) ? len : 16;
 
-  for(uint8_t i = 0; i < len; i++)
-  {
-    if((i % width) == 0 && prefix)
+    for (uint8_t i = 0; i < len; i++)
     {
-      am_util_debug_printf(prefix);
+        if ((i % width) == 0 && prefix)
+        {
+            am_util_debug_printf(prefix);
+        }
+        if (((i + 1) % width) == 0)
+        {
+            am_util_debug_printf("%02X\n", buf[i]);
+        }
+        else
+        {
+            am_util_debug_printf("%02X%c", buf[i], sp);
+        }
     }
-    if(((i+1) % width) == 0)
+    if (len % width != 0)
     {
-      am_util_debug_printf("%02X\n", buf[i]);
+        am_util_debug_printf("\n");
     }
-    else
-    {
-      am_util_debug_printf("%02X%c", buf[i], sp);
-    }
-  }
-  if(len % width != 0)
-  {
-    am_util_debug_printf("\n");
-  }
 }
 
 /******************************************************************************
@@ -194,28 +187,28 @@ static void s_dump_hex(char *prefix, uint8_t *buf, uint8_t len, char sp)
  ******************************************************************************/
 static void s_join_network(void)
 {
-  LoRaMacStatus_t status;
-  MlmeReq_t mlme_req;
+    LoRaMacStatus_t status;
+    MlmeReq_t mlme_req;
 
-  mlme_req.Type = MLME_JOIN;
-  mlme_req.Req.Join.Datarate = DEFAULT_LORAMAC_DATARATE;
-  status = LoRaMacMlmeRequest(&mlme_req);
-  am_util_debug_printf("\n###### ===== MLME-Request - MLME_JOIN ==== ######\n");
-  am_util_debug_printf("STATUS      : %s\n\n", loramac_req_stat_str[status]);
+    mlme_req.Type = MLME_JOIN;
+    mlme_req.Req.Join.Datarate = DEFAULT_LORAMAC_DATARATE;
+    status = LoRaMacMlmeRequest(&mlme_req);
+    am_util_debug_printf("\n###### ===== MLME-Request - MLME_JOIN ==== ######\n");
+    am_util_debug_printf("STATUS      : %s\n\n", loramac_req_stat_str[status]);
 
-  if(status == LORAMAC_STATUS_OK)
-  {
-    am_util_debug_printf("###### ===== JOINING ==== ######\n");
-    app_state = APP_STATE_IDLE;
-  }
-  else
-  {
-    if(status == LORAMAC_STATUS_DUTYCYCLE_RESTRICTED)
+    if (status == LORAMAC_STATUS_OK)
     {
-      am_util_debug_printf("Next Tx in  : %lu [ms]\n", mlme_req.ReqReturn.DutyCycleWaitTime);
+        am_util_debug_printf("###### ===== JOINING ==== ######\n");
+        app_state = APP_STATE_IDLE;
     }
-    app_state = APP_STATE_SCHEDULE;
-  }
+    else
+    {
+        if (status == LORAMAC_STATUS_DUTYCYCLE_RESTRICTED)
+        {
+            am_util_debug_printf("Next Tx in  : %lu [ms]\n", mlme_req.ReqReturn.DutyCycleWaitTime);
+        }
+        app_state = APP_STATE_SCHEDULE;
+    }
 }
 
 /******************************************************************************
@@ -228,57 +221,62 @@ static void s_join_network(void)
  ******************************************************************************/
 static bool s_loramac_send_frame(void)
 {
-  LoRaMacStatus_t status;
-  McpsReq_t mcps_req;
-  LoRaMacTxInfo_t tx_info;
-  bool reschedule = false;
+    LoRaMacStatus_t status;
+    McpsReq_t mcps_req;
+    LoRaMacTxInfo_t tx_info;
+    bool reschedule = false;
 
-  if(LoRaMacQueryTxPossible(ul_data->len, &tx_info) != LORAMAC_STATUS_OK)
-  {
-    am_util_debug_printf("\n###### ====== MAC Flush ====== ######\n");
-    mcps_req.Type = MCPS_UNCONFIRMED;
-    mcps_req.Req.Unconfirmed.fBuffer = NULL;
-    mcps_req.Req.Unconfirmed.fBufferSize = 0;
-    mcps_req.Req.Unconfirmed.Datarate = DEFAULT_LORAMAC_DATARATE;
-    reschedule = true;
-  }
-  else
-  {
-    if(ul_data->ack_mode)
+    if (LoRaMacQueryTxPossible(ul_data->len, &tx_info) != LORAMAC_STATUS_OK)
     {
-      mcps_req.Type = MCPS_CONFIRMED;
-      mcps_req.Req.Confirmed.fPort = ul_data->port;
-      mcps_req.Req.Confirmed.fBuffer = ul_data->buf;
-      mcps_req.Req.Confirmed.fBufferSize = ul_data->len;
-      mcps_req.Req.Confirmed.NbTrials = 8;
-      mcps_req.Req.Confirmed.Datarate = DEFAULT_LORAMAC_DATARATE;
+        am_util_debug_printf("\n###### ====== MAC Flush ====== ######\n");
+        mcps_req.Type = MCPS_UNCONFIRMED;
+        mcps_req.Req.Unconfirmed.fBuffer = NULL;
+        mcps_req.Req.Unconfirmed.fBufferSize = 0;
+        mcps_req.Req.Unconfirmed.Datarate = DEFAULT_LORAMAC_DATARATE;
+        reschedule = true;
     }
     else
     {
-      mcps_req.Type = MCPS_UNCONFIRMED;
-      mcps_req.Req.Unconfirmed.fPort = ul_data->port;
-      mcps_req.Req.Unconfirmed.fBuffer = ul_data->buf;
-      mcps_req.Req.Unconfirmed.fBufferSize = ul_data->len;
-      mcps_req.Req.Unconfirmed.Datarate = DEFAULT_LORAMAC_DATARATE;
+        if (ul_data->ack_mode)
+        {
+            mcps_req.Type = MCPS_CONFIRMED;
+            mcps_req.Req.Confirmed.fPort = ul_data->port;
+            mcps_req.Req.Confirmed.fBuffer = ul_data->buf;
+            mcps_req.Req.Confirmed.fBufferSize = ul_data->len;
+            mcps_req.Req.Confirmed.NbTrials = 8;
+            mcps_req.Req.Confirmed.Datarate = DEFAULT_LORAMAC_DATARATE;
+        }
+        else
+        {
+            mcps_req.Type = MCPS_UNCONFIRMED;
+            mcps_req.Req.Unconfirmed.fPort = ul_data->port;
+            mcps_req.Req.Unconfirmed.fBuffer = ul_data->buf;
+            mcps_req.Req.Unconfirmed.fBufferSize = ul_data->len;
+            mcps_req.Req.Unconfirmed.Datarate = DEFAULT_LORAMAC_DATARATE;
+        }
+        ul_data->sent = true;
     }
-    ul_data->sent = true;
-  }
 
-  status = LoRaMacMcpsRequest(&mcps_req);
-  am_util_debug_printf("\n###### ===== MCPS-Request ==== ######\n");
-  am_util_debug_printf("STATUS      : %s\n", loramac_req_stat_str[status]);
+    status = LoRaMacMcpsRequest(&mcps_req);
+    am_util_debug_printf("\n###### ===== MCPS-Request ==== ######\n");
+    am_util_debug_printf("STATUS      : %s\n", loramac_req_stat_str[status]);
 
-  if(status == LORAMAC_STATUS_OK)
-  {
-    return reschedule;
-  }
+    if (status == LORAMAC_STATUS_OK)
+    {
+        return reschedule;
+    }
 
-  if(status == LORAMAC_STATUS_DUTYCYCLE_RESTRICTED)
-  {
-    am_util_debug_printf("Next Tx in  : %lu [ms]\n", mcps_req.ReqReturn.DutyCycleWaitTime);
-  }
+    if (status == LORAMAC_STATUS_DUTYCYCLE_RESTRICTED)
+    {
+        am_util_debug_printf("Next Tx in  : %lu [ms]\n", mcps_req.ReqReturn.DutyCycleWaitTime);
+    }
 
-  return true;
+    if (status != LORAMAC_STATUS_OK)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 /******************************************************************************
@@ -292,25 +290,25 @@ static bool s_loramac_send_frame(void)
  ******************************************************************************/
 static void next_tx_expiry_fn(void *context)
 {
-  MibRequestConfirm_t mib_req;
-  LoRaMacStatus_t status;
+    MibRequestConfirm_t mib_req;
+    LoRaMacStatus_t status;
 
-  TimerStop(&next_tx_timer);
+    TimerStop(&next_tx_timer);
 
-  mib_req.Type = MIB_NETWORK_ACTIVATION;
-  status = LoRaMacMibGetRequestConfirm(&mib_req);
+    mib_req.Type = MIB_NETWORK_ACTIVATION;
+    status = LoRaMacMibGetRequestConfirm(&mib_req);
 
-  if(status == LORAMAC_STATUS_OK)
-  {
-    if(mib_req.Param.NetworkActivation == ACTIVATION_TYPE_NONE)
+    if (status == LORAMAC_STATUS_OK)
     {
-      s_join_network();
+        if (mib_req.Param.NetworkActivation == ACTIVATION_TYPE_NONE)
+        {
+            s_join_network();
+        }
+        else
+        {
+            app_state = APP_STATE_SEND;
+        }
     }
-    else
-    {
-      app_state = APP_STATE_SEND;
-    }
-  }
 }
 
 /******************************************************************************
@@ -324,94 +322,93 @@ static void next_tx_expiry_fn(void *context)
  ******************************************************************************/
 static void s_mcps_cnf(McpsConfirm_t *mcps_cnf)
 {
-  MibRequestConfirm_t mib_get;
-  MibRequestConfirm_t mib_req;
+    MibRequestConfirm_t mib_get;
+    MibRequestConfirm_t mib_req;
 
-  am_util_debug_printf("\n###### ===== MCPS-Confirm ==== ######\n");
-  am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[mcps_cnf->Status]);
-  if(mcps_cnf->Status == LORAMAC_EVENT_INFO_STATUS_OK)
-  {
-    switch(mcps_cnf->McpsRequest)
+    am_util_debug_printf("\n###### ===== MCPS-Confirm ==== ######\n");
+    am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[mcps_cnf->Status]);
+    if (mcps_cnf->Status == LORAMAC_EVENT_INFO_STATUS_OK)
     {
-      case MCPS_UNCONFIRMED:
-        break;
-
-      case MCPS_CONFIRMED:
-        break;
-
-      case MCPS_PROPRIETARY:
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  mib_req.Type = MIB_DEVICE_CLASS;
-  LoRaMacMibGetRequestConfirm(&mib_req);
-
-  am_util_debug_printf("\n###### ===== UPLINK FRAME %lu ==== ######\n", mcps_cnf->UpLinkCounter);
-  am_util_debug_printf("CLASS       : %c\n", "ABC"[mib_req.Param.Class]);
-  am_util_debug_printf("TX PORT     : %d\n", ul_data->port);
-
-  if(ul_data->len != 0 && ul_data->sent)
-  {
-    am_util_debug_printf("TX DATA     : ");
-    if(ul_data->ack_mode)
-    {
-      am_util_debug_printf("CONFIRMED - %s\n", (mcps_cnf->AckReceived != 0) ? "ACK" : "NACK");
-    }
-    else
-    {
-      am_util_debug_printf("UNCONFIRMED\n");
-    }
-    s_dump_hex("              ", ul_data->buf, ul_data->len, ' ');
-  }
-
-  am_util_debug_printf("DATA RATE   : DR_%d\n", mcps_cnf->Datarate);
-
-  mib_get.Type  = MIB_CHANNELS;
-  if(LoRaMacMibGetRequestConfirm(&mib_get)== LORAMAC_STATUS_OK)
-  {
-    am_util_debug_printf("U/L FREQ    : %lu\n", mib_get.Param.ChannelList[mcps_cnf->Channel].Frequency);
-  }
-
-  am_util_debug_printf("TX POWER    : %d\n", mcps_cnf->TxPower);
-
-  mib_get.Type  = MIB_CHANNELS_MASK;
-  if(LoRaMacMibGetRequestConfirm(&mib_get)== LORAMAC_STATUS_OK)
-  {
-    am_util_debug_printf("CHANNEL MASK: ");
-    for(uint8_t i = 0; i < loramac_channel_mask_count; i++)
-    {
-      am_util_debug_printf("%04X ", mib_get.Param.ChannelsMask[i]);
-    }
-  }
-  am_util_debug_printf("\n");
-  if(ul_data->queued && ul_data->sent)
-  {
-    if(ul_data->done)
-    {
-      ul_data->done(ul_data->buf, true);
-    }
-    else
-    {
-      for(int i = 0; i < MAX_APP_BUFFERS; i++)
-      {
-        if(ul_data->buf >= app_buf[i].buf && ul_data->buf < app_buf[i].buf+MAX_APP_DATA_SIZE)
+        switch (mcps_cnf->McpsRequest)
         {
-          app_buf[i].available = true;
-        }
-      }
+        case MCPS_UNCONFIRMED:
+            break;
 
+        case MCPS_CONFIRMED:
+            break;
+
+        case MCPS_PROPRIETARY:
+            break;
+
+        default:
+            break;
+        }
     }
-    ul_data->buf = NULL;
-    ul_data->len = 0;
-    ul_data->sent = false;
-    ul_data->queued = false;
-    ul_data->done = NULL;
-    ul_data = &ul_data_queue[ul_data->next];
-  }
+
+    mib_req.Type = MIB_DEVICE_CLASS;
+    LoRaMacMibGetRequestConfirm(&mib_req);
+
+    am_util_debug_printf("\n###### ===== UPLINK FRAME %lu ==== ######\n", mcps_cnf->UpLinkCounter);
+    am_util_debug_printf("CLASS       : %c\n", "ABC"[mib_req.Param.Class]);
+    am_util_debug_printf("TX PORT     : %d\n", ul_data->port);
+
+    if (ul_data->len != 0 && ul_data->sent)
+    {
+        am_util_debug_printf("TX DATA     : ");
+        if (ul_data->ack_mode)
+        {
+            am_util_debug_printf("CONFIRMED - %s\n", (mcps_cnf->AckReceived != 0) ? "ACK" : "NACK");
+        }
+        else
+        {
+            am_util_debug_printf("UNCONFIRMED\n");
+        }
+        s_dump_hex("              ", ul_data->buf, ul_data->len, ' ');
+    }
+
+    am_util_debug_printf("DATA RATE   : DR_%d\n", mcps_cnf->Datarate);
+
+    mib_get.Type = MIB_CHANNELS;
+    if (LoRaMacMibGetRequestConfirm(&mib_get) == LORAMAC_STATUS_OK)
+    {
+        am_util_debug_printf("U/L FREQ    : %lu\n", mib_get.Param.ChannelList[mcps_cnf->Channel].Frequency);
+    }
+
+    am_util_debug_printf("TX POWER    : %d\n", mcps_cnf->TxPower);
+
+    mib_get.Type = MIB_CHANNELS_MASK;
+    if (LoRaMacMibGetRequestConfirm(&mib_get) == LORAMAC_STATUS_OK)
+    {
+        am_util_debug_printf("CHANNEL MASK: ");
+        for (uint8_t i = 0; i < loramac_channel_mask_count; i++)
+        {
+            am_util_debug_printf("%04X ", mib_get.Param.ChannelsMask[i]);
+        }
+    }
+    am_util_debug_printf("\n");
+    if (ul_data->queued && ul_data->sent)
+    {
+        if (ul_data->done)
+        {
+            ul_data->done(ul_data->buf, true);
+        }
+        else
+        {
+            for (int i = 0; i < MAX_APP_BUFFERS; i++)
+            {
+                if (ul_data->buf >= app_buf[i].buf && ul_data->buf < app_buf[i].buf + MAX_APP_DATA_SIZE)
+                {
+                    app_buf[i].available = true;
+                }
+            }
+        }
+        ul_data->buf = NULL;
+        ul_data->len = 0;
+        ul_data->sent = false;
+        ul_data->queued = false;
+        ul_data->done = NULL;
+        ul_data = &ul_data_queue[ul_data->next];
+    }
 }
 
 /******************************************************************************
@@ -425,78 +422,225 @@ static void s_mcps_cnf(McpsConfirm_t *mcps_cnf)
  ******************************************************************************/
 static void s_mcps_ind(McpsIndication_t *mcps_ind)
 {
-  am_util_debug_printf("\n###### ===== MCPS-Indication ==== ######\n");
-  am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[mcps_ind->Status]);
-  if(mcps_ind->Status != LORAMAC_EVENT_INFO_STATUS_OK)
-  {
-    return;
-  }
+    am_util_debug_printf("\n###### ===== MCPS-Indication ==== ######\n");
+    am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[mcps_ind->Status]);
+    if (mcps_ind->Status != LORAMAC_EVENT_INFO_STATUS_OK)
+    {
+        return;
+    }
 
-  switch(mcps_ind->McpsIndication)
-  {
+    switch (mcps_ind->McpsIndication)
+    {
     case MCPS_UNCONFIRMED:
-      break;
+        break;
 
     case MCPS_CONFIRMED:
-      break;
+        break;
 
     case MCPS_PROPRIETARY:
-      break;
+        break;
 
     case MCPS_MULTICAST:
-      break;
+        break;
 
     default:
-      break;
-  }
-
-  if(mcps_ind->FramePending == true)
-  {
-    next_tx_expiry_fn(NULL);
-  }
-
-  if(mcps_ind->RxData == true)
-  {
-    // Do something with the data
-	  switch(mcps_ind->Port)
-	  {
-	  case 1:
-	  case 2:
-		  break;
-	  case 224:
-		  break;
-	  }
-  }
-
-  const char *slotStrings[] = {"1", "2", "C", "C Multicast", "B Ping-Slot", "B Multicast Ping-Slot" };
-
-  am_util_debug_printf("\n###### ===== DOWNLINK FRAME %lu ==== ######\n", mcps_ind->DownLinkCounter);
-  am_util_debug_printf("RX WINDOW   : %s\n", slotStrings[mcps_ind->RxSlot]);
-  am_util_debug_printf("RX PORT     : %d\n", mcps_ind->Port);
-  if(mcps_ind->BufferSize != 0)
-  {
-    am_util_debug_printf("RX DATA   : ");
-    if(mcps_ind->McpsIndication == MCPS_UNCONFIRMED)
-    {
-      am_util_debug_printf("UNCONFIRMED\n");
+        break;
     }
-    else if(mcps_ind->McpsIndication == MCPS_CONFIRMED)
+
+    if (mcps_ind->FramePending == true)
     {
-      am_util_debug_printf("CONFIRMED\n");
+        next_tx_expiry_fn(NULL);
     }
-    else if(mcps_ind->McpsIndication == MCPS_MULTICAST)
+
+    if (loramac_compliance_status.Running == true)
     {
-      am_util_debug_printf("MULTICAST\n");
+        loramac_compliance_status.DownLinkCounter++;
     }
-    else if(mcps_ind->McpsIndication == MCPS_PROPRIETARY)
+
+    if (mcps_ind->RxData == true)
     {
-      am_util_debug_printf("PROPRIETARY\n");
+        // Port 1 and 2 are used for the application layer
+        switch (mcps_ind->Port)
+        {
+        case 1:
+        case 2:
+        break;
+
+        case LORAMAC_COMPLIANCE_TEST_PORT:
+
+            if (loramac_compliance_status.Running == false)
+            {
+                // Check compliance test enable command (i)
+                if ((mcps_ind->BufferSize == 4) && (mcps_ind->Buffer[0] == 0x01) && (mcps_ind->Buffer[1] == 0x01) &&
+                    (mcps_ind->Buffer[2] == 0x01) && (mcps_ind->Buffer[3] == 0x01))
+                {
+                    loramac_compliance_status.IsTxConfirmed = false;
+                    loramac_compliance_status.AppPort = LORAMAC_COMPLIANCE_TEST_PORT;
+                    loramac_compliance_status.AppDataSize = 2;
+                    loramac_compliance_status.DownLinkCounter = 0;
+                    loramac_compliance_status.LinkCheck = false;
+                    loramac_compliance_status.DemodMargin = 0;
+                    loramac_compliance_status.NbGateways = 0;
+                    loramac_compliance_status.Running = true;
+                    loramac_compliance_status.State = STATE_1;
+
+                    MibRequestConfirm_t mib_req;
+                    mib_req.Type = MIB_ADR;
+                    mib_req.Param.AdrEnable = true;
+                    LoRaMacMibSetRequestConfirm(&mib_req);
+
+                    // turn off duty cycle during testing
+                    if (loramac_duty_cycle_used)
+                    {
+                        LoRaMacTestSetDutyCycleOn(false);
+                    }
+                }
+            }
+            else
+            {
+                loramac_compliance_status.State = mcps_ind->Buffer[0];
+                switch (loramac_compliance_status.State)
+                {
+                case CHECK_DISABLE_CMD: {
+                    loramac_compliance_status.DownLinkCounter = 0;
+                    loramac_compliance_status.Running = false;
+
+                    MibRequestConfirm_t mib_req;
+                    mib_req.Type = MIB_ADR;
+                    mib_req.Param.AdrEnable = true;
+                    LoRaMacMibSetRequestConfirm(&mib_req);
+
+                    if (loramac_duty_cycle_used)
+                    {
+                        LoRaMacTestSetDutyCycleOn(true);
+                    }
+                }
+                break;
+
+                case STATE_1:
+                    loramac_compliance_status.AppDataSize = 2;
+                    break;
+
+                case ENABLE_CONFIRMATION:
+                    loramac_compliance_status.IsTxConfirmed = true;
+                    loramac_compliance_status.State = STATE_1;
+                    break;
+
+                case DISABLE_CONFIRMATION:
+                    loramac_compliance_status.IsTxConfirmed = false;
+                    loramac_compliance_status.State = STATE_1;
+                    break;
+
+                case STATE_4:
+                    loramac_compliance_status.AppDataSize = mcps_ind->BufferSize;
+                    loramac_compliance_status.AppDataBuffer[0] = 4;
+                    for (uint8_t i = 1; i < MIN(loramac_compliance_status.AppDataSize, MAX_APP_DATA_SIZE); i++)
+                    {
+                        loramac_compliance_status.AppDataBuffer[i] = mcps_ind->Buffer[i] + 1;
+                    }
+                    break;
+
+                case LINK_CHECK: {
+                    MlmeReq_t mlme_req;
+                    mlme_req.Type = MLME_LINK_CHECK;
+                    LoRaMacStatus_t status = LoRaMacMlmeRequest(&mlme_req);
+                    am_util_debug_printf("\n###### ===== MLME-Request - MLME_LINK_CHECK ==== ######\n");
+                    am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[status]);
+                }
+                break;
+
+                case EXIT_TEST: {
+
+                    loramac_compliance_status.DownLinkCounter = 0;
+                    loramac_compliance_status.Running = false;
+
+                    MibRequestConfirm_t mib_req;
+                    mib_req.Type = MIB_ADR;
+                    mib_req.Param.AdrEnable = true;
+                    LoRaMacMibSetRequestConfirm(&mib_req);
+
+                    if (loramac_duty_cycle_used)
+                    {
+                        LoRaMacTestSetDutyCycleOn(true);
+                    }
+
+                    s_join_network();
+                }
+                break;
+
+                case TXCW: {
+                    if (mcps_ind->BufferSize == 3)
+                    {
+                        MlmeReq_t mlme_req;
+                        mlme_req.Type = MLME_TXCW;
+                        mlme_req.Req.TxCw.Timeout = (uint16_t)((mcps_ind->Buffer[1] << 8) | mcps_ind->Buffer[2]);
+                        LoRaMacStatus_t status = LoRaMacMlmeRequest(&mlme_req);
+                        am_util_debug_printf("\n###### ===== MLME-Request - MLME_TXCW ==== ######\n");
+                        am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[status]);
+                    }
+                    else if (mcps_ind->BufferSize == 7)
+                    {
+                        MlmeReq_t mlme_req;
+                        mlme_req.Type = MLME_TXCW_1;
+                        mlme_req.Req.TxCw.Timeout = (uint16_t)((mcps_ind->Buffer[1] << 8) | mcps_ind->Buffer[2]);
+                        mlme_req.Req.TxCw.Frequency = (uint32_t)((mcps_ind->Buffer[3] << 16) |
+                                                                 (mcps_ind->Buffer[4] << 8) | mcps_ind->Buffer[5]) *
+                                                      100;
+                        mlme_req.Req.TxCw.Power = mcps_ind->Buffer[6];
+                        LoRaMacStatus_t status = LoRaMacMlmeRequest(&mlme_req);
+                        am_util_debug_printf("\n###### ===== MLME-Request - MLME_TXCW1 ==== ######\n");
+                        am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[status]);
+                    }
+                    loramac_compliance_status.State = STATE_1;
+                }
+                break;
+
+                case REQ_DEVICE_TIME: {
+                    MlmeReq_t mlme_req;
+                    mlme_req.Type = MLME_DEVICE_TIME;
+                    LoRaMacStatus_t status = LoRaMacMlmeRequest(&mlme_req);
+                    am_util_debug_printf("\n###### ===== MLME-Request - MLME_DEVICE_TIME ==== ######\n");
+                    am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[status]);
+                }
+                break;
+
+                default:
+                    break;
+                }
+            }
+        break;
+        }
     }
-    s_dump_hex("              ", mcps_ind->Buffer, mcps_ind->BufferSize, ' ');
-  }
-  am_util_debug_printf("DATA RATE   : DR_%d\n", mcps_ind->RxDatarate);
-  am_util_debug_printf("RX RSSI     : %d\n", mcps_ind->Rssi);
-  am_util_debug_printf("RX SNR      : %d\n", mcps_ind->Snr);
+
+    const char *slotStrings[] = {"1", "2", "C", "C Multicast", "B Ping-Slot", "B Multicast Ping-Slot"};
+
+    am_util_debug_printf("\n###### ===== DOWNLINK FRAME %lu ==== ######\n", mcps_ind->DownLinkCounter);
+    am_util_debug_printf("RX WINDOW   : %s\n", slotStrings[mcps_ind->RxSlot]);
+    am_util_debug_printf("RX PORT     : %d\n", mcps_ind->Port);
+    if (mcps_ind->BufferSize != 0)
+    {
+        am_util_debug_printf("RX DATA   : ");
+        if (mcps_ind->McpsIndication == MCPS_UNCONFIRMED)
+        {
+            am_util_debug_printf("UNCONFIRMED\n");
+        }
+        else if (mcps_ind->McpsIndication == MCPS_CONFIRMED)
+        {
+            am_util_debug_printf("CONFIRMED\n");
+        }
+        else if (mcps_ind->McpsIndication == MCPS_MULTICAST)
+        {
+            am_util_debug_printf("MULTICAST\n");
+        }
+        else if (mcps_ind->McpsIndication == MCPS_PROPRIETARY)
+        {
+            am_util_debug_printf("PROPRIETARY\n");
+        }
+        s_dump_hex("              ", mcps_ind->Buffer, mcps_ind->BufferSize, ' ');
+    }
+    am_util_debug_printf("DATA RATE   : DR_%d\n", mcps_ind->RxDatarate);
+    am_util_debug_printf("RX RSSI     : %d\n", mcps_ind->Rssi);
+    am_util_debug_printf("RX SNR      : %d\n", mcps_ind->Snr);
 }
 
 /******************************************************************************
@@ -510,37 +654,46 @@ static void s_mcps_ind(McpsIndication_t *mcps_ind)
  ******************************************************************************/
 static void s_mlme_cnf(MlmeConfirm_t *mlme_cnf)
 {
-  am_util_debug_printf("\n###### ===== MLME-Confirm ==== ######\n");
-  am_util_debug_printf("STATUS      : %s\n\n", loramac_mlstat_str[mlme_cnf->Status]);
-  switch(mlme_cnf->MlmeRequest)
-  {
+    am_util_debug_printf("\n###### ===== MLME-Confirm ==== ######\n");
+    am_util_debug_printf("STATUS      : %s\n\n", loramac_mlstat_str[mlme_cnf->Status]);
+    switch (mlme_cnf->MlmeRequest)
+    {
     case MLME_JOIN:
-      if(mlme_cnf->Status == LORAMAC_EVENT_INFO_STATUS_OK)
-      {
-        MibRequestConfirm_t mib_get;
-        am_util_debug_printf("###### ===== JOINED ==== ######\n");
-        am_util_debug_printf("AUTH TYPE   : OTAA\n");
+        if (mlme_cnf->Status == LORAMAC_EVENT_INFO_STATUS_OK)
+        {
+            MibRequestConfirm_t mib_get;
+            am_util_debug_printf("###### ===== JOINED ==== ######\n");
+            am_util_debug_printf("AUTH TYPE   : OTAA\n");
 
-        mib_get.Type = MIB_DEV_ADDR;
-        LoRaMacMibGetRequestConfirm(&mib_get);
-        am_util_debug_printf("DevAddr     : %08lX\n", mib_get.Param.DevAddr);
+            mib_get.Type = MIB_DEV_ADDR;
+            LoRaMacMibGetRequestConfirm(&mib_get);
+            am_util_debug_printf("DevAddr     : %08lX\n", mib_get.Param.DevAddr);
 
-        mib_get.Type = MIB_CHANNELS_DATARATE;
-        LoRaMacMibGetRequestConfirm(&mib_get);
-        am_util_debug_printf("DATA RATE   : DR_%d\n", mib_get.Param.ChannelsDatarate);
-        app_state = APP_STATE_SEND;
-      }
-      else
-      {
-        s_join_network();
-      }
-      break;
+            mib_get.Type = MIB_CHANNELS_DATARATE;
+            LoRaMacMibGetRequestConfirm(&mib_get);
+            am_util_debug_printf("DATA RATE   : DR_%d\n", mib_get.Param.ChannelsDatarate);
+            app_state = APP_STATE_SEND;
+        }
+        else
+        {
+            s_join_network();
+        }
+        break;
     case MLME_LINK_CHECK:
-    	break;
+        if (mlme_cnf->Status == LORAMAC_EVENT_INFO_STATUS_OK)
+        {
+            if (loramac_compliance_status.Running == true)
+            {
+                loramac_compliance_status.LinkCheck = true;
+                loramac_compliance_status.DemodMargin = mlme_cnf->DemodMargin;
+                loramac_compliance_status.NbGateways = mlme_cnf->NbGateways;
+            }
+        }
+        break;
 
     default:
-      break;
-  }
+        break;
+    }
 }
 
 /******************************************************************************
@@ -554,20 +707,20 @@ static void s_mlme_cnf(MlmeConfirm_t *mlme_cnf)
  ******************************************************************************/
 static void s_mlme_ind(MlmeIndication_t *mlme_ind)
 {
-  if(mlme_ind->Status != LORAMAC_EVENT_INFO_STATUS_BEACON_LOCKED)
-  {
-    am_util_debug_printf("\n###### ===== MLME-Indication ==== ######\n");
-    am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[mlme_ind->Status]);
-  }
-  switch(mlme_ind->MlmeIndication)
-  {
+    if (mlme_ind->Status != LORAMAC_EVENT_INFO_STATUS_BEACON_LOCKED)
+    {
+        am_util_debug_printf("\n###### ===== MLME-Indication ==== ######\n");
+        am_util_debug_printf("STATUS      : %s\n", loramac_mlstat_str[mlme_ind->Status]);
+    }
+    switch (mlme_ind->MlmeIndication)
+    {
     case MLME_SCHEDULE_UPLINK:
-      next_tx_expiry_fn(NULL);
-      break;
+        next_tx_expiry_fn(NULL);
+        break;
 
     default:
-      break;
-  }
+        break;
+    }
 }
 
 /******************************************************************************
@@ -578,7 +731,7 @@ static void s_mlme_ind(MlmeIndication_t *mlme_ind)
  ******************************************************************************/
 static void s_on_mac_process_notify(void)
 {
-  app_can_sleep = false;
+    app_can_sleep = false;
 }
 
 /******************************************************************************
@@ -588,96 +741,96 @@ static void s_on_mac_process_notify(void)
  ******************************************************************************/
 bool g_loramac_init(LoRaMacRegion_t region)
 {
-  LoRaMacStatus_t status;
+    LoRaMacStatus_t status;
 
-  loramac_evt_fn.MacMcpsConfirm = s_mcps_cnf;
-  loramac_evt_fn.MacMcpsIndication = s_mcps_ind;
-  loramac_evt_fn.MacMlmeConfirm = s_mlme_cnf;
-  loramac_evt_fn.MacMlmeIndication = s_mlme_ind;
-  loramac_cb.GetBatteryLevel = NULL;
-  loramac_cb.GetTemperatureLevel = NULL;
-  loramac_cb.NvmContextChange = NULL;
-  loramac_cb.MacProcessNotify = s_on_mac_process_notify;
+    loramac_evt_fn.MacMcpsConfirm = s_mcps_cnf;
+    loramac_evt_fn.MacMcpsIndication = s_mcps_ind;
+    loramac_evt_fn.MacMlmeConfirm = s_mlme_cnf;
+    loramac_evt_fn.MacMlmeIndication = s_mlme_ind;
+    loramac_cb.GetBatteryLevel = NULL;
+    loramac_cb.GetTemperatureLevel = NULL;
+    loramac_cb.NvmContextChange = NULL;
+    loramac_cb.MacProcessNotify = s_on_mac_process_notify;
 
-  switch(region)
-  {
+    switch (region)
+    {
     case LORAMAC_REGION_AS923:
-      loramac_channel_mask_count = 1;
-      loramac_duty_cycle_used = false;
-      break;
+        loramac_channel_mask_count = 1;
+        loramac_duty_cycle_used = false;
+        break;
 
     case LORAMAC_REGION_AU915:
-      loramac_channel_mask_count = 5;
-      loramac_duty_cycle_used = false;
-      break;
+        loramac_channel_mask_count = 5;
+        loramac_duty_cycle_used = false;
+        break;
 
     case LORAMAC_REGION_CN470:
-      loramac_channel_mask_count = 5;
-      loramac_duty_cycle_used = false;
-      break;
+        loramac_channel_mask_count = 5;
+        loramac_duty_cycle_used = false;
+        break;
 
     case LORAMAC_REGION_CN779:
-      loramac_channel_mask_count = 1;
-      loramac_duty_cycle_used = true;
-      break;
+        loramac_channel_mask_count = 1;
+        loramac_duty_cycle_used = true;
+        break;
 
     case LORAMAC_REGION_EU433:
-      loramac_channel_mask_count = 1;
-      loramac_duty_cycle_used = true;
-      break;
+        loramac_channel_mask_count = 1;
+        loramac_duty_cycle_used = true;
+        break;
 
     case LORAMAC_REGION_EU868:
-      loramac_channel_mask_count = 1;
-      loramac_duty_cycle_used = true;
-      break;
+        loramac_channel_mask_count = 1;
+        loramac_duty_cycle_used = true;
+        break;
 
     case LORAMAC_REGION_KR920:
-      loramac_channel_mask_count = 1;
-      loramac_duty_cycle_used = false;
-      break;
+        loramac_channel_mask_count = 1;
+        loramac_duty_cycle_used = false;
+        break;
 
     case LORAMAC_REGION_IN865:
-      loramac_channel_mask_count = 1;
-      loramac_duty_cycle_used = false;
-      break;
+        loramac_channel_mask_count = 1;
+        loramac_duty_cycle_used = false;
+        break;
 
     default: // Set US915 as default region
     case LORAMAC_REGION_US915:
-      loramac_channel_mask_count = 5;
-      loramac_duty_cycle_used = false;
-      break;
+        loramac_channel_mask_count = 5;
+        loramac_duty_cycle_used = false;
+        break;
 
     case LORAMAC_REGION_RU864:
-      loramac_channel_mask_count = 1;
-      loramac_duty_cycle_used = true;
-      break;
-  }
+        loramac_channel_mask_count = 1;
+        loramac_duty_cycle_used = true;
+        break;
+    }
 
-  status = LoRaMacInitialization(&loramac_evt_fn, &loramac_cb, region);
-  if(status != LORAMAC_STATUS_OK)
-  {
-    am_util_debug_printf("LoRaMac wasn't properly initialized, error: %s", loramac_req_stat_str[status]);
-    return false;
-  }
+    status = LoRaMacInitialization(&loramac_evt_fn, &loramac_cb, region);
+    if (status != LORAMAC_STATUS_OK)
+    {
+        am_util_debug_printf("LoRaMac wasn't properly initialized, error: %s", loramac_req_stat_str[status]);
+        return false;
+    }
 
-  for(int i = 0; i < MAX_APP_TX_QUEUE_SIZE; i++)
-  {
-    ul_data_queue[i].queued = false;
-    ul_data_queue[i].buf = NULL;
-    ul_data_queue[i].len = 0;
-    ul_data_queue[i].done = NULL;
+    for (int i = 0; i < MAX_APP_TX_QUEUE_SIZE; i++)
+    {
+        ul_data_queue[i].queued = false;
+        ul_data_queue[i].buf = NULL;
+        ul_data_queue[i].len = 0;
+        ul_data_queue[i].done = NULL;
 
-    ul_data_queue[i].ack_mode = false;
-    ul_data_queue[i].port = 0;
+        ul_data_queue[i].ack_mode = false;
+        ul_data_queue[i].port = 0;
 
-    ul_data_queue[i].next = (i + 1) % MAX_APP_TX_QUEUE_SIZE;
-  }
-  for(int i = 0; i < MAX_APP_BUFFERS; i++)
-  {
-    app_buf[i].available = true;
-  }
-  app_state = APP_STATE_INIT;
-  return true;
+        ul_data_queue[i].next = (i + 1) % MAX_APP_TX_QUEUE_SIZE;
+    }
+    for (int i = 0; i < MAX_APP_BUFFERS; i++)
+    {
+        app_buf[i].available = true;
+    }
+    app_state = APP_STATE_INIT;
+    return true;
 }
 
 /******************************************************************************
@@ -685,9 +838,9 @@ bool g_loramac_init(LoRaMacRegion_t region)
  ******************************************************************************/
 void g_loramac_reset(void)
 {
-  TimerStop(&next_tx_timer);
-  app_state = APP_STATE_NULL;
-  LoRaMacStop();
+    TimerStop(&next_tx_timer);
+    app_state = APP_STATE_NULL;
+    LoRaMacStop();
 }
 
 /******************************************************************************
@@ -695,142 +848,150 @@ void g_loramac_reset(void)
  ******************************************************************************/
 loramac_app_state_e g_loramac_state_machine(void)
 {
-  MibRequestConfirm_t mib_req;
-  LoRaMacStatus_t status;
+    MibRequestConfirm_t mib_req;
+    LoRaMacStatus_t status;
 
-  if(app_state == APP_STATE_NULL)
-  {
-    return app_state;
-  }
-  if(Radio.IrqProcess != NULL)
-  {
-    Radio.IrqProcess();
-  }
-  LoRaMacProcess();
-  switch(app_state)
-  {
+    if (app_state == APP_STATE_NULL)
+    {
+        return app_state;
+    }
+    if (Radio.IrqProcess != NULL)
+    {
+        Radio.IrqProcess();
+    }
+    LoRaMacProcess();
+    switch (app_state)
+    {
     case APP_STATE_INIT:
-      TimerInit(&next_tx_timer, next_tx_expiry_fn);
+        TimerInit(&next_tx_timer, next_tx_expiry_fn);
 
-      mib_req.Type = MIB_PUBLIC_NETWORK;
-      mib_req.Param.EnablePublicNetwork = true;
-      LoRaMacMibSetRequestConfirm(&mib_req);
+        mib_req.Type = MIB_PUBLIC_NETWORK;
+        mib_req.Param.EnablePublicNetwork = true;
+        LoRaMacMibSetRequestConfirm(&mib_req);
 
-      mib_req.Type = MIB_ADR;
-      mib_req.Param.AdrEnable = DEFAULT_LORAMAC_ADR_MODE;
-      LoRaMacMibSetRequestConfirm(&mib_req);
+        mib_req.Type = MIB_ADR;
+        mib_req.Param.AdrEnable = DEFAULT_LORAMAC_ADR_MODE;
+        LoRaMacMibSetRequestConfirm(&mib_req);
 
-      if(loramac_duty_cycle_used)
-      {
-        LoRaMacTestSetDutyCycleOn(true);
-      }
-
-      mib_req.Type = MIB_SYSTEM_MAX_RX_ERROR;
-      mib_req.Param.SystemMaxRxError = 20;
-      LoRaMacMibSetRequestConfirm(&mib_req);
-
-      LoRaMacStart();
-
-      mib_req.Type = MIB_NETWORK_ACTIVATION;
-      status = LoRaMacMibGetRequestConfirm(&mib_req);
-
-      if(status == LORAMAC_STATUS_OK)
-      {
-        if(mib_req.Param.NetworkActivation == ACTIVATION_TYPE_NONE)
+        if (loramac_duty_cycle_used)
         {
-          app_state = APP_STATE_JOIN;
+            LoRaMacTestSetDutyCycleOn(true);
         }
-        else if(ul_data->queued)
+
+        mib_req.Type = MIB_SYSTEM_MAX_RX_ERROR;
+        mib_req.Param.SystemMaxRxError = 20;
+        LoRaMacMibSetRequestConfirm(&mib_req);
+
+        LoRaMacStart();
+
+        mib_req.Type = MIB_NETWORK_ACTIVATION;
+        status = LoRaMacMibGetRequestConfirm(&mib_req);
+
+        if (status == LORAMAC_STATUS_OK)
         {
-          app_state = APP_STATE_SEND;
+            if (mib_req.Param.NetworkActivation == ACTIVATION_TYPE_NONE)
+            {
+                app_state = APP_STATE_JOIN;
+            }
+            else if (ul_data->queued)
+            {
+                app_state = APP_STATE_SEND;
+            }
+            else
+            {
+                app_state = APP_STATE_IDLE;
+            }
         }
-        else
-        {
-          app_state = APP_STATE_IDLE;
-        }
-      }
-      break;
+        break;
 
     case APP_STATE_JOIN:
-      mib_req.Type = MIB_DEV_EUI;
-      LoRaMacMibGetRequestConfirm(&mib_req);
-      am_util_debug_printf("DevEUI      : ");
-      s_dump_hex(NULL, mib_req.Param.DevEui, 8, '-');
+        mib_req.Type = MIB_DEV_EUI;
+        LoRaMacMibGetRequestConfirm(&mib_req);
+        am_util_debug_printf("DevEUI      : ");
+        s_dump_hex(NULL, mib_req.Param.DevEui, 8, '-');
 
-      mib_req.Type = MIB_JOIN_EUI;
-      LoRaMacMibGetRequestConfirm(&mib_req);
-      am_util_debug_printf("JoinEUI     : ");
-      s_dump_hex(NULL, mib_req.Param.JoinEui, 8, '-');
+        mib_req.Type = MIB_JOIN_EUI;
+        LoRaMacMibGetRequestConfirm(&mib_req);
+        am_util_debug_printf("JoinEUI     : ");
+        s_dump_hex(NULL, mib_req.Param.JoinEui, 8, '-');
 
-      mib_req.Type = MIB_SE_PIN;
-      LoRaMacMibGetRequestConfirm(&mib_req);
-      am_util_debug_printf("PIN         : ");
-      s_dump_hex(NULL, mib_req.Param.SePin, 4, '-');
+        mib_req.Type = MIB_SE_PIN;
+        LoRaMacMibGetRequestConfirm(&mib_req);
+        am_util_debug_printf("PIN         : ");
+        s_dump_hex(NULL, mib_req.Param.SePin, 4, '-');
 
-      s_join_network();
-      break;
+        s_join_network();
+        break;
 
     case APP_STATE_SEND:
-      if(ul_data->queued == true)
-      {
-    	  mib_req.Type = MIB_DEVICE_CLASS;
-    	  LoRaMacMibGetRequestConfirm(&mib_req);
-
-    	  if (mib_req.Param.Class != app_class)
-    	  {
-    		  mib_req.Param.Class = app_class;
-    		  LoRaMacMibSetRequestConfirm(&mib_req);
-    	  }
-
-        if(s_loramac_send_frame())
+        if (ul_data->queued == true)
         {
-          app_state = APP_STATE_SCHEDULE;
+            mib_req.Type = MIB_DEVICE_CLASS;
+            LoRaMacMibGetRequestConfirm(&mib_req);
+
+            if (mib_req.Param.Class != app_class)
+            {
+                mib_req.Param.Class = app_class;
+                LoRaMacMibSetRequestConfirm(&mib_req);
+            }
+
+            if (s_loramac_send_frame())
+            {
+                app_state = APP_STATE_SCHEDULE;
+            }
+            else
+            {
+                app_state = APP_STATE_IDLE;
+            }
         }
         else
         {
-          app_state = APP_STATE_IDLE;
+            app_state = APP_STATE_IDLE;
         }
-      }
-      else
-      {
-        app_state = APP_STATE_IDLE;
-      }
-      break;
+        break;
 
     case APP_STATE_SCHEDULE:
-      app_state = APP_STATE_IDLE;
-      next_tx_time = APP_TX_NEXT_TIMEOUT + randr(-APP_TX_NEXT_TIMEOUT_RND, APP_TX_NEXT_TIMEOUT_RND);
-      TimerSetValue(&next_tx_timer, next_tx_time);
-      TimerStart(&next_tx_timer);
-      break;
+        app_state = APP_STATE_IDLE;
 
-    case APP_STATE_IDLE:
-      {
-        CRITICAL_SECTION_BEGIN();
-        if(app_can_sleep)
+        if (loramac_compliance_status.Running == true)
         {
-          // Go to sleep here
+            next_tx_time = loramac_app_tx_timeout;
         }
         else
         {
-          // Do some stuff here
-          app_can_sleep = true;
+            next_tx_time = loramac_app_tx_timeout + randr(-loramac_app_tx_timeout_rnd, loramac_app_tx_timeout_rnd);
+        }
+
+        TimerSetValue(&next_tx_timer, next_tx_time);
+        TimerStart(&next_tx_timer);
+        break;
+
+    case APP_STATE_IDLE: {
+        CRITICAL_SECTION_BEGIN();
+        if (app_can_sleep)
+        {
+            // Go to sleep here
+        }
+        else
+        {
+            // Do some stuff here
+            app_can_sleep = true;
         }
         CRITICAL_SECTION_END();
-      }
-      break;
+    }
+    break;
 
     default:
-      app_state = APP_STATE_INIT;
-      break;
-  }
+        app_state = APP_STATE_INIT;
+        break;
+    }
 
-  return app_state;
+    return app_state;
 }
 
 void g_loramac_set_class(DeviceClass_t loramac_class)
 {
-	app_class = loramac_class;
+    app_class = loramac_class;
 }
 
 /******************************************************************************
@@ -838,25 +999,25 @@ void g_loramac_set_class(DeviceClass_t loramac_class)
  ******************************************************************************/
 void *g_loramac_get_buffer(size_t *len)
 {
-  for(int i = 0; i < MAX_APP_BUFFERS; i++)
-  {
-    CRITICAL_SECTION_BEGIN();
-    if(app_buf[i].available)
+    for (int i = 0; i < MAX_APP_BUFFERS; i++)
     {
-      app_buf[i].available = false;
-      CRITICAL_SECTION_END();
+        CRITICAL_SECTION_BEGIN();
+        if (app_buf[i].available)
+        {
+            app_buf[i].available = false;
+            CRITICAL_SECTION_END();
 
-      if(len)
-      {
-        *len = MAX_APP_DATA_SIZE;
-      }
+            if (len)
+            {
+                *len = MAX_APP_DATA_SIZE;
+            }
 
-      return app_buf[i].buf;
+            return app_buf[i].buf;
+        }
+        CRITICAL_SECTION_END();
     }
-    CRITICAL_SECTION_END();
-  }
 
-  return NULL;
+    return NULL;
 }
 
 /******************************************************************************
@@ -864,29 +1025,58 @@ void *g_loramac_get_buffer(size_t *len)
  ******************************************************************************/
 void g_loramac_enqueue_uplink(bool ack_mode, uint8_t port, uint8_t *buf, uint8_t len, loramac_app_buf_done_fn done)
 {
-  loramac_app_data_s *item = ul_data;
-  
-  do
-  {
-    if(item->queued)
-    {
-      item = &ul_data_queue[item->next];
-    }
-    else
-    {
-      item->ack_mode = ack_mode;
-      item->port = port;
-      item->buf = buf;
-      item->len = len;
-      item->done = done;
+    loramac_app_data_s *item = ul_data;
 
-      if(app_state == APP_STATE_IDLE)
-      {
-        app_state = APP_STATE_SEND;
-      }
-      item->queued = true;
-      break;
-    }
-  }
-  while(item != ul_data);
+    do
+    {
+        if (item->queued)
+        {
+            item = &ul_data_queue[item->next];
+        }
+        else
+        {
+            item->ack_mode = ack_mode;
+            item->port = port;
+            item->buf  = buf;
+            item->len  = len;
+            item->done = done;
+
+            if (port == LORAMAC_COMPLIANCE_TEST_PORT)
+            {
+                if (loramac_compliance_status.LinkCheck == true)
+                {
+                    loramac_compliance_status.LinkCheck = false;
+                    loramac_compliance_status.State = STATE_1;
+                    
+                    item->len = 3;
+                    item->buf[0] = 5;
+                    item->buf[1] = loramac_compliance_status.DemodMargin;
+                    item->buf[2] = loramac_compliance_status.NbGateways;
+                }
+                else
+                {
+                    switch (loramac_compliance_status.State)
+                    {
+                    case STATE_4:
+                        loramac_compliance_status.State = STATE_1;
+                        item->len = loramac_compliance_status.AppDataSize;
+                        memcpy(item->buf, loramac_compliance_status.AppDataBuffer, item->len);
+                        break;
+                    case STATE_1:
+                        item->len = 2;
+                        item->buf[0] = loramac_compliance_status.DownLinkCounter >> 8;
+                        item->buf[1] = loramac_compliance_status.DownLinkCounter;
+                        break;
+                    }
+                }
+            }
+
+            if (app_state == APP_STATE_IDLE)
+            {
+                app_state = APP_STATE_SEND;
+            }
+            item->queued = true;
+            break;
+        }
+    } while (item != ul_data);
 }
