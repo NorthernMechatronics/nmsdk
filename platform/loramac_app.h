@@ -13,7 +13,7 @@
 #define MAX_APP_DATA_SIZE               (242)
 #define DEFAULT_LORAMAC_ADR_MODE        (1)
 #define DEFAULT_LORAMAC_APP_PORT        (2)
-#define DEFAULT_LORAMAC_CONFIRMED_MODE  false
+#define DEFAULT_LORAMAC_CONFIRMED_MODE  true
 #define DEFAULT_LORAMAC_DATARATE        DR_0
 
 

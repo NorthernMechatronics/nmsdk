@@ -399,7 +399,7 @@ static portBASE_TYPE s_loramac_cmd(char *out, size_t out_len, const char *cmd)
       return pdFALSE;
     }
 
-    param = FreeRTOS_CLIGetParameter(cmd, 3, &param_len);
+    param = FreeRTOS_CLIGetParameter(cmd, 2, &param_len);
     if(param == NULL)
     {
       const char *test_str = "This is a test.";
@@ -408,8 +408,9 @@ static portBASE_TYPE s_loramac_cmd(char *out, size_t out_len, const char *cmd)
     }
     else
     {
-      am_util_string_strncpy(buf, param, len);
-      len = am_util_string_strlen(buf);
+      am_util_string_strncpy(buf, param, param_len);
+      len = param_len;
+      //len = am_util_string_strlen(buf);
     }
     msg.data[0] = (uint32_t) buf;
     msg.data[1] = (uint32_t) ((loramac_ack_mode << 16) | (loramac_app_port << 8) | len);
