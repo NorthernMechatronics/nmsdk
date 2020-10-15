@@ -22,7 +22,7 @@
 #include <FreeRTOS_CLI.h>
 #include <task.h>
 
-#include "gpio.h"
+#include "gpio_service.h"
 
 TaskHandle_t gpio_task_handle;
 
