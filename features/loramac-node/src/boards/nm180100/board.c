@@ -27,18 +27,24 @@ void BoardCriticalSectionEnd(uint32_t *mask)
 
 void BoardInitPeriph(void)
 {
+	RtcInit();
 }
 
 void BoardInitMcu(void)
 {
+	SX126xIoInit();
 }
 
 void BoardResetMcu(void)
 {
+	CRITICAL_SECTION_BEGIN();
+
+	ResetHandler();
 }
 
 void BoardDeInitMcu(void)
 {
+	SX126xIoDeInit();
 }
 
 uint32_t BoardGetRandomSeed(void)

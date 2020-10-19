@@ -50,11 +50,18 @@ typedef struct
 }
 rtc_backup_s;
 
+static const char *month_str[] =
+{
+  "January", "February", "March", "April", "May", "June", "July", "August",
+  "September", "October", "November", "December", "Month?"
+};
 
-/******************************************************************************
- * External functions
- ******************************************************************************/
-extern void g_loramac_task_set_rtc_alarm_callback(void (*callback)(void));
+static char *build_timestamp(void)
+{
+    static char build_timestamp[32] = __DATE__ " " __TIME__;
+
+    return build_timestamp;
+}
 
 
 /******************************************************************************
@@ -64,6 +71,31 @@ static const uint8_t days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 
 static bool rtc_initialized = false;
 static rtc_timer_ctx_s rtc_timer_ctx;
 static rtc_backup_s rtc_backup;
+
+static uint8_t s_2ch_to_dec(char *in)
+{
+  int val;
+
+  val = in[1] - '0';
+  val += in[0] == ' ' ? 0 : (in[0] - '0') * 10;
+
+  return val;
+}
+
+static uint8_t s_mth_to_idx(char *mth)
+{
+  uint8_t idx;
+
+  for(idx = 0; idx < 12; idx++)
+  {
+    if(am_util_string_strnicmp(mth, month_str[idx], 3) == 0)
+    {
+      break;
+    }
+  }
+
+  return idx;
+}
 
 
 /******************************************************************************
@@ -171,11 +203,37 @@ static void s_handle_rtc_alarm(void)
  ******************************************************************************/
 void RtcInit(void)
 {
+
   if(rtc_initialized == false)
   {
+	  am_hal_rtc_time_t startup_time;
+
+	char *ts = build_timestamp();
     rtc_timer_ctx.running = false;
+
+    am_hal_clkgen_control(AM_HAL_CLKGEN_CONTROL_XTAL_START, 0);
+    am_hal_rtc_osc_select(AM_HAL_RTC_OSC_XT);
+    am_hal_rtc_osc_enable();
+
+    startup_time.ui32Hour = s_2ch_to_dec(&ts[12]);
+    startup_time.ui32Minute = s_2ch_to_dec(&ts[15]);
+    startup_time.ui32Second = s_2ch_to_dec(&ts[18]);
+    startup_time.ui32Hundredths = 0;
+    startup_time.ui32Month = s_mth_to_idx(&ts[0]);
+    startup_time.ui32DayOfMonth = s_2ch_to_dec(&ts[4]);
+    startup_time.ui32Year = s_2ch_to_dec(&ts[9]);
+    startup_time.ui32Century = s_2ch_to_dec(&ts[7])-20;
+    startup_time.ui32Weekday = am_util_time_computeDayofWeek(2000 + startup_time.ui32Century*100 + startup_time.ui32Year, startup_time.ui32Month+1, startup_time.ui32DayOfMonth);
+    am_hal_rtc_time_set(&startup_time);
+
+    am_hal_rtc_alarm_interval_set(AM_HAL_RTC_ALM_RPT_100TH);
+    am_hal_rtc_int_clear(AM_HAL_RTC_INT_ALM);
+    am_hal_rtc_int_disable(AM_HAL_RTC_INT_ALM);
+    NVIC_EnableIRQ(RTC_IRQn);
+    //NVIC_SetPriority(RTC_IRQn, NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY);
+
     RtcSetTimerContext();
-    g_loramac_task_set_rtc_alarm_callback(s_handle_rtc_alarm);
+    //g_loramac_task_set_rtc_alarm_callback(s_handle_rtc_alarm);
     rtc_initialized = true;
   }
 }
@@ -487,4 +545,10 @@ void RtcProcess(void)
 TimerTime_t RtcTempCompensation(TimerTime_t period, float temperature)
 {
   return period;
+}
+
+void am_rtc_isr(void)
+{
+	am_hal_rtc_int_clear(AM_HAL_RTC_INT_ALM);
+	s_handle_rtc_alarm();
 }
