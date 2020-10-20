@@ -235,66 +235,6 @@ static void s_sx1262_spi_read_buffer(uint8_t ofs, uint8_t *buf, uint8_t len)
 }
 
 /******************************************************************************
- * s_sx1262_print_irq_status
- * -------------------------
- * Print the IRQ status to SWO debug window
- *
- * Parameters     :
- *    @irq_status - {description}
- *
- ******************************************************************************/
-static void s_sx1262_print_irq_status(uint16_t irq_status)
-{
-  if(irq_status)
-  {
-	am_bsp_itm_printf_enable();
-    am_util_debug_printf("IRQ STATUS  :");
-    if(irq_status & IRQ_TX_DONE)
-    {
-      am_util_debug_printf(" TX_DONE");
-    }
-    if(irq_status & IRQ_RX_DONE)
-    {
-      am_util_debug_printf(" RX_DONE");
-    }
-    if(irq_status & IRQ_PREAMBLE_DETECTED)
-    {
-      am_util_debug_printf(" PREAMBLE_DETECTED");
-    }
-    if(irq_status & IRQ_SYNCWORD_VALID)
-    {
-      am_util_debug_printf(" SYNCWORD_VALID");
-    }
-    if(irq_status & IRQ_HEADER_VALID)
-    {
-      am_util_debug_printf(" HEADER_VALID");
-    }
-    if(irq_status & IRQ_HEADER_ERROR)
-    {
-      am_util_debug_printf(" HEADER_ERROR");
-    }
-    if(irq_status & IRQ_CRC_ERROR)
-    {
-      am_util_debug_printf(" CRC_ERROR");
-    }
-    if(irq_status & IRQ_CAD_DONE)
-    {
-      am_util_debug_printf(" CAD_DONE");
-    }
-    if(irq_status & IRQ_CAD_ACTIVITY_DETECTED)
-    {
-      am_util_debug_printf(" CAD_ACTIVITY_DETECTED");
-    }
-    if(irq_status & IRQ_RX_TX_TIMEOUT)
-    {
-      am_util_debug_printf(" RX_TX_TIMEOUT");
-    }
-    am_util_debug_printf("\n");
-	am_bsp_itm_printf_disable();
-  }
-}
-
-/******************************************************************************
  * s_sx1262_get_irq_status
  * -----------------------
  * {Insert description here}
@@ -328,7 +268,6 @@ static uint16_t s_sx1262_get_irq_status(void)
  ******************************************************************************/
 static void s_sx1262_isr(void)
 {
-  s_sx1262_print_irq_status(s_sx1262_get_irq_status());
   if(sx1262_isr_chain != NULL)
   {
     sx1262_isr_chain();
