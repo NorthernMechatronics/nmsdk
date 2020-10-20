@@ -247,6 +247,7 @@ static void s_sx1262_print_irq_status(uint16_t irq_status)
 {
   if(irq_status)
   {
+	am_bsp_itm_printf_enable();
     am_util_debug_printf("IRQ STATUS  :");
     if(irq_status & IRQ_TX_DONE)
     {
@@ -289,6 +290,7 @@ static void s_sx1262_print_irq_status(uint16_t irq_status)
       am_util_debug_printf(" RX_TX_TIMEOUT");
     }
     am_util_debug_printf("\n");
+	am_bsp_itm_printf_disable();
   }
 }
 
