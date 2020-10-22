@@ -5,7 +5,6 @@ BUILDDIR := $(SDKROOT)/build
 
 AM_HAL_DIR    := $(SDKROOT)/features/hal
 AM_UTILS_DIR  := $(SDKROOT)/features/utils
-#AM_BSP_DIR    := $(SDKROOT)/bsp/nm180100evb
 
 FREERTOS_DIR     := $(SDKROOT)/features/FreeRTOS
 FREERTOS-CLI_DIR := $(SDKROOT)/features/FreeRTOS-Plus-CLI
@@ -17,7 +16,6 @@ LORAMAC_DIR   := $(SDKROOT)/features/loramac-node
 ifdef DEBUG
     AM_HAL_TARGET   = libam_hal-dev.a
     AM_UTILS_TARGET = libam_utils-dev.a
-#    AM_BSP_TARGET      = libam_bsp-dev.a
     FREERTOS_TARGET     = libfreertos-dev.a
     FREERTOS-CLI_TARGET = libfreertos-cli-dev.a
     CORDIO_TARGET = libcordio-dev.a
@@ -26,7 +24,6 @@ ifdef DEBUG
 else
     AM_HAL_TARGET   = libam_hal.a
     AM_UTILS_TARGET = libam_utils.a
-#    AM_BSP_TARGET      = libam_bsp.a
     FREERTOS_TARGET     = libfreertos.a
     FREERTOS-CLI_TARGET = libfreertos-cli.a
     CORDIO_TARGET = libcordio.a
