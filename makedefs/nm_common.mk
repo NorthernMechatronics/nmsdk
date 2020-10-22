@@ -1,15 +1,5 @@
 SDKROOT?=..
 
-ifndef AMBIQ_SDK
-  AMBIQ_SDK := $(SDKROOT)/../AmbiqSuite-R2.4.2
-  $(warning AmbiqSuite SDK location AMBIQ_SDK not defined )
-  ifneq "$(wildcard $(AMBIQ_SDK) )" ""
-    $(warning found AmbiqSuite SDK at $(AMBIQ_SDK))
-  else
-    $(error unable to locate AmbiqSuite SDK)
-  endif
-endif
-
 ifdef DEBUG
   $(info ****** DEBUG VERSION ******)
 else

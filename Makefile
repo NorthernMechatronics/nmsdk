@@ -1,3 +1,29 @@
+AMBIQ_SDK := ~/git/AmbiqSuite-R2.5.1
+FREERTOS  := ~/git/FreeRTOS/FreeRTOS
+CORDIO    := ~/git/AmbiqSuite-R2.5.1/third_party/cordio
+UECC      := ~/git/AmbiqSuite-R2.5.1/third_party/uecc
+LORAMAC   := ~/git/loramac-node
+
+ifndef AMBIQ_SDK
+    $(error AmbiqSuite SDK location not defined)
+endif
+
+ifndef CORDIO
+    $(error ARM BLE Cordio Stack location not defined)
+endif
+
+ifndef UECC
+    $(error Micro ECC library location not defined)
+endif
+
+ifndef FREERTOS
+    $(error FreeRTOS location not defined)
+endif
+
+ifndef LORAMAC
+    $(error LoRaMAC Node library location not defined)
+endif
+
 SDKROOT?= .
 include $(SDKROOT)/makedefs/nm_common.mk
 
@@ -33,6 +59,7 @@ endif
 
 export DEBUG
 
+
 all: $(BUILDDIR) am_hal am_utils freertos freertos-cli cordio loramac
 	@echo "****** Build Successful ******"
 
@@ -40,27 +67,27 @@ $(BUILDDIR):
 	@mkdir -p $@
 
 am_hal:
-	$(MAKE) -C $(AM_HAL_DIR)
+	$(MAKE) -C $(AM_HAL_DIR) AMBIQ_SDK=$(AMBIQ_SDK)
 	$(CP) $(AM_HAL_DIR)/$(CONFIG)/$(AM_HAL_TARGET) $(BUILDDIR)/$(AM_HAL_TARGET)
 
 am_utils:
-	$(MAKE) -C $(AM_UTILS_DIR)
+	$(MAKE) -C $(AM_UTILS_DIR) AMBIQ_SDK=$(AMBIQ_SDK)
 	$(CP) $(AM_UTILS_DIR)/$(CONFIG)/$(AM_UTILS_TARGET) $(BUILDDIR)/$(AM_UTILS_TARGET)
 
 freertos:
-	$(MAKE) -C $(FREERTOS_DIR)
+	$(MAKE) -C $(FREERTOS_DIR) AMBIQ_SDK=$(AMBIQ_SDK) FREERTOS=$(FREERTOS)
 	$(CP) $(FREERTOS_DIR)/$(CONFIG)/$(FREERTOS_TARGET) $(BUILDDIR)/$(FREERTOS_TARGET)
 
 freertos-cli:
-	$(MAKE) -C $(FREERTOS-CLI_DIR)
+	$(MAKE) -C $(FREERTOS-CLI_DIR) AMBIQ_SDK=$(AMBIQ_SDK) FREERTOS=$(FREERTOS)
 	$(CP) $(FREERTOS-CLI_DIR)/$(CONFIG)/$(FREERTOS-CLI_TARGET) $(BUILDDIR)/$(FREERTOS-CLI_TARGET)
 
 cordio:
-	$(MAKE) -C $(CORDIO_DIR)
+	$(MAKE) -C $(CORDIO_DIR) AMBIQ_SDK=$(AMBIQ_SDK) CORDIO=$(CORDIO) UECC=$(UECC) FREERTOS=$(FREERTOS)
 	$(CP) $(CORDIO_DIR)/$(CONFIG)/$(CORDIO_TARGET) $(BUILDDIR)/$(CORDIO_TARGET)
 
 loramac:
-	$(MAKE) -C $(LORAMAC_DIR)
+	$(MAKE) -C $(LORAMAC_DIR) LORAMAC=$(LORAMAC) AMBIQ_SDK=$(AMBIQ_SDK)
 	$(CP) $(LORAMAC_DIR)/$(CONFIG)/$(LORAMAC_TARGET) $(BUILDDIR)/$(LORAMAC_TARGET)
 
 
