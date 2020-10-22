@@ -23,7 +23,7 @@
 #include <FreeRTOS_CLI.h>
 #include <task.h>
 
-#include "iom.h"
+#include "iom_service.h"
 
 TaskHandle_t iom_task_handle;
 
