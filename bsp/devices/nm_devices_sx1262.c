@@ -157,11 +157,7 @@ static void sx1262_write_command (uint8_t cmd, const uint8_t* data, uint8_t len)
     Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_RADIO_NSS_CHNL;
 
     sx1262_block_on_busy();
-    uint32_t status = am_hal_iom_blocking_transfer(gSpiHandle, &Transaction);
-
-    if (status != AM_HAL_STATUS_SUCCESS)
-    {
-    }
+    am_hal_iom_blocking_transfer(gSpiHandle, &Transaction);
 }
 
 static void sx1262_write_registers (uint16_t addr, const uint8_t* data, uint8_t len)
