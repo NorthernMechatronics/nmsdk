@@ -1,13 +1,34 @@
-/******************************************************************************
+/*
+ * BSD 3-Clause License
  *
- * Filename     : console_task.c
- * Description  : Console task implementation
+ * Copyright (c) 2020, Northern Mechatronics, Inc.
+ * All rights reserved.
  *
- ******************************************************************************/
-
-/******************************************************************************
- * Standard header files
- ******************************************************************************/
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its
+ *    contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
@@ -84,7 +105,7 @@ static am_hal_uart_config_t g_sConsoleUartBufferedConfig = {
 /******************************************************************************
  * Global declarations
  ******************************************************************************/
-TaskHandle_t console_task_handle;
+TaskHandle_t nm_console_task_handle;
 
 /******************************************************************************
  * Local functions
@@ -180,7 +201,7 @@ static void s_clearln(uint8_t pos) {
   if (pos > 0) {
     // ANSI escape code CUB
     am_util_stdio_sprintf(buf, "\e[%dD\e[0K", pos);
-    g_console_print(buf);
+    nm_console_print(buf);
   }
 }
 
@@ -195,11 +216,11 @@ static void s_clearln(uint8_t pos) {
  *  @str      - Null-terminated string
  *
  ******************************************************************************/
-void g_console_print(const char *str) { g_console_write(str, strlen(str)); }
+void nm_console_print(const char *str) { nm_console_write(str, strlen(str)); }
 
-void g_console_prompt()
+void nm_console_print_prompt()
 {
-  g_console_print(cmd_prompt);
+  nm_console_print(cmd_prompt);
 }
 
 /******************************************************************************
@@ -212,7 +233,7 @@ void g_console_prompt()
  *  @len      - Number of characters from buffer to output
  *
  ******************************************************************************/
-void g_console_write(const char *buf, size_t len) {
+void nm_console_write(const char *buf, size_t len) {
   xSemaphoreTake(g_sConsoleMutex, portMAX_DELAY);
 
   uint8_t *pui8String = (uint8_t *)buf;
@@ -245,7 +266,7 @@ void g_console_write(const char *buf, size_t len) {
   xSemaphoreGive(g_sConsoleMutex);
 }
 
-char g_console_read_char() {
+char nm_console_read() {
   size_t received = 0;
   uint8_t ch;
 
@@ -305,7 +326,7 @@ void g_console_task_setup(void) {
  *  @pvp      - FreeRTOS parameters
  *
  ******************************************************************************/
-void g_console_task(void *pvp) {
+void nm_console_task(void *pvp) {
   char ch;
   char *out_str;
   portBASE_TYPE ret;
@@ -314,20 +335,20 @@ void g_console_task(void *pvp) {
 
   g_console_task_setup();
 
-  g_console_print(welcome_msg);
-  g_console_print("Built on: ");
-  g_console_print(g_build_timestamp());
-  g_console_print(crlf);
-  g_console_print(crlf);
-  g_console_print(cmd_prompt);
+  nm_console_print(welcome_msg);
+  nm_console_print("Built on: ");
+  nm_console_print(g_build_timestamp());
+  nm_console_print(crlf);
+  nm_console_print(crlf);
+  nm_console_print(cmd_prompt);
 
   while (1) {
-    ch = g_console_read_char();
+    ch = nm_console_read();
 
     switch ((uint8_t)ch) {
       case '\e':
-        ch = g_console_read_char();
-        ch = g_console_read_char();
+        ch = nm_console_read();
+        ch = nm_console_read();
         if (ch == 'A') {
           const char *cmd = s_cmd_hist_up();
 
@@ -335,7 +356,7 @@ void g_console_task(void *pvp) {
           if (cmd != NULL) {
             strcpy(in_str, cmd);
             in_len = strlen(in_str);
-            g_console_write(in_str, in_len);
+            nm_console_write(in_str, in_len);
           } else {
             in_len = 0;
           }
@@ -346,7 +367,7 @@ void g_console_task(void *pvp) {
           if (cmd != NULL) {
             strcpy(in_str, cmd);
             in_len = strlen(in_str);
-            g_console_write(in_str, in_len);
+            nm_console_write(in_str, in_len);
           } else {
             in_len = 0;
           }
@@ -359,16 +380,16 @@ void g_console_task(void *pvp) {
           s_clearln(in_len--);
 
           in_str[in_len] = '\0';
-          g_console_write(in_str, in_len);
+          nm_console_write(in_str, in_len);
         }
         break;
 
       case '\r':
       case '\n':
-        g_console_print(crlf);
+        nm_console_print(crlf);
 
         if (in_len == 0) {
-          g_console_print(cmd_prompt);
+          nm_console_print(cmd_prompt);
           cmd_hist_cur = cmd_hist_last;
           break;
         }
@@ -376,11 +397,11 @@ void g_console_task(void *pvp) {
         do {
           ret = FreeRTOS_CLIProcessCommand(in_str, out_str,
                                            configCOMMAND_INT_MAX_OUTPUT_SIZE);
-          g_console_print(out_str);
+          nm_console_print(out_str);
         } while (ret != pdFALSE);
 
-        g_console_print(crlf);
-        g_console_print(cmd_prompt);
+        nm_console_print(crlf);
+        nm_console_print(cmd_prompt);
 
         s_cmd_hist_add(in_str, in_len);
         in_len = 0;
@@ -388,7 +409,7 @@ void g_console_task(void *pvp) {
         break;
 
       default:
-        g_console_write(&ch, sizeof(ch));
+        nm_console_write(&ch, sizeof(ch));
 
         if ((ch >= ' ') && (ch <= '~')) {
           if (in_len < MAX_INPUT_LEN) {
