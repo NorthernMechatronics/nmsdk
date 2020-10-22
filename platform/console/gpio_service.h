@@ -29,8 +29,8 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _GPIO_H_
-#define _GPIO_H_
+#ifndef _GPIO_SERVICE_H_
+#define _GPIO_SERVICE_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -44,4 +44,4 @@ void gpio_task(void *pvp);
 }
 #endif  // defined(__cplusplus)
 
-#endif /* _GPIO_H_ */
+#endif /* _GPIO_SERVICE_H_ */

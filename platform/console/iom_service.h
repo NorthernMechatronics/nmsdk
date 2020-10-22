@@ -29,8 +29,8 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _IOM_H_
-#define _IOM_H_
+#ifndef _IOM_SERVICE_H_
+#define _IOM_SERVICE_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -44,4 +44,4 @@ void iom_task(void *pvp);
 }
 #endif  // defined(__cplusplus)
 
-#endif /* _IOM_H_ */
+#endif /* _IOM_SERVICE_H_ */
