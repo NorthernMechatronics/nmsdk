@@ -2,7 +2,7 @@ SDKROOT?=..
 include $(SDKROOT)/makedefs/nm_common.mk
 
 ifndef CORDIO
-  CORDIO  := $(AMBIQ_SDK)/third_party/exactle
+  CORDIO  := $(AMBIQ_SDK)/third_party/cordio
   $(warning Cordio source location CORDIO not defined )
   ifneq "$(wildcard $(CORDIO) )" ""
     $(warning found Cordio at $(CORDIO))

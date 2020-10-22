@@ -157,7 +157,7 @@ SRC += hci_core.c
 SRC += hci_core_ps.c
 SRC += hci_evt.c
 SRC += hci_tr.c
-SRC += hci_vs.c
+SRC += hci_vs_apollo3.c
 SRC += hci_vs_ae.c
 
 SRC += sec_aes.c
@@ -328,9 +328,11 @@ SRC += wsps_main.c
 SRC += app_disc.c
 SRC += app_main.c
 SRC += app_master.c
+SRC += app_master_ae.c
 SRC += app_master_leg.c
 SRC += app_server.c
 SRC += app_slave.c
+SRC += app_slave_ae.c
 SRC += app_slave_leg.c
 SRC += app_terminal.c
 
