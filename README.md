@@ -20,7 +20,7 @@ For more details on building the SDK on a host platform, please check the **User
 | --------- | ----------- |
 | bsp | Pre-defined board support packages |
 | doc | Documentation |
-| features | SDK bindings and build scripts to other software packages |
+| features | SDK bindings and build scripts for other software packages |
 | platform | NM platform service code |
 
 ## Build Instructions
@@ -29,11 +29,11 @@ For more details on building the SDK on a host platform, please check the **User
 * make
 
 ### Installation
-* Clone the [NMSDK](http://gitlab.northernmechatronics.com:50250/nmi/software/nmsdk).
+* Clone the [NMSDK](https://github.com/NorthernMechatronics/nmsdk).
 
-```git clone ssh://git@gitlab.northernmechatronics.com:50251/nmi/software/nmsdk.git```
+```git clone https://github.com/NorthernMechatronics/nmsdk.git```
 
-* Download and install [AmbiqSuite](https://ambiq.com/apollo3-blue-low-power-mcu-family/#documents).
+* Download and install the [AmbiqSuite](https://ambiq.com/wp-content/uploads/2020/09/AmbiqSuite-R2.5.1.zip).
 
 * Clone [FreeRTOS](https://github.com/FreeRTOS/FreeRTOS).  Make sure to clone with the `--recurse-submodules` argument.
 
