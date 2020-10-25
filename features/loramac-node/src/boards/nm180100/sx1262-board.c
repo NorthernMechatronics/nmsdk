@@ -7,7 +7,6 @@
  * Ambiq Micro header files
  ******************************************************************************/
 #include <am_mcu_apollo.h>
-#include <am_bsp.h>
 #include <am_util.h>
 
 /******************************************************************************
@@ -26,6 +25,78 @@
  * Macros
  ******************************************************************************/
 #define SX1262_IOM_MODULE                      (3)
+
+#define AM_BSP_GPIO_RADIO_NRESET        44
+static const am_hal_gpio_pincfg_t s_AM_BSP_GPIO_RADIO_NRESET =
+{
+    .uFuncSel            = AM_HAL_PIN_44_GPIO,
+    .eDriveStrength      = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA
+};
+
+#define AM_BSP_GPIO_RADIO_BUSY          39
+static const am_hal_gpio_pincfg_t s_AM_BSP_GPIO_RADIO_BUSY =
+{
+    .uFuncSel            = AM_HAL_PIN_39_GPIO,
+    .eDriveStrength      = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
+    .eGPInput            = AM_HAL_GPIO_PIN_INPUT_ENABLE
+};
+
+#define AM_BSP_GPIO_RADIO_DIO1          40
+static const am_hal_gpio_pincfg_t s_AM_BSP_GPIO_RADIO_DIO1 =
+{
+    .uFuncSel            = AM_HAL_PIN_40_GPIO,
+    .eDriveStrength      = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
+    .eGPInput            = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+    .eIntDir             = AM_HAL_GPIO_PIN_INTDIR_LO2HI
+};
+
+#define AM_BSP_GPIO_RADIO_DIO3          47
+static const am_hal_gpio_pincfg_t s_AM_BSP_GPIO_RADIO_DIO3 =
+{
+    .uFuncSel            = AM_HAL_PIN_47_GPIO,
+    .eDriveStrength      = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
+    .eGPInput            = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+    .eIntDir             = AM_HAL_GPIO_PIN_INTDIR_LO2HI
+};
+
+#define AM_BSP_GPIO_RADIO_NSS           36
+#define AM_BSP_RADIO_NSS_CHNL           1
+static const am_hal_gpio_pincfg_t s_AM_BSP_GPIO_RADIO_NSS =
+{
+    .uFuncSel            = AM_HAL_PIN_36_NCE36,
+    .eDriveStrength      = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
+    .eGPOutcfg           = AM_HAL_GPIO_PIN_OUTCFG_PUSHPULL,
+    .eGPInput            = AM_HAL_GPIO_PIN_INPUT_NONE,
+    .eIntDir             = AM_HAL_GPIO_PIN_INTDIR_LO2HI,
+    .uIOMnum             = 3,
+    .uNCE                = 1,
+    .eCEpol              = AM_HAL_GPIO_PIN_CEPOL_ACTIVELOW
+};
+
+#define AM_BSP_GPIO_RADIO_MISO          43
+static const am_hal_gpio_pincfg_t s_AM_BSP_GPIO_RADIO_MISO =
+{
+    .uFuncSel            = AM_HAL_PIN_43_M3MISO,
+    .uIOMnum             = 3
+};
+
+#define AM_BSP_GPIO_RADIO_MOSI          38
+static const am_hal_gpio_pincfg_t s_AM_BSP_GPIO_RADIO_MOSI =
+{
+    .uFuncSel            = AM_HAL_PIN_38_M3MOSI,
+    .eDriveStrength      = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
+    .uIOMnum             = 3
+};
+
+#define AM_BSP_GPIO_RADIO_CLK           42
+static const am_hal_gpio_pincfg_t s_AM_BSP_GPIO_RADIO_CLK =
+{
+    .uFuncSel            = AM_HAL_PIN_42_M3SCK,
+    .eDriveStrength      = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA,
+    .uIOMnum             = 3
+};
+
+
 
 /******************************************************************************
  * Local declarations
@@ -277,13 +348,13 @@ static void s_sx1262_isr(void)
  ******************************************************************************/
 void SX126xIoInit(void)
 {
-  am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NRESET, g_AM_BSP_GPIO_RADIO_NRESET);
+  am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NRESET, s_AM_BSP_GPIO_RADIO_NRESET);
   am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
   am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_SET);
-  am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_BUSY, g_AM_BSP_GPIO_RADIO_BUSY);
+  am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_BUSY, s_AM_BSP_GPIO_RADIO_BUSY);
 
   am_hal_gpio_interrupt_register(AM_BSP_GPIO_RADIO_DIO1, (am_hal_gpio_handler_t) s_sx1262_isr);
-  am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_DIO1, g_AM_BSP_GPIO_RADIO_DIO1);
+  am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_DIO1, s_AM_BSP_GPIO_RADIO_DIO1);
 
   am_hal_gpio_interrupt_clear(AM_HAL_GPIO_BIT(AM_BSP_GPIO_RADIO_DIO1));
 

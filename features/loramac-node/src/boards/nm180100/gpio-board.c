@@ -1,9 +1,10 @@
 #include <am_mcu_apollo.h>
-#include <am_bsp.h>
-
 #include <FreeRTOSConfig.h>
 
 #include "gpio-board.h"
+
+#define AM_BSP_GPIO_RADIO_BUSY   39
+#define AM_BSP_GPIO_RADIO_NRESET 44
 
 void GpioMcuInit(Gpio_t *obj, PinNames pin, PinModes mode, PinConfigs config, PinTypes type, uint32_t value)
 {
@@ -16,11 +17,11 @@ void GpioMcuInit(Gpio_t *obj, PinNames pin, PinModes mode, PinConfigs config, Pi
 
   if(mode == PIN_INPUT)
   {
-    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_BUSY, g_AM_BSP_GPIO_RADIO_BUSY);
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_BUSY, g_AM_HAL_GPIO_INPUT);
   }
   else
   {
-    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NRESET, g_AM_BSP_GPIO_RADIO_NRESET);
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_RADIO_NRESET, g_AM_HAL_GPIO_OUTPUT);
     am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
     am_hal_gpio_state_write(AM_BSP_GPIO_RADIO_NRESET, AM_HAL_GPIO_OUTPUT_SET);
   }
