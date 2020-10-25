@@ -34,7 +34,7 @@
 
 #if defined(__cplusplus)
 extern "C" {
-#endif  // defined(__cplusplus)
+#endif // defined(__cplusplus)
 
 #define CONSOLE_UART_INST 0
 
@@ -48,6 +48,6 @@ extern void nm_console_print_prompt();
 
 #if defined(__cplusplus)
 }
-#endif  // defined(__cplusplus)
+#endif // defined(__cplusplus)
 
-#endif  // !defined(__CONSOLE_TASK_H__)
+#endif // !defined(__CONSOLE_TASK_H__)

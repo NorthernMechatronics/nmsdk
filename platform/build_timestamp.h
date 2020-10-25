@@ -33,8 +33,7 @@
 #define __BUILD_TIMESTAMP_H__
 
 #if defined(__cplusplus)
-extern "C"
-{
+extern "C" {
 #endif // defined(__cplusplus)
 
 char *build_timestamp(void);

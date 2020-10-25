@@ -34,7 +34,7 @@
 
 #if defined(__cplusplus)
 extern "C" {
-#endif  // defined(__cplusplus)
+#endif // defined(__cplusplus)
 
 // constant strings used by lora_console to set the radio configuration
 extern const char LORA_RADIO_FREQUENCY[];
@@ -56,6 +56,6 @@ extern void lora_direct_radio_configuration_reset(void);
 
 #if defined(__cplusplus)
 }
-#endif  // defined(__cplusplus)
+#endif // defined(__cplusplus)
 
 #endif /* _LORA_DIRECT_CONFIG_H_ */

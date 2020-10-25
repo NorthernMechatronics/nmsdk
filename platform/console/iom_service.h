@@ -34,7 +34,7 @@
 
 #if defined(__cplusplus)
 extern "C" {
-#endif  // defined(__cplusplus)
+#endif // defined(__cplusplus)
 
 extern TaskHandle_t nm_iom_task_handle;
 
@@ -42,6 +42,6 @@ void nm_iom_task(void *pvp);
 
 #if defined(__cplusplus)
 }
-#endif  // defined(__cplusplus)
+#endif // defined(__cplusplus)
 
 #endif /* _IOM_SERVICE_H_ */

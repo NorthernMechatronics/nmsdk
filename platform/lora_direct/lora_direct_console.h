@@ -34,7 +34,7 @@
 
 #if defined(__cplusplus)
 extern "C" {
-#endif  // defined(__cplusplus)
+#endif // defined(__cplusplus)
 
 extern TaskHandle_t lora_direct_console_task_handle;
 
@@ -42,6 +42,6 @@ void lora_direct_console_task(void *pvp);
 
 #if defined(__cplusplus)
 }
-#endif  // defined(__cplusplus)
+#endif // defined(__cplusplus)
 
 #endif /* _LORA_DIRECT_CONSOLE_H_ */

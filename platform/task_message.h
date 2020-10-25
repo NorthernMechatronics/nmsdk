@@ -34,10 +34,9 @@
 
 #include <stdint.h>
 
-typedef struct
-{
-	uint32_t  ui32Event;
-	void     *psContent;
+typedef struct {
+    uint32_t ui32Event;
+    void *psContent;
 } task_message_t;
 
 #endif /* __TASK_MESSAGE_H__ */

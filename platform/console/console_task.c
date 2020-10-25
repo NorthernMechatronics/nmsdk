@@ -42,8 +42,8 @@
 #include <semphr.h>
 #include <task.h>
 
-#include "console_task.h"
 #include "build_timestamp.h"
+#include "console_task.h"
 
 /******************************************************************************
  * Macros
@@ -60,10 +60,9 @@ static char in_str[MAX_INPUT_LEN];
 static uint8_t in_len = 0;
 
 static const char *cmd_prompt = "> ";
-static const char *welcome_msg =
-    "\r\n"
-    "Northern Mechatronics\r\n\r\n"
-    "NM180100 Command Console\r\n";
+static const char *welcome_msg = "\r\n"
+                                 "Northern Mechatronics\r\n\r\n"
+                                 "NM180100 Command Console\r\n";
 
 static char cmd_hist[MAX_CMD_HIST_LEN][MAX_INPUT_LEN];
 static uint8_t cmd_hist_len = 0;
@@ -118,22 +117,23 @@ TaskHandle_t nm_console_task_handle;
  *  @cmd      - {description}
  *
  ******************************************************************************/
-static void s_cmd_hist_add(const char *cmd, size_t len) {
-  uint8_t next;
+static void s_cmd_hist_add(const char *cmd, size_t len)
+{
+    uint8_t next;
 
-  if (cmd_hist_len < MAX_CMD_HIST_LEN) {
-    next = cmd_hist_len;
-    cmd_hist_len++;
-  } else {
-    next = (cmd_hist_last + 1) % MAX_CMD_HIST_LEN;
-  }
-  strncpy(cmd_hist[next], cmd, len);
-  cmd_hist_last = next;
-  cmd_hist_cur = next;
-  // wrap-around
-  if (cmd_hist_last == cmd_hist_first && cmd_hist_len == MAX_CMD_HIST_LEN) {
-    cmd_hist_first = (cmd_hist_first + 1) % MAX_CMD_HIST_LEN;
-  }
+    if (cmd_hist_len < MAX_CMD_HIST_LEN) {
+        next = cmd_hist_len;
+        cmd_hist_len++;
+    } else {
+        next = (cmd_hist_last + 1) % MAX_CMD_HIST_LEN;
+    }
+    strncpy(cmd_hist[next], cmd, len);
+    cmd_hist_last = next;
+    cmd_hist_cur = next;
+    // wrap-around
+    if (cmd_hist_last == cmd_hist_first && cmd_hist_len == MAX_CMD_HIST_LEN) {
+        cmd_hist_first = (cmd_hist_first + 1) % MAX_CMD_HIST_LEN;
+    }
 }
 
 /******************************************************************************
@@ -145,22 +145,23 @@ static void s_cmd_hist_add(const char *cmd, size_t len) {
  *  Command from history buffer
  *
  ******************************************************************************/
-static const char *s_cmd_hist_up(void) {
-  const char *cmd;
+static const char *s_cmd_hist_up(void)
+{
+    const char *cmd;
 
-  // Empty history buffer
-  if (cmd_hist_len == 0) {
-    return NULL;
-  }
+    // Empty history buffer
+    if (cmd_hist_len == 0) {
+        return NULL;
+    }
 
-  if (cmd_hist_cur == cmd_hist_len) {
-    cmd = NULL;
-  } else {
-    cmd = cmd_hist[cmd_hist_cur];
-  }
-  cmd_hist_cur = (cmd_hist_cur + cmd_hist_len) % (cmd_hist_len + 1);
+    if (cmd_hist_cur == cmd_hist_len) {
+        cmd = NULL;
+    } else {
+        cmd = cmd_hist[cmd_hist_cur];
+    }
+    cmd_hist_cur = (cmd_hist_cur + cmd_hist_len) % (cmd_hist_len + 1);
 
-  return cmd;
+    return cmd;
 }
 
 /******************************************************************************
@@ -172,18 +173,19 @@ static const char *s_cmd_hist_up(void) {
  *  Command from history buffer
  *
  ******************************************************************************/
-static const char *s_cmd_hist_down(void) {
-  // Empty history buffer
-  if (cmd_hist_len == 0) {
-    return NULL;
-  }
+static const char *s_cmd_hist_down(void)
+{
+    // Empty history buffer
+    if (cmd_hist_len == 0) {
+        return NULL;
+    }
 
-  cmd_hist_cur = (cmd_hist_cur + 1) % (cmd_hist_len + 1);
-  if (cmd_hist_cur == cmd_hist_len) {
-    return NULL;
-  }
+    cmd_hist_cur = (cmd_hist_cur + 1) % (cmd_hist_len + 1);
+    if (cmd_hist_cur == cmd_hist_len) {
+        return NULL;
+    }
 
-  return cmd_hist[cmd_hist_cur];
+    return cmd_hist[cmd_hist_cur];
 }
 
 /******************************************************************************
@@ -195,14 +197,15 @@ static const char *s_cmd_hist_down(void) {
  *    @pos    - Position to delete from
  *
  ******************************************************************************/
-static void s_clearln(uint8_t pos) {
-  char buf[16];
+static void s_clearln(uint8_t pos)
+{
+    char buf[16];
 
-  if (pos > 0) {
-    // ANSI escape code CUB
-    am_util_stdio_sprintf(buf, "\e[%dD\e[0K", pos);
-    nm_console_print(buf);
-  }
+    if (pos > 0) {
+        // ANSI escape code CUB
+        am_util_stdio_sprintf(buf, "\e[%dD\e[0K", pos);
+        nm_console_print(buf);
+    }
 }
 
 /******************************************************************************
@@ -218,10 +221,7 @@ static void s_clearln(uint8_t pos) {
  ******************************************************************************/
 void nm_console_print(const char *str) { nm_console_write(str, strlen(str)); }
 
-void nm_console_print_prompt()
-{
-  nm_console_print(cmd_prompt);
-}
+void nm_console_print_prompt() { nm_console_print(cmd_prompt); }
 
 /******************************************************************************
  * g_console_write
@@ -233,50 +233,53 @@ void nm_console_print_prompt()
  *  @len      - Number of characters from buffer to output
  *
  ******************************************************************************/
-void nm_console_write(const char *buf, size_t len) {
-  xSemaphoreTake(g_sConsoleMutex, portMAX_DELAY);
+void nm_console_write(const char *buf, size_t len)
+{
+    xSemaphoreTake(g_sConsoleMutex, portMAX_DELAY);
 
-  uint8_t *pui8String = (uint8_t *)buf;
-  uint32_t ui32BytesWritten = 0;
-  uint32_t ui32TotalLength = len;
-  uint32_t ui32TotalWritten = 0;
+    uint8_t *pui8String = (uint8_t *)buf;
+    uint32_t ui32BytesWritten = 0;
+    uint32_t ui32TotalLength = len;
+    uint32_t ui32TotalWritten = 0;
 
-  am_hal_uart_transfer_t sUartWrite = {
-      .ui32Direction = AM_HAL_UART_WRITE,
-      .pui8Data = pui8String,
-      .ui32NumBytes = ui32TotalLength < CONSOLE_UART_BUFFER_SIZE
-                          ? ui32TotalLength
-                          : CONSOLE_UART_BUFFER_SIZE,
-      .ui32TimeoutMs = 0,
-      .pui32BytesTransferred = &ui32BytesWritten,
-  };
+    am_hal_uart_transfer_t sUartWrite = {
+        .ui32Direction = AM_HAL_UART_WRITE,
+        .pui8Data = pui8String,
+        .ui32NumBytes = ui32TotalLength < CONSOLE_UART_BUFFER_SIZE
+                            ? ui32TotalLength
+                            : CONSOLE_UART_BUFFER_SIZE,
+        .ui32TimeoutMs = 0,
+        .pui32BytesTransferred = &ui32BytesWritten,
+    };
 
-  while (ui32TotalWritten < ui32TotalLength) {
-    am_hal_uart_transfer(g_sCOMUART, &sUartWrite);
-    pui8String += ui32BytesWritten;
-    len -= ui32BytesWritten;
-    ui32TotalWritten += ui32BytesWritten;
+    while (ui32TotalWritten < ui32TotalLength) {
+        am_hal_uart_transfer(g_sCOMUART, &sUartWrite);
+        pui8String += ui32BytesWritten;
+        len -= ui32BytesWritten;
+        ui32TotalWritten += ui32BytesWritten;
 
-    sUartWrite.pui8Data = pui8String;
-    sUartWrite.ui32NumBytes = ui32TotalLength < CONSOLE_UART_BUFFER_SIZE
-                                  ? ui32TotalLength
-                                  : CONSOLE_UART_BUFFER_SIZE;
-  }
+        sUartWrite.pui8Data = pui8String;
+        sUartWrite.ui32NumBytes = ui32TotalLength < CONSOLE_UART_BUFFER_SIZE
+                                      ? ui32TotalLength
+                                      : CONSOLE_UART_BUFFER_SIZE;
+    }
 
-  xSemaphoreGive(g_sConsoleMutex);
+    xSemaphoreGive(g_sConsoleMutex);
 }
 
-char nm_console_read() {
-  size_t received = 0;
-  uint8_t ch;
+char nm_console_read()
+{
+    size_t received = 0;
+    uint8_t ch;
 
-  while (received < 1) {
-    if (xQueueReceive(g_sConsoleQueueHandle, &ch, portMAX_DELAY) == pdPASS) {
-      received++;
+    while (received < 1) {
+        if (xQueueReceive(g_sConsoleQueueHandle, &ch, portMAX_DELAY) ==
+            pdPASS) {
+            received++;
+        }
     }
-  }
 
-  return ch;
+    return ch;
 }
 
 /******************************************************************************
@@ -285,36 +288,37 @@ char nm_console_read() {
  * Console task setup function
  *
  ******************************************************************************/
-void g_console_task_setup(void) {
-  g_sConsoleMutex = xSemaphoreCreateMutex();
-  g_sConsoleQueueHandle =
-      xQueueCreate(CONSOLE_UART_BUFFER_SIZE, sizeof(uint8_t));
-  //
-  // Initialize, power up, and configure the communication UART. Use the
-  // custom configuration if it was provided. Otherwise, just use the default
-  // configuration.
-  //
-  am_hal_uart_initialize(CONSOLE_UART_INST, &g_sCOMUART);
-  am_hal_uart_power_control(g_sCOMUART, AM_HAL_SYSCTRL_WAKE, false);
-  am_hal_uart_configure(g_sCOMUART, &g_sConsoleUartBufferedConfig);
+void g_console_task_setup(void)
+{
+    g_sConsoleMutex = xSemaphoreCreateMutex();
+    g_sConsoleQueueHandle =
+        xQueueCreate(CONSOLE_UART_BUFFER_SIZE, sizeof(uint8_t));
+    //
+    // Initialize, power up, and configure the communication UART. Use the
+    // custom configuration if it was provided. Otherwise, just use the default
+    // configuration.
+    //
+    am_hal_uart_initialize(CONSOLE_UART_INST, &g_sCOMUART);
+    am_hal_uart_power_control(g_sCOMUART, AM_HAL_SYSCTRL_WAKE, false);
+    am_hal_uart_configure(g_sCOMUART, &g_sConsoleUartBufferedConfig);
 
-  //
-  // Enable the UART pins.
-  //
-  am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_BSP_GPIO_COM_UART_TX);
-  am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_BSP_GPIO_COM_UART_RX);
+    //
+    // Enable the UART pins.
+    //
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_BSP_GPIO_COM_UART_TX);
+    am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_BSP_GPIO_COM_UART_RX);
 
-  //
-  // Enable the interrupts for the UART.
-  //
-  am_hal_uart_interrupt_enable(g_sCOMUART, AM_HAL_UART_INT_TXCMP |
-                                               AM_HAL_UART_INT_RX_TMOUT |
-                                               AM_HAL_UART_INT_RX);
-  NVIC_SetPriority((IRQn_Type)(UART0_IRQn + CONSOLE_UART_INST),
-                   NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY);
-  NVIC_EnableIRQ((IRQn_Type)(UART0_IRQn + CONSOLE_UART_INST));
+    //
+    // Enable the interrupts for the UART.
+    //
+    am_hal_uart_interrupt_enable(g_sCOMUART, AM_HAL_UART_INT_TXCMP |
+                                                 AM_HAL_UART_INT_RX_TMOUT |
+                                                 AM_HAL_UART_INT_RX);
+    NVIC_SetPriority((IRQn_Type)(UART0_IRQn + CONSOLE_UART_INST),
+                     NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY);
+    NVIC_EnableIRQ((IRQn_Type)(UART0_IRQn + CONSOLE_UART_INST));
 
-  memset(cmd_hist, 0, MAX_CMD_HIST_LEN * MAX_INPUT_LEN);
+    memset(cmd_hist, 0, MAX_CMD_HIST_LEN * MAX_INPUT_LEN);
 }
 
 /******************************************************************************
@@ -326,129 +330,131 @@ void g_console_task_setup(void) {
  *  @pvp      - FreeRTOS parameters
  *
  ******************************************************************************/
-void nm_console_task(void *pvp) {
-  char ch;
-  char *out_str;
-  portBASE_TYPE ret;
+void nm_console_task(void *pvp)
+{
+    char ch;
+    char *out_str;
+    portBASE_TYPE ret;
 
-  out_str = FreeRTOS_CLIGetOutputBuffer();
+    out_str = FreeRTOS_CLIGetOutputBuffer();
 
-  g_console_task_setup();
+    g_console_task_setup();
 
-  nm_console_print(welcome_msg);
-  nm_console_print("Built on: ");
-  nm_console_print(build_timestamp());
-  nm_console_print(crlf);
-  nm_console_print(crlf);
-  nm_console_print(cmd_prompt);
+    nm_console_print(welcome_msg);
+    nm_console_print("Built on: ");
+    nm_console_print(build_timestamp());
+    nm_console_print(crlf);
+    nm_console_print(crlf);
+    nm_console_print(cmd_prompt);
 
-  while (1) {
-    ch = nm_console_read();
-
-    switch ((uint8_t)ch) {
-      case '\e':
+    while (1) {
         ch = nm_console_read();
-        ch = nm_console_read();
-        if (ch == 'A') {
-          const char *cmd = s_cmd_hist_up();
 
-          s_clearln(in_len);
-          if (cmd != NULL) {
-            strcpy(in_str, cmd);
-            in_len = strlen(in_str);
-            nm_console_write(in_str, in_len);
-          } else {
+        switch ((uint8_t)ch) {
+        case '\e':
+            ch = nm_console_read();
+            ch = nm_console_read();
+            if (ch == 'A') {
+                const char *cmd = s_cmd_hist_up();
+
+                s_clearln(in_len);
+                if (cmd != NULL) {
+                    strcpy(in_str, cmd);
+                    in_len = strlen(in_str);
+                    nm_console_write(in_str, in_len);
+                } else {
+                    in_len = 0;
+                }
+            } else if (ch == 'B') {
+                const char *cmd = s_cmd_hist_down();
+
+                s_clearln(in_len);
+                if (cmd != NULL) {
+                    strcpy(in_str, cmd);
+                    in_len = strlen(in_str);
+                    nm_console_write(in_str, in_len);
+                } else {
+                    in_len = 0;
+                }
+            }
+            break;
+
+        case '\b':
+        case '\x7f':
+            if (in_len > 0) {
+                s_clearln(in_len--);
+
+                in_str[in_len] = '\0';
+                nm_console_write(in_str, in_len);
+            }
+            break;
+
+        case '\r':
+        case '\n':
+            nm_console_print(crlf);
+
+            if (in_len == 0) {
+                nm_console_print(cmd_prompt);
+                cmd_hist_cur = cmd_hist_last;
+                break;
+            }
+
+            do {
+                ret = FreeRTOS_CLIProcessCommand(
+                    in_str, out_str, configCOMMAND_INT_MAX_OUTPUT_SIZE);
+                nm_console_print(out_str);
+            } while (ret != pdFALSE);
+
+            nm_console_print(crlf);
+            nm_console_print(cmd_prompt);
+
+            s_cmd_hist_add(in_str, in_len);
             in_len = 0;
-          }
-        } else if (ch == 'B') {
-          const char *cmd = s_cmd_hist_down();
+            memset(in_str, 0x00, MAX_INPUT_LEN);
+            break;
 
-          s_clearln(in_len);
-          if (cmd != NULL) {
-            strcpy(in_str, cmd);
-            in_len = strlen(in_str);
-            nm_console_write(in_str, in_len);
-          } else {
-            in_len = 0;
-          }
+        default:
+            nm_console_write(&ch, sizeof(ch));
+
+            if ((ch >= ' ') && (ch <= '~')) {
+                if (in_len < MAX_INPUT_LEN) {
+                    in_str[in_len] = ch;
+                    in_len++;
+                }
+            }
+            break;
         }
-        break;
-
-      case '\b':
-      case '\x7f':
-        if (in_len > 0) {
-          s_clearln(in_len--);
-
-          in_str[in_len] = '\0';
-          nm_console_write(in_str, in_len);
-        }
-        break;
-
-      case '\r':
-      case '\n':
-        nm_console_print(crlf);
-
-        if (in_len == 0) {
-          nm_console_print(cmd_prompt);
-          cmd_hist_cur = cmd_hist_last;
-          break;
-        }
-
-        do {
-          ret = FreeRTOS_CLIProcessCommand(in_str, out_str,
-                                           configCOMMAND_INT_MAX_OUTPUT_SIZE);
-          nm_console_print(out_str);
-        } while (ret != pdFALSE);
-
-        nm_console_print(crlf);
-        nm_console_print(cmd_prompt);
-
-        s_cmd_hist_add(in_str, in_len);
-        in_len = 0;
-        memset(in_str, 0x00, MAX_INPUT_LEN);
-        break;
-
-      default:
-        nm_console_write(&ch, sizeof(ch));
-
-        if ((ch >= ' ') && (ch <= '~')) {
-          if (in_len < MAX_INPUT_LEN) {
-            in_str[in_len] = ch;
-            in_len++;
-          }
-        }
-        break;
     }
-  }
 }
 
-void am_uart_isr() {
-  portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+void am_uart_isr()
+{
+    portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
 
-  uint32_t ui32Status, ui32Idle;
-  am_hal_uart_interrupt_status_get(g_sCOMUART, &ui32Status, true);
-  am_hal_uart_interrupt_clear(g_sCOMUART, ui32Status);
-  am_hal_uart_interrupt_service(g_sCOMUART, ui32Status, &ui32Idle);
+    uint32_t ui32Status, ui32Idle;
+    am_hal_uart_interrupt_status_get(g_sCOMUART, &ui32Status, true);
+    am_hal_uart_interrupt_clear(g_sCOMUART, ui32Status);
+    am_hal_uart_interrupt_service(g_sCOMUART, ui32Status, &ui32Idle);
 
-  if ((ui32Status & AM_HAL_UART_INT_RX) ||
-      (ui32Status & AM_HAL_UART_INT_RX_TMOUT)) {
-    uint8_t ui8Buffer[32];
-    uint32_t ui32BytesRead = 0;
-    am_hal_uart_transfer_t sUartRead = {
-        .ui32Direction = AM_HAL_UART_READ,
-        .pui8Data = ui8Buffer,
-        .ui32NumBytes = 32,
-        .ui32TimeoutMs = 0,
-        .pui32BytesTransferred = &ui32BytesRead,
-    };
+    if ((ui32Status & AM_HAL_UART_INT_RX) ||
+        (ui32Status & AM_HAL_UART_INT_RX_TMOUT)) {
+        uint8_t ui8Buffer[32];
+        uint32_t ui32BytesRead = 0;
+        am_hal_uart_transfer_t sUartRead = {
+            .ui32Direction = AM_HAL_UART_READ,
+            .pui8Data = ui8Buffer,
+            .ui32NumBytes = 32,
+            .ui32TimeoutMs = 0,
+            .pui32BytesTransferred = &ui32BytesRead,
+        };
 
-    am_hal_uart_transfer(g_sCOMUART, &sUartRead);
+        am_hal_uart_transfer(g_sCOMUART, &sUartRead);
 
-    for (int i = 0; i < ui32BytesRead; i++) {
-      xQueueSendFromISR(g_sConsoleQueueHandle, &ui8Buffer[i],
-                        &xHigherPriorityTaskWoken);
+        for (int i = 0; i < ui32BytesRead; i++) {
+            xQueueSendFromISR(g_sConsoleQueueHandle, &ui8Buffer[i],
+                              &xHigherPriorityTaskWoken);
+        }
     }
-  }
 
-  portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+    portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 }

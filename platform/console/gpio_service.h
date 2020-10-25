@@ -34,7 +34,7 @@
 
 #if defined(__cplusplus)
 extern "C" {
-#endif  // defined(__cplusplus)
+#endif // defined(__cplusplus)
 
 extern TaskHandle_t nm_gpio_task_handle;
 
@@ -42,6 +42,6 @@ void nm_gpio_task(void *pvp);
 
 #if defined(__cplusplus)
 }
-#endif  // defined(__cplusplus)
+#endif // defined(__cplusplus)
 
 #endif /* _GPIO_SERVICE_H_ */
