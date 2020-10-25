@@ -97,52 +97,52 @@ void PrintHexBuffer( uint8_t *buffer, uint8_t size )
     {
         if( newline != 0 )
         {
-            printf( "\r\n" );
+            am_util_stdio_printf( "\r\n" );
             newline = 0;
         }
 
-        printf( "%02X ", buffer[i] );
+        am_util_stdio_printf( "%02X ", buffer[i] );
 
         if( ( ( i + 1 ) % 16 ) == 0 )
         {
             newline = 1;
         }
     }
-    printf( "\r\n" );
+    am_util_stdio_printf( "\r\n" );
 }
 
 void DisplayNvmContextChange( LmHandlerNvmContextStates_t state )
 {
     if( state == LORAMAC_HANDLER_NVM_STORE )
     {
-        printf( "\r\n###### ============ CTXS STORED ============ ######\r\n\r\n" );
+        am_util_stdio_printf( "\r\n###### ============ CTXS STORED ============ ######\r\n\r\n" );
     }
     else
     {
-        printf( "\r\n###### =========== CTXS RESTORED =========== ######\r\n\r\n" );
+        am_util_stdio_printf( "\r\n###### =========== CTXS RESTORED =========== ######\r\n\r\n" );
     }
 }
 
 void DisplayNetworkParametersUpdate( CommissioningParams_t *commissioningParams )
 {
-    printf( "DevEui      : %02X", commissioningParams->DevEui[0] );
+    am_util_stdio_printf( "DevEui      : %02X", commissioningParams->DevEui[0] );
     for( int i = 1; i < 8; i++ )
     {
-        printf( "-%02X", commissioningParams->DevEui[i] );
+        am_util_stdio_printf( "-%02X", commissioningParams->DevEui[i] );
     }
-    printf( "\r\n" );
-    printf( "JoinEui     : %02X", commissioningParams->JoinEui[0] );
+    am_util_stdio_printf( "\r\n" );
+    am_util_stdio_printf( "JoinEui     : %02X", commissioningParams->JoinEui[0] );
     for( int i = 1; i < 8; i++ )
     {
-        printf( "-%02X", commissioningParams->JoinEui[i] );
+        am_util_stdio_printf( "-%02X", commissioningParams->JoinEui[i] );
     }
-    printf( "\r\n" );
-    printf( "Pin         : %02X", commissioningParams->SePin[0] );
+    am_util_stdio_printf( "\r\n" );
+    am_util_stdio_printf( "Pin         : %02X", commissioningParams->SePin[0] );
     for( int i = 1; i < 4; i++ )
     {
-        printf( "-%02X", commissioningParams->SePin[i] );
+        am_util_stdio_printf( "-%02X", commissioningParams->SePin[i] );
     }
-    printf( "\r\n\r\n" );
+    am_util_stdio_printf( "\r\n\r\n" );
 }
 
 void DisplayMacMcpsRequestUpdate( LoRaMacStatus_t status, McpsReq_t *mcpsReq, TimerTime_t nextTxIn )
@@ -151,37 +151,37 @@ void DisplayMacMcpsRequestUpdate( LoRaMacStatus_t status, McpsReq_t *mcpsReq, Ti
     {
         case MCPS_CONFIRMED:
         {
-            printf( "\r\n###### =========== MCPS-Request ============ ######\r\n" );
-            printf( "######            MCPS_CONFIRMED             ######\r\n");
-            printf( "###### ===================================== ######\r\n");
+            am_util_stdio_printf( "\r\n###### =========== MCPS-Request ============ ######\r\n" );
+            am_util_stdio_printf( "######            MCPS_CONFIRMED             ######\r\n");
+            am_util_stdio_printf( "###### ===================================== ######\r\n");
             break;
         }
         case MCPS_UNCONFIRMED:
         {
-            printf( "\r\n###### =========== MCPS-Request ============ ######\r\n" );
-            printf( "######           MCPS_UNCONFIRMED            ######\r\n");
-            printf( "###### ===================================== ######\r\n");
+            am_util_stdio_printf( "\r\n###### =========== MCPS-Request ============ ######\r\n" );
+            am_util_stdio_printf( "######           MCPS_UNCONFIRMED            ######\r\n");
+            am_util_stdio_printf( "###### ===================================== ######\r\n");
             break;
         }
         case MCPS_PROPRIETARY:
         {
-            printf( "\r\n###### =========== MCPS-Request ============ ######\r\n" );
-            printf( "######           MCPS_PROPRIETARY            ######\r\n");
-            printf( "###### ===================================== ######\r\n");
+            am_util_stdio_printf( "\r\n###### =========== MCPS-Request ============ ######\r\n" );
+            am_util_stdio_printf( "######           MCPS_PROPRIETARY            ######\r\n");
+            am_util_stdio_printf( "###### ===================================== ######\r\n");
             break;
         }
         default:
         {
-            printf( "\r\n###### =========== MCPS-Request ============ ######\r\n" );
-            printf( "######                MCPS_ERROR             ######\r\n");
-            printf( "###### ===================================== ######\r\n");
+            am_util_stdio_printf( "\r\n###### =========== MCPS-Request ============ ######\r\n" );
+            am_util_stdio_printf( "######                MCPS_ERROR             ######\r\n");
+            am_util_stdio_printf( "###### ===================================== ######\r\n");
             break;
         }
     }
-    printf( "STATUS      : %s\r\n", MacStatusStrings[status] );
+    am_util_stdio_printf( "STATUS      : %s\r\n", MacStatusStrings[status] );
     if( status == LORAMAC_STATUS_DUTYCYCLE_RESTRICTED )
     {
-        printf( "Next Tx in  : %lu [ms]\r\n", nextTxIn );
+        am_util_stdio_printf( "Next Tx in  : %lu [ms]\r\n", nextTxIn );
     }
 }
 
@@ -191,51 +191,51 @@ void DisplayMacMlmeRequestUpdate( LoRaMacStatus_t status, MlmeReq_t *mlmeReq, Ti
     {
         case MLME_JOIN:
         {
-            printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
-            printf( "######               MLME_JOIN               ######\r\n");
-            printf( "###### ===================================== ######\r\n");
+            am_util_stdio_printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
+            am_util_stdio_printf( "######               MLME_JOIN               ######\r\n");
+            am_util_stdio_printf( "###### ===================================== ######\r\n");
             break;
         }
         case MLME_LINK_CHECK:
         {
-            printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
-            printf( "######            MLME_LINK_CHECK            ######\r\n");
-            printf( "###### ===================================== ######\r\n");
+            am_util_stdio_printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
+            am_util_stdio_printf( "######            MLME_LINK_CHECK            ######\r\n");
+            am_util_stdio_printf( "###### ===================================== ######\r\n");
             break;
         }
         case MLME_DEVICE_TIME:
         {
-            printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
-            printf( "######            MLME_DEVICE_TIME           ######\r\n");
-            printf( "###### ===================================== ######\r\n");
+            am_util_stdio_printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
+            am_util_stdio_printf( "######            MLME_DEVICE_TIME           ######\r\n");
+            am_util_stdio_printf( "###### ===================================== ######\r\n");
             break;
         }
         case MLME_TXCW:
         {
-            printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
-            printf( "######               MLME_TXCW               ######\r\n");
-            printf( "###### ===================================== ######\r\n");
+            am_util_stdio_printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
+            am_util_stdio_printf( "######               MLME_TXCW               ######\r\n");
+            am_util_stdio_printf( "###### ===================================== ######\r\n");
             break;
         }
         case MLME_TXCW_1:
         {
-            printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
-            printf( "######               MLME_TXCW_1             ######\r\n");
-            printf( "###### ===================================== ######\r\n");
+            am_util_stdio_printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
+            am_util_stdio_printf( "######               MLME_TXCW_1             ######\r\n");
+            am_util_stdio_printf( "###### ===================================== ######\r\n");
             break;
         }
         default:
         {
-            printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
-            printf( "######              MLME_UNKNOWN             ######\r\n");
-            printf( "###### ===================================== ######\r\n");
+            am_util_stdio_printf( "\r\n###### =========== MLME-Request ============ ######\r\n" );
+            am_util_stdio_printf( "######              MLME_UNKNOWN             ######\r\n");
+            am_util_stdio_printf( "###### ===================================== ######\r\n");
             break;
         }
     }
-    printf( "STATUS      : %s\r\n", MacStatusStrings[status] );
+    am_util_stdio_printf( "STATUS      : %s\r\n", MacStatusStrings[status] );
     if( status == LORAMAC_STATUS_DUTYCYCLE_RESTRICTED )
     {
-        printf( "Next Tx in  : %lu [ms]\r\n", nextTxIn );
+        am_util_stdio_printf( "Next Tx in  : %lu [ms]\r\n", nextTxIn );
     }
 }
 
@@ -245,20 +245,20 @@ void DisplayJoinRequestUpdate( LmHandlerJoinParams_t *params )
     {
         if( params->Status == LORAMAC_HANDLER_SUCCESS )
         {
-            printf( "###### ===========   JOINED     ============ ######\r\n" );
-            printf( "\r\nOTAA\r\n\r\n" );
-            printf( "DevAddr     :  %08lX\r\n", params->CommissioningParams->DevAddr );
-            printf( "\r\n\r\n" );
-            printf( "DATA RATE   : DR_%d\r\n\r\n", params->Datarate );
+            am_util_stdio_printf( "###### ===========   JOINED     ============ ######\r\n" );
+            am_util_stdio_printf( "\r\nOTAA\r\n\r\n" );
+            am_util_stdio_printf( "DevAddr     :  %08lX\r\n", params->CommissioningParams->DevAddr );
+            am_util_stdio_printf( "\r\n\r\n" );
+            am_util_stdio_printf( "DATA RATE   : DR_%d\r\n\r\n", params->Datarate );
         }
     }
 #if ( OVER_THE_AIR_ACTIVATION == 0 )
     else
     {
-        printf( "###### ===========   JOINED     ============ ######\r\n" );
-        printf( "\r\nABP\r\n\r\n" );
-        printf( "DevAddr     : %08lX\r\n", params->CommissioningParams->DevAddr );
-        printf( "\r\n\r\n" );
+        am_util_stdio_printf( "###### ===========   JOINED     ============ ######\r\n" );
+        am_util_stdio_printf( "\r\nABP\r\n\r\n" );
+        am_util_stdio_printf( "DevAddr     : %08lX\r\n", params->CommissioningParams->DevAddr );
+        am_util_stdio_printf( "\r\n\r\n" );
     }
 #endif
 }
@@ -269,50 +269,50 @@ void DisplayTxUpdate( LmHandlerTxParams_t *params )
 
     if( params->IsMcpsConfirm == 0 )
     {
-        printf( "\r\n###### =========== MLME-Confirm ============ ######\r\n" );
-        printf( "STATUS      : %s\r\n", EventInfoStatusStrings[params->Status] );
+        am_util_stdio_printf( "\r\n###### =========== MLME-Confirm ============ ######\r\n" );
+        am_util_stdio_printf( "STATUS      : %s\r\n", EventInfoStatusStrings[params->Status] );
         return;
     }
 
-    printf( "\r\n###### =========== MCPS-Confirm ============ ######\r\n" );
-    printf( "STATUS      : %s\r\n", EventInfoStatusStrings[params->Status] );
+    am_util_stdio_printf( "\r\n###### =========== MCPS-Confirm ============ ######\r\n" );
+    am_util_stdio_printf( "STATUS      : %s\r\n", EventInfoStatusStrings[params->Status] );
 
-    printf( "\r\n###### =====   UPLINK FRAME %8lu   ===== ######\r\n", params->UplinkCounter );
-    printf( "\r\n" );
+    am_util_stdio_printf( "\r\n###### =====   UPLINK FRAME %8lu   ===== ######\r\n", params->UplinkCounter );
+    am_util_stdio_printf( "\r\n" );
 
-    printf( "CLASS       : %c\r\n", "ABC"[LmHandlerGetCurrentClass( )] );
-    printf( "\r\n" );
-    printf( "TX PORT     : %d\r\n", params->AppData.Port );
+    am_util_stdio_printf( "CLASS       : %c\r\n", "ABC"[LmHandlerGetCurrentClass( )] );
+    am_util_stdio_printf( "\r\n" );
+    am_util_stdio_printf( "TX PORT     : %d\r\n", params->AppData.Port );
 
     if( params->AppData.BufferSize != 0 )
     {
-        printf( "TX DATA     : " );
+        am_util_stdio_printf( "TX DATA     : " );
         if( params->MsgType == LORAMAC_HANDLER_CONFIRMED_MSG )
         {
-            printf( "CONFIRMED - %s\r\n", ( params->AckReceived != 0 ) ? "ACK" : "NACK" );
+            am_util_stdio_printf( "CONFIRMED - %s\r\n", ( params->AckReceived != 0 ) ? "ACK" : "NACK" );
         }
         else
         {
-            printf( "UNCONFIRMED\r\n" );
+            am_util_stdio_printf( "UNCONFIRMED\r\n" );
         }
         PrintHexBuffer( params->AppData.Buffer, params->AppData.BufferSize );
     }
 
-    printf( "\r\n" );
-    printf( "DATA RATE   : DR_%d\r\n", params->Datarate );
+    am_util_stdio_printf( "\r\n" );
+    am_util_stdio_printf( "DATA RATE   : DR_%d\r\n", params->Datarate );
 
     mibGet.Type  = MIB_CHANNELS;
     if( LoRaMacMibGetRequestConfirm( &mibGet ) == LORAMAC_STATUS_OK )
     {
-        printf( "U/L FREQ    : %lu\r\n", mibGet.Param.ChannelList[params->Channel].Frequency );
+        am_util_stdio_printf( "U/L FREQ    : %lu\r\n", mibGet.Param.ChannelList[params->Channel].Frequency );
     }
 
-    printf( "TX POWER    : %d\r\n", params->TxPower );
+    am_util_stdio_printf( "TX POWER    : %d\r\n", params->TxPower );
 
     mibGet.Type  = MIB_CHANNELS_MASK;
     if( LoRaMacMibGetRequestConfirm( &mibGet ) == LORAMAC_STATUS_OK )
     {
-        printf("CHANNEL MASK: ");
+        am_util_stdio_printf("CHANNEL MASK: ");
         switch( LmHandlerGetActiveRegion( ) )
         {
             case LORAMAC_REGION_AS923:
@@ -323,7 +323,7 @@ void DisplayTxUpdate( LmHandlerTxParams_t *params )
             case LORAMAC_REGION_EU433:
             case LORAMAC_REGION_RU864:
             {
-                printf( "%04X ", mibGet.Param.ChannelsMask[0] );
+                am_util_stdio_printf( "%04X ", mibGet.Param.ChannelsMask[0] );
                 break;
             }
             case LORAMAC_REGION_AU915:
@@ -332,20 +332,20 @@ void DisplayTxUpdate( LmHandlerTxParams_t *params )
             {
                 for( uint8_t i = 0; i < 5; i++)
                 {
-                    printf( "%04X ", mibGet.Param.ChannelsMask[i] );
+                    am_util_stdio_printf( "%04X ", mibGet.Param.ChannelsMask[i] );
                 }
                 break;
             }
             default:
             {
-                printf( "\r\n###### ========= Unknown Region ============ ######" );
+                am_util_stdio_printf( "\r\n###### ========= Unknown Region ============ ######" );
                 break;
             }
         }
-        printf("\r\n");
+        am_util_stdio_printf("\r\n");
     }
 
-    printf( "\r\n" );
+    am_util_stdio_printf( "\r\n" );
 }
 
 void DisplayRxUpdate( LmHandlerAppData_t *appData, LmHandlerRxParams_t *params )
@@ -354,32 +354,32 @@ void DisplayRxUpdate( LmHandlerAppData_t *appData, LmHandlerRxParams_t *params )
 
     if( params->IsMcpsIndication == 0 )
     {
-        printf( "\r\n###### ========== MLME-Indication ========== ######\r\n" );
-        printf( "STATUS      : %s\r\n", EventInfoStatusStrings[params->Status] );
+        am_util_stdio_printf( "\r\n###### ========== MLME-Indication ========== ######\r\n" );
+        am_util_stdio_printf( "STATUS      : %s\r\n", EventInfoStatusStrings[params->Status] );
         return;
     }
 
-    printf( "\r\n###### ========== MCPS-Indication ========== ######\r\n" );
-    printf( "STATUS      : %s\r\n", EventInfoStatusStrings[params->Status] );
+    am_util_stdio_printf( "\r\n###### ========== MCPS-Indication ========== ######\r\n" );
+    am_util_stdio_printf( "STATUS      : %s\r\n", EventInfoStatusStrings[params->Status] );
 
-    printf( "\r\n###### =====  DOWNLINK FRAME %8lu  ===== ######\r\n", params->DownlinkCounter );
+    am_util_stdio_printf( "\r\n###### =====  DOWNLINK FRAME %8lu  ===== ######\r\n", params->DownlinkCounter );
 
-    printf( "RX WINDOW   : %s\r\n", slotStrings[params->RxSlot] );
+    am_util_stdio_printf( "RX WINDOW   : %s\r\n", slotStrings[params->RxSlot] );
     
-    printf( "RX PORT     : %d\r\n", appData->Port );
+    am_util_stdio_printf( "RX PORT     : %d\r\n", appData->Port );
 
     if( appData->BufferSize != 0 )
     {
-        printf( "RX DATA     : \r\n" );
+        am_util_stdio_printf( "RX DATA     : \r\n" );
         PrintHexBuffer( appData->Buffer, appData->BufferSize );
     }
 
-    printf( "\r\n" );
-    printf( "DATA RATE   : DR_%d\r\n", params->Datarate );
-    printf( "RX RSSI     : %d\r\n", params->Rssi );
-    printf( "RX SNR      : %d\r\n", params->Snr );
+    am_util_stdio_printf( "\r\n" );
+    am_util_stdio_printf( "DATA RATE   : DR_%d\r\n", params->Datarate );
+    am_util_stdio_printf( "RX RSSI     : %d\r\n", params->Rssi );
+    am_util_stdio_printf( "RX SNR      : %d\r\n", params->Snr );
 
-    printf( "\r\n" );
+    am_util_stdio_printf( "\r\n" );
 }
 
 void DisplayBeaconUpdate( LoRaMAcHandlerBeaconParams_t *params )
@@ -389,31 +389,31 @@ void DisplayBeaconUpdate( LoRaMAcHandlerBeaconParams_t *params )
         default:
         case LORAMAC_HANDLER_BEACON_ACQUIRING:
         {
-            printf( "\r\n###### ========= BEACON ACQUIRING ========== ######\r\n" );
+            am_util_stdio_printf( "\r\n###### ========= BEACON ACQUIRING ========== ######\r\n" );
             break;
         }
         case LORAMAC_HANDLER_BEACON_LOST:
         {
-            printf( "\r\n###### ============ BEACON LOST ============ ######\r\n" );
+            am_util_stdio_printf( "\r\n###### ============ BEACON LOST ============ ######\r\n" );
             break;
         }
         case LORAMAC_HANDLER_BEACON_RX:
         {
-            printf( "\r\n###### ===== BEACON %8lu ==== ######\r\n", params->Info.Time.Seconds );
-            printf( "GW DESC     : %d\r\n", params->Info.GwSpecific.InfoDesc );
-            printf( "GW INFO     : " );
+            am_util_stdio_printf( "\r\n###### ===== BEACON %8lu ==== ######\r\n", params->Info.Time.Seconds );
+            am_util_stdio_printf( "GW DESC     : %d\r\n", params->Info.GwSpecific.InfoDesc );
+            am_util_stdio_printf( "GW INFO     : " );
             PrintHexBuffer( params->Info.GwSpecific.Info, 6 );
-            printf( "\r\n" );
-            printf( "FREQ        : %lu\r\n", params->Info.Frequency );
-            printf( "DATA RATE   : DR_%d\r\n", params->Info.Datarate );
-            printf( "RX RSSI     : %d\r\n", params->Info.Rssi );
-            printf( "RX SNR      : %d\r\n", params->Info.Snr );
-            printf( "\r\n" );
+            am_util_stdio_printf( "\r\n" );
+            am_util_stdio_printf( "FREQ        : %lu\r\n", params->Info.Frequency );
+            am_util_stdio_printf( "DATA RATE   : DR_%d\r\n", params->Info.Datarate );
+            am_util_stdio_printf( "RX RSSI     : %d\r\n", params->Info.Rssi );
+            am_util_stdio_printf( "RX SNR      : %d\r\n", params->Info.Snr );
+            am_util_stdio_printf( "\r\n" );
             break;
         }
         case LORAMAC_HANDLER_BEACON_NRX:
         {
-            printf( "\r\n###### ======== BEACON NOT RECEIVED ======== ######\r\n" );
+            am_util_stdio_printf( "\r\n###### ======== BEACON NOT RECEIVED ======== ######\r\n" );
             break;
         }
     }
@@ -421,14 +421,14 @@ void DisplayBeaconUpdate( LoRaMAcHandlerBeaconParams_t *params )
 
 void DisplayClassUpdate( DeviceClass_t deviceClass )
 {
-    printf( "\r\n\r\n###### ===== Switch to Class %c done.  ===== ######\r\n\r\n", "ABC"[deviceClass] );
+    am_util_stdio_printf( "\r\n\r\n###### ===== Switch to Class %c done.  ===== ######\r\n\r\n", "ABC"[deviceClass] );
 }
 
 void DisplayAppInfo( const char* appName, const Version_t* appVersion, const Version_t* gitHubVersion )
 {
-    printf( "\r\n###### ===================================== ######\r\n\r\n" );
-    printf( "Application name   : %s\r\n", appName );
-    printf( "Application version: %d.%d.%d\r\n", appVersion->Fields.Major, appVersion->Fields.Minor, appVersion->Fields.Patch );
-    printf( "GitHub base version: %d.%d.%d\r\n", gitHubVersion->Fields.Major, gitHubVersion->Fields.Minor, gitHubVersion->Fields.Patch );
-    printf( "\r\n###### ===================================== ######\r\n\r\n" );
+    am_util_stdio_printf( "\r\n###### ===================================== ######\r\n\r\n" );
+    am_util_stdio_printf( "Application name   : %s\r\n", appName );
+    am_util_stdio_printf( "Application version: %d.%d.%d\r\n", appVersion->Fields.Major, appVersion->Fields.Minor, appVersion->Fields.Patch );
+    am_util_stdio_printf( "GitHub base version: %d.%d.%d\r\n", gitHubVersion->Fields.Major, gitHubVersion->Fields.Minor, gitHubVersion->Fields.Patch );
+    am_util_stdio_printf( "\r\n###### ===================================== ######\r\n\r\n" );
 }
