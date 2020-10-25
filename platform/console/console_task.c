@@ -337,7 +337,7 @@ void nm_console_task(void *pvp) {
 
   nm_console_print(welcome_msg);
   nm_console_print("Built on: ");
-  nm_console_print(g_build_timestamp());
+  nm_console_print(build_timestamp());
   nm_console_print(crlf);
   nm_console_print(crlf);
   nm_console_print(cmd_prompt);
