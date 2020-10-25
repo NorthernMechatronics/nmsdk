@@ -47,6 +47,14 @@ For more details on building the SDK on a host platform, please check the **User
 
 ```git clone https://github.com/Lora-net/LoRaMac-node.git```
 
+### Build Configuration
+* Open the Makefile
+* Modify the following variables to point to the location where you have cloned or downloaded the various SDKs:
+    - AMBIQ_SDK
+    - FREERTOS
+    - CORDIO
+    - UECC
+    - LORAMAC
 
 ### Build
 * Define the following variables: NM_SDK, AMBIQ_SDK, FREERTOS, CORDIO
