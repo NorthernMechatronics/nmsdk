@@ -44,7 +44,7 @@
 
 #include "iom_service.h"
 
-TaskHandle_t iom_task_handle;
+TaskHandle_t nm_iom_task_handle;
 
 #define BUFFER_MAX_SIZE 64
 #define OPCODE_MAX_SIZE 8
@@ -491,7 +491,7 @@ portBASE_TYPE prvIomCommand(char *pcWriteBuffer, size_t xWriteBufferLen, const c
 	return xReturn;
 }
 
-void iom_task(void *pvp)
+void nm_iom_task(void *pvp)
 {
 	FreeRTOS_CLIRegisterCommand(&prvIomCommandDefinition);
 	vTaskDelete(NULL);

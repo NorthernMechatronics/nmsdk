@@ -36,9 +36,9 @@
 extern "C" {
 #endif  // defined(__cplusplus)
 
-extern TaskHandle_t gpio_task_handle;
+extern TaskHandle_t nm_gpio_task_handle;
 
-void gpio_task(void *pvp);
+void nm_gpio_task(void *pvp);
 
 #if defined(__cplusplus)
 }

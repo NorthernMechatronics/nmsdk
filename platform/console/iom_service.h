@@ -36,9 +36,9 @@
 extern "C" {
 #endif  // defined(__cplusplus)
 
-extern TaskHandle_t iom_task_handle;
+extern TaskHandle_t nm_iom_task_handle;
 
-void iom_task(void *pvp);
+void nm_iom_task(void *pvp);
 
 #if defined(__cplusplus)
 }

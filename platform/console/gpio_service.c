@@ -43,7 +43,7 @@
 
 #include "gpio_service.h"
 
-TaskHandle_t gpio_task_handle;
+TaskHandle_t nm_gpio_task_handle;
 
 #define MAX_GPIO_PINS 50
 
@@ -454,7 +454,7 @@ portBASE_TYPE prvGpioCommand(char *pcWriteBuffer, size_t xWriteBufferLen, const 
 	return xReturn;
 }
 
-void gpio_task(void *pvp)
+void nm_gpio_task(void *pvp)
 {
     FreeRTOS_CLIRegisterCommand(&prvGpioCommandDefinition);
     vTaskDelete(NULL);
