@@ -1,8 +1,8 @@
-AMBIQ_SDK := ~/git/AmbiqSuite-R2.5.1
-FREERTOS  := ~/git/FreeRTOS/FreeRTOS
-CORDIO    := ~/git/AmbiqSuite-R2.5.1/third_party/cordio
-UECC      := ~/git/AmbiqSuite-R2.5.1/third_party/uecc
-LORAMAC   := ~/git/loramac-node
+AMBIQ_SDK ?= ../AmbiqSuite-R2.5.1
+FREERTOS  ?= ../FreeRTOS/FreeRTOS
+CORDIO    ?= ../AmbiqSuite-R2.5.1/third_party/cordio
+UECC      ?= ../AmbiqSuite-R2.5.1/third_party/uecc
+LORAMAC   ?= ../LoRaMac-node
 
 ifndef AMBIQ_SDK
     $(error AmbiqSuite SDK location not defined)
