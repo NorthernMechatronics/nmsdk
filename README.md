@@ -47,7 +47,7 @@ For more details on building the SDK on a host platform, please check the **User
 
 ```git clone https://github.com/Lora-net/LoRaMac-node.git```
 
-### Build Configuration
+### Build Setup
 * Open the Makefile
 * Modify the following variables to point to the location where you have cloned or downloaded the various SDKs:
     - AMBIQ_SDK
@@ -57,6 +57,5 @@ For more details on building the SDK on a host platform, please check the **User
     - LORAMAC
 
 ### Build
-* Define the following variables: NM_SDK, AMBIQ_SDK, FREERTOS, CORDIO
-
 * Type `make` for release and `make DEBUG=1` for debug.
+* Note that in the release configuration, the Ambiq's HAL API validation and parameter checking are disabled.
