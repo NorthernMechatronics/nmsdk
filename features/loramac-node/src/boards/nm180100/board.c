@@ -39,7 +39,7 @@ void BoardResetMcu(void)
 {
 	CRITICAL_SECTION_BEGIN();
 
-	ResetHandler();
+	Reset_Handler();
 }
 
 void BoardDeInitMcu(void)
