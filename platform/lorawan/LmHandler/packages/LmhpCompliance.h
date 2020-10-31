@@ -38,29 +38,25 @@
 typedef struct LmhpComplianceParams_s
 {
     /*!
-     * Holds the ADR state
+     * Indicates if the DUT FPort 224 is enabled.
      */
-    bool AdrEnabled;
+    bool IsDutFPort224On;
     /*!
-    * LoRaWAN ETSI duty cycle control enable/disable
-    *
-    * \remark Please note that ETSI mandates duty cycled transmissions. Use only for test purposes
-    */
-    bool DutyCycleEnabled;
+     * Current firmware version
+     */
+    Version_t FwVersion;
     /*!
-     * Stops unnecessary peripherals.
      *
-     * \remark Use for the compliance tests protocol handling in order to
-     *         reduce the power consumption.
      */
-    void ( *StopPeripherals )( void );
+    void ( *OnTxPeriodicityChanged )( uint32_t periodicity );
     /*!
-     * Starts previously stopped peripherals.
      *
-     * \remark Use for the compliance tests protocol handling in order to
-     *         reduce the power consumption.
      */
-    void ( *StartPeripherals )( void );
+    void ( *OnTxFrameCtrlChanged )( LmHandlerMsgTypes_t isTxConfirmed );
+    /*!
+     *
+     */
+    void ( *OnPingSlotPeriodicityChanged )( uint8_t pingSlotPeriodicity );
 }LmhpComplianceParams_t;
 
 LmhPackage_t *LmphCompliancePackageFactory( void );
