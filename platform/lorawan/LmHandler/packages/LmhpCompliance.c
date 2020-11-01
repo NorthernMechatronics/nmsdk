@@ -263,10 +263,10 @@ static void LmhpComplianceProcess( void )
         ComplianceTestState.IsResetCmdPending = false;
         // L2 v1.0.4 reset command should trigger a rejoin instead
         LmHandlerJoin();
-        /*
+
         // Call platform MCU reset API
-        BoardResetMcu(lo );
-        */
+        //BoardResetMcu();
+
     }
 }
 
