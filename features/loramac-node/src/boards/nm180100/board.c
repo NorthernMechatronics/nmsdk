@@ -62,21 +62,6 @@ uint32_t BoardGetRandomSeed(void)
 
   return ret;
 }
-void BoardGetUniqueId(uint8_t *id)
-{
-  am_util_id_t i;
-
-  am_util_id_device(&i);
-
-  id[0] = 0xCC;
-  id[1] = 0x5D;
-  id[2] = 0x78;
-  id[3] = 0xFF;
-  id[4] = (uint8_t) (i.sMcuCtrlDevice.ui32ChipID0);
-  id[5] = (uint8_t) (i.sMcuCtrlDevice.ui32ChipID0 >> 8);
-  id[6] = (uint8_t) (i.sMcuCtrlDevice.ui32ChipID0 >> 16);
-  id[7] = (uint8_t) (i.sMcuCtrlDevice.ui32ChipID0 >> 24);
-}
 
 uint16_t BoardBatteryMeasureVolage(void)
 {
