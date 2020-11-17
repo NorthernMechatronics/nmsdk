@@ -23,8 +23,6 @@
 #include "utilities.h"
 #include "eeprom-board.h"
 
-uint16_t EepromVirtualAddress[NB_OF_VARIALBES];
-
 uint8_t EepromMcuWriteBuffer( uint16_t addr, uint8_t *buffer, uint16_t size )
 {
     uint8_t status = FAIL;
