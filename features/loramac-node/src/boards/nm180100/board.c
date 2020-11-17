@@ -38,8 +38,7 @@ void BoardInitMcu(void)
 void BoardResetMcu(void)
 {
 	CRITICAL_SECTION_BEGIN();
-
-	Reset_Handler();
+    NVIC_SystemReset();
 }
 
 void BoardDeInitMcu(void)
