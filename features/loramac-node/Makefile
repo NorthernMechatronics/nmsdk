@@ -71,6 +71,7 @@ SRC += RegionUS915.c
 
 SRC += board.c
 SRC += delay-board.c
+SRC += eeprom-board.c
 #SRC += gpio-board.c
 SRC += rtc-board.c
 SRC += sx1262-board.c
@@ -81,6 +82,8 @@ SRC += sx1262-board.c
 #SRC += soft-se-hal.c
 
 SRC += delay.c
+SRC += eeprom.c
+SRC += nvmm.c
 SRC += systime.c
 SRC += timer.c
 
