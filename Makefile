@@ -1,8 +1,8 @@
-AMBIQ_SDK ?= $(PWD)/../AmbiqSuite-R2.5.1
-FREERTOS  ?= $(PWD)/../FreeRTOS/FreeRTOS
-CORDIO    ?= $(PWD)/../AmbiqSuite-R2.5.1/third_party/cordio
-UECC      ?= $(PWD)/../AmbiqSuite-R2.5.1/third_party/uecc
-LORAMAC   ?= $(PWD)/../LoRaMac-node
+AMBIQ_SDK ?= $(shell pwd)/../AmbiqSuite-R2.5.1
+FREERTOS  ?= $(shell pwd)/../FreeRTOS/FreeRTOS
+CORDIO    ?= $(shell pwd)/../AmbiqSuite-R2.5.1/third_party/cordio
+UECC      ?= $(shell pwd)/../AmbiqSuite-R2.5.1/third_party/uecc
+LORAMAC   ?= $(shell pwd)/../LoRaMac-node
 
 ifndef AMBIQ_SDK
     $(error AmbiqSuite SDK location not defined)
@@ -64,7 +64,7 @@ all: $(BUILDDIR) am_hal am_utils freertos freertos-cli cordio loramac
 	@echo "****** Build Successful ******"
 
 $(BUILDDIR):
-	@mkdir -p $@
+	@$(MKDIR) $@
 
 am_hal:
 	$(MAKE) -C $(AM_HAL_DIR) AMBIQ_SDK=$(AMBIQ_SDK)
@@ -93,6 +93,7 @@ loramac:
 
 clean:
 	$(MAKE) -C $(AM_HAL_DIR) clean
+	$(MAKE) -C $(AM_UTILS_DIR) clean
 	$(MAKE) -C $(FREERTOS_DIR) clean
 	$(MAKE) -C $(FREERTOS-CLI_DIR) clean
 	$(MAKE) -C $(CORDIO_DIR) clean

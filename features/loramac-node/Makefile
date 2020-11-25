@@ -2,11 +2,11 @@ SDKROOT?=../..
 include $(SDKROOT)/makedefs/nm_loramac.mk
 
 ifdef DEBUG
-    TARGET       := libloramac-dev
-    CONFIG       := debug
+    TARGET := libloramac-dev
+    CONFIG := ./debug
 else
-    TARGET       := libloramac
-    CONFIG       := release
+    TARGET := libloramac
+    CONFIG := ./release
 endif
 COMPILERNAME := gcc
 PROJECT      := libloramac_gcc
@@ -123,26 +123,26 @@ all: directories $(CONFIG)/$(TARGET).a
 directories: $(CONFIG)
 
 $(CONFIG):
-	@mkdir -p $@
+	@$(MKDIR) $@
 
 $(SPECIAL_OBJ): $(SPECIAL_SRC) $(SPECIAL_DEP) $(INCS)
-	@echo "Compiling $(COMPILERNAME) $<" ;\
+	@echo "Compiling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $< -o $@
 
 $(CONFIG)/%.o: %.c $(CONFIG)/%.d $(INCS)
-	@echo "Compiling $(COMPILERNAME) $<" ;\
+	@echo "Compiling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) $< -o $@
 
 $(CONFIG)/%.o: %.s $(CONFIG)/%.d $(INCS)
-	@echo "Assembling $(COMPILERNAME) $<" ;\
+	@echo "Assembling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) $< -o $@
 
 $(CONFIG)/$(TARGET).a: $(OBJS) $(SPECIAL_OBJ)
 	$(AR) rsvc $@ $(OBJS) $(SPECIAL_OBJ)
 
 clean:
-	@echo "Cleaning..." ;\
-	$(RM) -f $(OBJS) $(DEPS) $(CONFIG)/$(TARGET).a ;\
+	@echo "Cleaning..."
+	$(RM) -f $(OBJS) $(DEPS) $(CONFIG)/$(TARGET).a
 	$(RM) -rf $(CONFIG)
 
 $(CONFIG)/%.d: ;

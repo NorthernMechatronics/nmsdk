@@ -8,7 +8,6 @@ endif
 
 SDKLIB   := $(SDKROOT)/lib
 
-SHELL     := /bin/bash
 TOOLCHAIN ?= arm-none-eabi
 PART       = apollo3
 CPU        = cortex-m4
@@ -16,6 +15,7 @@ FPU        = fpv4-sp-d16
 FABI       = hard
 
 #### Required Executables ####
+SHELL     := /bin/bash
 CC   = $(TOOLCHAIN)-gcc
 GCC  = $(TOOLCHAIN)-gcc
 CPP  = $(TOOLCHAIN)-cpp
@@ -25,8 +25,17 @@ OD   = $(TOOLCHAIN)-objdump
 RD   = $(TOOLCHAIN)-readelf
 AR   = $(TOOLCHAIN)-ar
 SIZE = $(TOOLCHAIN)-size
-CP   = $(shell which cp 2>/dev/null)
-RM   = $(shell which rm 2>/dev/null)
+
+ifeq ($(OS), Windows_NT)
+  $(info Windows Platform Detected)
+  MKDIR = mkdir
+  CP    = cp
+  RM    = rm
+else
+  MKDIR = mkdir -p
+  CP   = $(shell which cp 2>/dev/null)
+  RM   = $(shell which rm 2>/dev/null)
+endif
 
 DEFINES  = -Dgcc
 DEFINES += -DAM_PART_APOLLO3

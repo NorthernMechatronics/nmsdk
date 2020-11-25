@@ -5,10 +5,10 @@ include $(SDKROOT)/makedefs/nm_uecc.mk
 
 ifdef DEBUG
     TARGET  := libcordio-dev
-    CONFIG  := debug
+    CONFIG  := ./debug
 else
-    TARGET       := libcordio
-    CONFIG       := release
+    TARGET  := libcordio
+    CONFIG  := ./release
 endif
 COMPILERNAME := gcc
 PROJECT      := libcordio_gcc
@@ -373,22 +373,22 @@ all: directories $(CONFIG)/$(TARGET).a
 directories: $(CONFIG)
 
 $(CONFIG):
-	@mkdir -p $@
+	@$(MKDIR) $@
 
 $(CONFIG)/%.o: %.c $(CONFIG)/%.d $(INCS)
-	@echo "Compiling $(COMPILERNAME) $<" ;\
+	@echo "Compiling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) $< -o $@
 
 $(CONFIG)/%.o: %.s $(CONFIG)/%.d $(INCS)
-	@echo "Assembling $(COMPILERNAME) $<" ;\
+	@echo "Assembling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) $< -o $@
 
 $(CONFIG)/$(TARGET).a: $(OBJS)
 	$(AR) rsvc $@ $(OBJS)
 
 clean:
-	@echo "Cleaning..." ;\
-	$(RM) -f $(OBJS) $(DEPS) $(CONFIG)/$(TARGET).a ;\
+	@echo "Cleaning..."
+	$(RM) -f $(OBJS) $(DEPS) $(CONFIG)/$(TARGET).a
 	$(RM) -rf $(CONFIG)
 
 $(CONFIG)/%.d: ;

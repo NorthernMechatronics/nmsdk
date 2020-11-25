@@ -3,10 +3,10 @@ include $(SDKROOT)/makedefs/nm_common.mk
 
 ifdef DEBUG
     TARGET   := libam_hal-dev
-    CONFIG   := debug
+    CONFIG   := ./debug
 else
     TARGET   := libam_hal
-    CONFIG   := release
+    CONFIG   := ./release
     DEFINES  += -DAM_HAL_DISABLE_API_VALIDATION
 endif
 
@@ -73,23 +73,23 @@ all: directories $(CONFIG)/$(TARGET).a
 directories: $(CONFIG)
 
 $(CONFIG):
-	@mkdir -p $@
+	@$(MKDIR) $@
 
 $(CONFIG)/%.o: %.c $(CONFIG)/%.d $(INCS)
-	@echo " Compiling $(COMPILERNAME) $<" ;\
+	@echo " Compiling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) $< -o $@
 
 $(CONFIG)/%.o: %.s $(CONFIG)/%.d $(INCS)
-	@echo " Assembling $(COMPILERNAME) $<" ;\
+	@echo " Assembling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) $< -o $@
 
 $(CONFIG)/$(TARGET).a: $(OBJS)
-	@echo " Library $(COMPILERNAME) $@" ;\
+	@echo " Library $(COMPILERNAME) $@"
 	$(AR) rsvc $@ $(OBJS)
 
 clean:
-	@echo "Cleaning..." ;\
-	$(RM) -f $(OBJS) $(DEPS) $(CONFIG)/$(TARGET).a ;\
+	@echo "Cleaning..."
+	$(RM) -f $(OBJS) $(DEPS) $(CONFIG)/$(TARGET).a
 	$(RM) -rf $(CONFIG)
 
 $(CONFIG)/%.d: ;

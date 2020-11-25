@@ -4,10 +4,10 @@ include $(SDKROOT)/makedefs/nm_common.mk
 
 ifdef DEBUG
     TARGET  := libam_bsp-dev.a
-    CONFIG  := debug
+    CONFIG  := ./debug
 else
     TARGET  := libam_bsp.a
-    CONFIG  := release
+    CONFIG  := ./release
 endif
 COMPILERNAME := gcc
 PROJECT      := libam_bsp_gcc
@@ -52,7 +52,7 @@ all: directories $(CONFIG)/$(TARGET)
 directories: $(CONFIG)
 
 $(CONFIG): $(TARGET_H) $(TARGET_C)
-	@mkdir -p $@
+	@$(MKDIR) $@
 
 $(TARGET_H): bsp_pins.src
 	python $(BSP_GENERATOR) $< h > $@
@@ -61,11 +61,11 @@ $(TARGET_C): bsp_pins.src
 	python $(BSP_GENERATOR) $< c > $@
 
 $(CONFIG)/%.o: %.c $(CONFIG)/%.d
-	@echo "Compiling $(COMPILERNAME) $<" ;\
+	@echo "Compiling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) $< -o $@
 
 $(CONFIG)/%.o: %.s $(CONFIG)/%.d
-	@echo "Assembling $(COMPILERNAME) $<" ;\
+	@echo "Assembling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) $< -o $@
 
 $(CONFIG)/$(TARGET): $(OBJS)
