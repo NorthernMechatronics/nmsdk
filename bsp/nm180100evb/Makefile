@@ -50,9 +50,9 @@ CFLAGS += $(DEFINES)
 all: directories $(CONFIG)/$(TARGET)
 
 directories: $(CONFIG)
-	@$(MKDIR) $@
 
 $(CONFIG): $(TARGET_H) $(TARGET_C)
+	@$(MKDIR) $@
 
 $(TARGET_H): bsp_pins.src
 	python $(BSP_GENERATOR) $< h > $@
