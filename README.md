@@ -1,8 +1,12 @@
 # Northern Mechatronics Software Development Kit
-
 License : [![License](https://img.shields.io/badge/license-BSD_3-blue.svg)](http://gitlab.northernmechatronics.com:50250/nmi/software/nmsdk/blob/master/LICENSE)
 
 Platform Details: [![Hardware](https://img.shields.io/badge/hardware-wiki-green.svg)](https://www.northernmechatronics.com/nm180100)
+
+## Attention
+This branch is configured for the LoRaWAN L2 v1.0.3 specifications.  The corresponding
+release tag for the LoRaMac-node is v4.4.6 (final release).  Please make sure that you switch
+to the proper release tag before building this SDK.
 
 ## Overview
 The NMSDK is a platform library for the Northern Mechatronics NM180100 LoRa BLE module.  It provides support for LoRa direct, LoRa real-time, LoRaWAN, and BLE wireless connectivity as well as a FreeRTOS framework for rapid application development across a wide range of use cases and environments.
@@ -47,6 +51,12 @@ For more details on building the SDK on a host platform, please check the **User
 
 ```git clone https://github.com/Lora-net/LoRaMac-node.git```
 
+* Change to the project directory and switch to the final release of the LoRaWAN
+L2 v1.0.3 tag
+
+```cd <LoRaMac-node directory>
+```git checkout v4.4.6
+
 ### Build Setup
 * Open the Makefile
 * Modify the following variables to point to the location where you have cloned or downloaded the various SDKs:
@@ -55,6 +65,8 @@ For more details on building the SDK on a host platform, please check the **User
     - CORDIO
     - UECC
     - LORAMAC
+* If all the SDKs are located within the same parent folder, there is no need to modify the variables as the build
+script will automatically search for the correct paths.
 
 ### Build
 * Type `make` for release and `make DEBUG=1` for debug.
