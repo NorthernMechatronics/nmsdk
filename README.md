@@ -54,8 +54,8 @@ For more details on building the SDK on a host platform, please check the **User
 * Change to the project directory and switch to the final release of the LoRaWAN
 L2 v1.0.3 tag
 
-```cd <LoRaMac-node directory>
-git checkout v4.4.6```
+```cd <LoRaMac-node directory>```
+```git checkout v4.4.6```
 
 ### Build Setup
 * Open the Makefile
