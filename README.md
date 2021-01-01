@@ -55,6 +55,7 @@ For more details on building the SDK on a host platform, please check the **User
 L2 v1.0.3 tag
 
 ```cd <LoRaMac-node directory>```
+
 ```git checkout v4.4.6```
 
 ### Build Setup
