@@ -4,7 +4,8 @@
 #include <am_mcu_apollo.h>
 #include <am_util.h>
 
-#include <bmi2_defs.h>
+#include "bmi2_defs.h"
+#include "nm_devices_bmi270.h"
 
 static uint8_t dev_addr;
 
