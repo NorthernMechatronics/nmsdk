@@ -31,19 +31,21 @@
  */
 #include <stdbool.h>
 #include <string.h>
+
 #include <am_bsp.h>
 #include <am_mcu_apollo.h>
 #include <am_util.h>
+
 #include <rtc-board.h>
 #include <systime.h>
 #include <timer.h>
 
 // MCU wake up time in ticks
-#define MIN_ALARM_DELAY (3)
-#define ALARM_RESOLUTION_MS  ((uint32_t)10U)
+#define MIN_ALARM_DELAY     (3)
+#define ALARM_RESOLUTION_MS ((uint32_t)10U)
 
 #define TICK_DURATION_MS ((uint32_t)10U)
-#define TICK_INTERVAL AM_HAL_RTC_ALM_RPT_100TH
+#define TICK_INTERVAL    AM_HAL_RTC_ALM_RPT_10TH
 
 /*
  * Macros used by epoch time computation
@@ -56,27 +58,21 @@
 #define DAYS_IN_MONTH_CORRECTION_NORM ((uint32_t)0x99AAA0)
 #define DAYS_IN_MONTH_CORRECTION_LEAP ((uint32_t)0x445550)
 
-#define DIVC(X, N) (((X) + (N)-1) / (N))
+static const uint8_t DaysInMonth[] = {31, 28, 31, 30, 31, 30,
+                                      31, 31, 30, 31, 30, 31};
 
-static const uint8_t DaysInMonth[] = {
-    31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-static const uint8_t DaysInMonthLeapYear[] = {
-    31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
+static const uint8_t DaysInMonthLeapYear[] = {31, 29, 31, 30, 31, 30,
+                                              31, 31, 30, 31, 30, 31};
 
 static const char *pcMonth[] = {
     "January",  "February", "March",        "April",     "May",
     "June",     "July",     "August",       "September", "October",
     "November", "December", "Invalid month"};
 
-static bool RtcInitialized = false;
-static bool McuWakeUpTimeInitialized = false;
-static int16_t McuWakeUpTimeCal = 0;
+static bool    RtcInitialized           = false;
+static bool    McuWakeUpTimeInitialized = false;
+static int16_t McuWakeUpTimeCal         = 0;
 
-// Ticks is tracked in 32-bit since
-// 32-bit wrap around is handle in the upper layer
 typedef struct {
     bool     Running;
     uint64_t Ref_Ticks;
@@ -84,7 +80,7 @@ typedef struct {
 } RtcTimerContext_t;
 
 static RtcTimerContext_t RtcTimerContext;
-static uint64_t DeviceEpoch = 0LL;
+static uint64_t          DeviceEpoch = 0LL;
 
 static uint32_t RtcBackupRegisters[] = {0, 0};
 
@@ -109,13 +105,12 @@ static int mthToIndex(char *pcMon)
 
 static uint64_t RtcGetTicksSinceEpoch(am_hal_rtc_time_t *hal_time)
 {
-    uint64_t ticks = 0LL;
-    uint32_t correction;
-    uint64_t seconds;
+    uint64_t          ticks = 0LL;
+    uint32_t          correction;
+    uint64_t          seconds;
     am_hal_rtc_time_t local_hal_time;
 
-    if (hal_time == NULL)
-    {
+    if (hal_time == NULL) {
         hal_time = &local_hal_time;
         am_hal_rtc_time_get(hal_time);
     }
@@ -145,11 +140,8 @@ static uint64_t RtcGetTicksSinceEpoch(am_hal_rtc_time_t *hal_time)
      *   seconds += (DIVC((hal_time->ui32Month) * (30 + 31), 2) -
      *              ((correction >> ((hal_time->ui32Month) * 2)) & 0x03));
      */
-    seconds += (
-                (((hal_time->ui32Month) * (30 + 31) - 1) >> 1)
-                -
-                ((correction >> ((hal_time->ui32Month) << 1)) & 0x03)
-               );
+    seconds += ((((hal_time->ui32Month) * (30 + 31) - 1) >> 1) -
+                ((correction >> ((hal_time->ui32Month) << 1)) & 0x03));
     seconds += hal_time->ui32DayOfMonth - 1;
     seconds *= TM_SECONDS_IN_1DAY;
 
@@ -157,9 +149,8 @@ static uint64_t RtcGetTicksSinceEpoch(am_hal_rtc_time_t *hal_time)
                 ((uint32_t)hal_time->ui32Minute * TM_SECONDS_IN_1MINUTE) +
                 (uint32_t)hal_time->ui32Second);
 
-    ticks = (uint64_t)(seconds * TICKS_IN_1SECOND)
-        + hal_time->ui32Hundredths * TICKS_IN_1SUBSECOND
-        - DeviceEpoch;
+    ticks = (uint64_t)(seconds * TICKS_IN_1SECOND) +
+            hal_time->ui32Hundredths * TICKS_IN_1SUBSECOND - DeviceEpoch;
 
     return ticks;
 }
@@ -167,66 +158,57 @@ static uint64_t RtcGetTicksSinceEpoch(am_hal_rtc_time_t *hal_time)
 static void RtcAddTicks2Calendar(uint64_t ticks, am_hal_rtc_time_t *hal_time)
 {
     uint32_t SubSeconds = 0;
-    uint32_t Seconds = 0;
-    uint32_t Minutes = 0;
-    uint32_t Hours = 0;
-    uint32_t Days = 0;
+    uint32_t Seconds    = 0;
+    uint32_t Minutes    = 0;
+    uint32_t Hours      = 0;
+    uint32_t Days       = 0;
 
-    uint32_t timeout = ticks / TICKS_IN_1SECOND;
+    uint32_t timeout         = ticks / TICKS_IN_1SECOND;
     uint32_t ticks_remainder = ticks - timeout * TICKS_IN_1SECOND;
 
     Days = hal_time->ui32DayOfMonth;
-    while (timeout >= TM_SECONDS_IN_1DAY)
-    {
+    while (timeout >= TM_SECONDS_IN_1DAY) {
         timeout -= TM_SECONDS_IN_1DAY;
         Days++;
     }
 
     Hours = hal_time->ui32Hour;
-    while (timeout >= TM_SECONDS_IN_1HOUR)
-    {
+    while (timeout >= TM_SECONDS_IN_1HOUR) {
         timeout -= TM_SECONDS_IN_1HOUR;
         Hours++;
     }
 
     Minutes = hal_time->ui32Minute;
-    while (timeout >= TM_SECONDS_IN_1MINUTE)
-    {
+    while (timeout >= TM_SECONDS_IN_1MINUTE) {
         timeout -= TM_SECONDS_IN_1MINUTE;
         Minutes++;
     }
 
     Seconds = hal_time->ui32Second + timeout;
 
-    if (TICKS_IN_1SUBSECOND == 0)
-    {
+    if (TICKS_IN_1SUBSECOND == 0) {
         SubSeconds = hal_time->ui32Hundredths;
+    } else {
+        SubSeconds =
+            hal_time->ui32Hundredths + ticks_remainder / TICKS_IN_1SUBSECOND;
     }
-    else
-    {
-        SubSeconds = hal_time->ui32Hundredths + ticks_remainder / TICKS_IN_1SUBSECOND;
-    }
- 
-    while (SubSeconds >= SUBSECONDS_IN_1SECOND)
-    {
+
+    while (SubSeconds >= SUBSECONDS_IN_1SECOND) {
         SubSeconds -= SUBSECONDS_IN_1SECOND;
         Seconds++;
     }
 
-    while (Seconds >= TM_SECONDS_IN_1MINUTE)
-    {
+    while (Seconds >= TM_SECONDS_IN_1MINUTE) {
         Seconds -= TM_SECONDS_IN_1MINUTE;
         Minutes++;
     }
 
-    while (Minutes >= TM_MINUTES_IN_1HOUR)
-    {
+    while (Minutes >= TM_MINUTES_IN_1HOUR) {
         Minutes -= TM_MINUTES_IN_1HOUR;
         Hours++;
     }
 
-    while (Hours >= TM_HOURS_IN_1DAY)
-    {
+    while (Hours >= TM_HOURS_IN_1DAY) {
         Hours -= TM_HOURS_IN_1DAY;
         Days++;
     }
@@ -239,42 +221,34 @@ static void RtcAddTicks2Calendar(uint64_t ticks, am_hal_rtc_time_t *hal_time)
      * }
      */
     const uint8_t *DAYS_IN_1MONTH;
-    uint32_t year;
+    uint32_t       year;
 
     year = hal_time->ui32Century * 100 + hal_time->ui32Year;
-    if ((year & 0x03) == 0)
-    {
+    if ((year & 0x03) == 0) {
         DAYS_IN_1MONTH = DaysInMonthLeapYear;
-    }
-    else
-    {
+    } else {
         DAYS_IN_1MONTH = DaysInMonth;
     }
 
-    while (Days >= DAYS_IN_1MONTH[hal_time->ui32Month])
-    {
+    while (Days >= DAYS_IN_1MONTH[hal_time->ui32Month]) {
         Days -= DAYS_IN_1MONTH[hal_time->ui32Month];
         hal_time->ui32Month++;
-        if (hal_time->ui32Month > 11)
-        {
+        if (hal_time->ui32Month > 11) {
             hal_time->ui32Month = 0;
             hal_time->ui32Year++;
             year = hal_time->ui32Century * 100 + hal_time->ui32Year;
-            if ((year & 0x03) == 0)
-            {
+            if ((year & 0x03) == 0) {
                 DAYS_IN_1MONTH = DaysInMonthLeapYear;
-            }
-            else
-            {
+            } else {
                 DAYS_IN_1MONTH = DaysInMonth;
             }
         }
     }
 
     hal_time->ui32DayOfMonth = Days;
-    hal_time->ui32Hour = Hours;
-    hal_time->ui32Minute = Minutes;
-    hal_time->ui32Second = Seconds;
+    hal_time->ui32Hour       = Hours;
+    hal_time->ui32Minute     = Minutes;
+    hal_time->ui32Second     = Seconds;
     hal_time->ui32Hundredths = SubSeconds;
 }
 
@@ -282,23 +256,22 @@ void RtcInit(void)
 {
     am_hal_rtc_time_t RtcHalTime;
 
-    if (RtcInitialized == false)
-    {
+    if (RtcInitialized == false) {
         am_hal_clkgen_control(AM_HAL_CLKGEN_CONTROL_XTAL_START, 0);
         am_hal_rtc_osc_select(AM_HAL_RTC_OSC_XT);
         am_hal_rtc_osc_enable();
 
-        RtcHalTime.ui32Hour = toVal(&__TIME__[0]);   // 0 to 23
-        RtcHalTime.ui32Minute = toVal(&__TIME__[3]); // 0 to 59
-        RtcHalTime.ui32Second = toVal(&__TIME__[6]); // 0 to 59
+        RtcHalTime.ui32Hour       = toVal(&__TIME__[0]); // 0 to 23
+        RtcHalTime.ui32Minute     = toVal(&__TIME__[3]); // 0 to 59
+        RtcHalTime.ui32Second     = toVal(&__TIME__[6]); // 0 to 59
         RtcHalTime.ui32Hundredths = 00;
-        RtcHalTime.ui32Weekday = am_util_time_computeDayofWeek(
+        RtcHalTime.ui32Weekday    = am_util_time_computeDayofWeek(
             2000 + toVal(&__DATE__[9]), mthToIndex(&__DATE__[0]) + 1,
-            toVal(&__DATE__[4]));                        // 1 to 7
-        RtcHalTime.ui32DayOfMonth = toVal(&__DATE__[4]); // 1 to 31
-        RtcHalTime.ui32Month = mthToIndex(&__DATE__[0]); // 0 to 11
-        RtcHalTime.ui32Year = toVal(&__DATE__[9]);       // years since 2000
-        RtcHalTime.ui32Century = 0;
+            toVal(&__DATE__[4]));                          // 1 to 7
+        RtcHalTime.ui32DayOfMonth = toVal(&__DATE__[4]);      // 1 to 31
+        RtcHalTime.ui32Month      = mthToIndex(&__DATE__[0]); // 0 to 11
+        RtcHalTime.ui32Year       = toVal(&__DATE__[9]); // years since 2000
+        RtcHalTime.ui32Century    = 0;
 
         RtcTimerContext.Running = false;
 
@@ -315,10 +288,7 @@ void RtcInit(void)
     }
 }
 
-uint32_t RtcGetMinimumTimeout(void)
-{
-    return MIN_ALARM_DELAY;
-}
+uint32_t RtcGetMinimumTimeout(void) { return MIN_ALARM_DELAY; }
 
 uint32_t RtcMs2Tick(uint32_t milliseconds)
 {
@@ -332,7 +302,7 @@ uint32_t RtcTick2Ms(uint32_t tick)
 
 void RtcDelayMs(uint32_t delay)
 {
-    uint32_t refTicks = RtcGetTimerValue();
+    uint32_t refTicks   = RtcGetTimerValue();
     uint32_t delayTicks = RtcMs2Tick(delay);
 
     while ((RtcGetTimerValue() - refTicks) < delayTicks) {
@@ -342,20 +312,14 @@ void RtcDelayMs(uint32_t delay)
 
 uint32_t RtcSetTimerContext(void)
 {
-    RtcTimerContext.Ref_Ticks = (uint32_t)RtcGetTicksSinceEpoch(NULL);
+    RtcTimerContext.Ref_Ticks = RtcGetTicksSinceEpoch(NULL);
 
-    return RtcTimerContext.Ref_Ticks;
+    return (uint32_t)RtcTimerContext.Ref_Ticks;
 }
 
-uint32_t RtcGetTimerContext(void)
-{
-    return RtcTimerContext.Ref_Ticks;
-}
+uint32_t RtcGetTimerContext(void) { return RtcTimerContext.Ref_Ticks; }
 
-void RtcSetAlarm(uint32_t timeout)
-{
-    RtcStartAlarm(timeout);
-}
+void RtcSetAlarm(uint32_t timeout) { RtcStartAlarm(timeout); }
 
 void RtcStopAlarm(void)
 {
@@ -393,23 +357,19 @@ uint32_t RtcGetTimerElapsedTime(void)
 
 void RtcSetMcuWakeUpTime(void)
 {
-    if (!McuWakeUpTimeInitialized)
-    {
+    if (!McuWakeUpTimeInitialized) {
     }
 }
 
-int16_t RtcGetMcuWakeUpTime(void)
-{
-    return McuWakeUpTimeCal;
-}
+int16_t RtcGetMcuWakeUpTime(void) { return McuWakeUpTimeCal; }
 
 uint32_t RtcGetCalendarTime(uint16_t *milliseconds)
 {
-    uint64_t ticks = RtcGetTicksSinceEpoch(NULL);
+    uint64_t ticks   = RtcGetTicksSinceEpoch(NULL);
     uint32_t seconds = (ticks + DeviceEpoch) / TICKS_IN_1SECOND;
 
     uint32_t ticks_remainder = ticks - seconds * TICKS_IN_1SECOND;
-    *milliseconds = RtcTick2Ms(ticks_remainder);
+    *milliseconds            = RtcTick2Ms(ticks_remainder);
 
     return ticks * TICKS_IN_1SECOND;
 }
@@ -439,13 +399,11 @@ void am_rtc_isr(void)
 
     am_hal_rtc_int_clear(AM_HAL_RTC_INT_ALM);
 
-    if (RtcTimerContext.Running)
-    {
+    if (RtcTimerContext.Running) {
         current_ticks = RtcGetTicksSinceEpoch(NULL);
-        alarm_ticks = RtcTimerContext.Alarm_Ticks;
+        alarm_ticks   = RtcTimerContext.Alarm_Ticks;
 
-        if (current_ticks >= alarm_ticks)
-        {
+        if (current_ticks >= alarm_ticks) {
             RtcTimerContext.Running = false;
             TimerIrqHandler();
         }
