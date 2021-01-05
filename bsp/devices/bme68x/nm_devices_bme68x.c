@@ -32,7 +32,7 @@ BME68X_INTF_RET_TYPE bme68x_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32
     Transaction.ui8Priority = 1;
     Transaction.eDirection = AM_HAL_IOM_RX;
     Transaction.ui32InstrLen = 1;
-    Transaction.ui32NumBytes = reg_addr;
+    Transaction.ui32Instr = reg_addr;
     Transaction.ui32NumBytes = len;
     Transaction.pui32RxBuffer = (uint32_t *)reg_data;
     Transaction.ui8RepeatCount = 0;
@@ -55,7 +55,7 @@ BME68X_INTF_RET_TYPE bme68x_i2c_write(uint8_t reg_addr, const uint8_t *reg_data,
     Transaction.ui8Priority = 1;
     Transaction.eDirection = AM_HAL_IOM_TX;
     Transaction.ui32InstrLen = 1;
-    Transaction.ui32NumBytes = reg_addr;
+    Transaction.ui32Instr = reg_addr;
     Transaction.ui32NumBytes = len;
     Transaction.pui32TxBuffer = (uint32_t *)reg_data;
     Transaction.ui8RepeatCount = 0;
@@ -121,7 +121,7 @@ int8_t bme68x_interface_init(struct bme68x_dev *bme, uint8_t intf)
             bme->write = bme68x_i2c_write;
             bme->intf = BME68X_I2C_INTF;
 
-            am_hal_iom_initialize(BME68X_IOM_MODULE, pBME68xIOMHandle);
+            am_hal_iom_initialize(BME68X_IOM_MODULE, &pBME68xIOMHandle);
             am_hal_iom_power_ctrl(pBME68xIOMHandle, AM_HAL_SYSCTRL_WAKE, false);
             am_hal_iom_configure(pBME68xIOMHandle, &gBME68xIOMConfig);
             am_hal_iom_enable(pBME68xIOMHandle);
