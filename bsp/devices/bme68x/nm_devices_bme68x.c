@@ -40,9 +40,7 @@ BME68X_INTF_RET_TYPE bme68x_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32
     Transaction.ui32StatusSetClr = 0;
     Transaction.bContinue = false;
 
-    am_hal_iom_blocking_transfer(pBME68xIOMHandle, &Transaction);
-
-    return BME68X_OK;
+    return am_hal_iom_blocking_transfer(pBME68xIOMHandle, &Transaction);
 }
 
 BME68X_INTF_RET_TYPE bme68x_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr)
@@ -63,9 +61,7 @@ BME68X_INTF_RET_TYPE bme68x_i2c_write(uint8_t reg_addr, const uint8_t *reg_data,
     Transaction.ui32StatusSetClr = 0;
     Transaction.bContinue = false;
 
-    am_hal_iom_blocking_transfer(pBME68xIOMHandle, &Transaction);
-
-    return BME68X_OK;
+    return am_hal_iom_blocking_transfer(pBME68xIOMHandle, &Transaction);
 }
 
 BME68X_INTF_RET_TYPE bme68x_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr)
