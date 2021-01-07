@@ -3,15 +3,114 @@
 
 #include <am_mcu_apollo.h>
 #include <am_util.h>
+#include <am_bsp.h>
 
 #include "bmi2_defs.h"
 #include "nm_devices_bmi270.h"
 
-static uint8_t dev_addr;
+#define READ_WRITE_LEN  UINT8_C(46)
+
+#define BMI270_IOM_MODULE 2
+
+static void    *pBMI270IOMHandle;
+static uint8_t  dev_addr;
+
+am_hal_iom_config_t gBMI270IOMConfig =
+{
+    .eInterfaceMode  = AM_HAL_IOM_SPI_MODE,
+    .ui32ClockFreq   = AM_HAL_IOM_8MHZ,
+    .eSpiMode        = AM_HAL_IOM_SPI_MODE_0,
+};
+
+BMI2_INTF_RETURN_TYPE bmi2_i2c_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr)
+{
+    return BMI2_E_COM_FAIL;
+}
+
+BMI2_INTF_RETURN_TYPE bmi2_i2c_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr)
+{
+    return BMI2_E_COM_FAIL;
+}
+
+BMI2_INTF_RETURN_TYPE bmi2_spi_read(uint8_t reg_addr, uint8_t *reg_data, uint32_t len, void *intf_ptr)
+{
+    am_hal_iom_transfer_t  Transaction;
+
+    Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM2_CS_CHNL;
+    Transaction.ui8Priority = 1;
+    Transaction.eDirection = AM_HAL_IOM_RX;
+    Transaction.ui32InstrLen = 1;
+    Transaction.ui32Instr = reg_addr;
+    Transaction.ui32NumBytes = len;
+    Transaction.pui32RxBuffer = (uint32_t *)reg_data;
+    Transaction.ui8RepeatCount = 0;
+    Transaction.ui32PauseCondition = 0;
+    Transaction.ui32StatusSetClr = 0;
+    Transaction.bContinue = false;
+
+    return am_hal_iom_blocking_transfer(pBMI270IOMHandle, &Transaction);
+}
+
+BMI2_INTF_RETURN_TYPE bmi2_spi_write(uint8_t reg_addr, const uint8_t *reg_data, uint32_t len, void *intf_ptr)
+{
+    am_hal_iom_transfer_t  Transaction;
+
+    Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM2_CS_CHNL;
+    Transaction.ui8Priority = 1;
+    Transaction.eDirection = AM_HAL_IOM_TX;
+    Transaction.ui32InstrLen = 1;
+    Transaction.ui32Instr = reg_addr;
+    Transaction.ui32NumBytes = len;
+    Transaction.pui32TxBuffer = (uint32_t *)reg_data;
+    Transaction.ui8RepeatCount = 0;
+    Transaction.ui32PauseCondition = 0;
+    Transaction.ui32StatusSetClr = 0;
+    Transaction.bContinue = false;
+
+    return am_hal_iom_blocking_transfer(pBMI270IOMHandle, &Transaction);
+}
+
+void bmi2_delay_us(uint32_t period, void *intf_ptr)
+{
+    am_util_delay_us(period);
+}
 
 int8_t bmi2_interface_init(struct bmi2_dev *bmi, uint8_t intf)
 {
     int8_t rslt = BMI2_OK;
+
+    if (bmi != NULL)
+    {
+        /* Bus configuration : I2C */
+        if (intf == BMI2_I2C_INTF)
+        {
+            am_util_stdio_printf("I2C Interface is not supported\n");
+            return BMI2_E_COM_FAIL;
+        }
+        else if (intf == BMI2_SPI_INTF)
+        {
+            am_util_stdio_printf("SPI Interface \n");
+            dev_addr = 0x00;
+            bmi->intf = BMI2_SPI_INTF;
+            bmi->read = bmi2_spi_read;
+            bmi->write = bmi2_spi_write;
+
+            am_hal_iom_initialize(BMI270_IOM_MODULE, &pBMI270IOMHandle);
+            am_hal_iom_power_ctrl(pBMI270IOMHandle, AM_HAL_SYSCTRL_WAKE, false);
+            am_hal_iom_configure(pBMI270IOMHandle, &gBMI270IOMConfig);
+            am_hal_iom_enable(pBMI270IOMHandle);
+
+            am_bsp_iom_pins_enable(BMI270_IOM_MODULE, AM_HAL_IOM_SPI_MODE);
+        }
+        bmi->intf_ptr = &dev_addr;
+        bmi->delay_us = bmi2_delay_us;
+        bmi->read_write_len = READ_WRITE_LEN;
+        bmi->config_file_ptr = NULL;
+    }
+    else
+    {
+        rslt = BMI2_E_NULL_PTR;
+    }
 
     return rslt;
 }
@@ -207,3 +306,10 @@ void bmi2_error_codes_print_result(int8_t rslt)
     }
 }
 
+void bmi2_coines_deinit(void)
+{
+    am_bsp_iom_pins_disable(BMI270_IOM_MODULE, AM_HAL_IOM_I2C_MODE);
+    am_hal_iom_disable(pBMI270IOMHandle);
+    am_hal_iom_power_ctrl(pBMI270IOMHandle, AM_HAL_SYSCTRL_DEEPSLEEP, false);
+    am_hal_iom_uninitialize(pBMI270IOMHandle);
+}
