@@ -4,9 +4,10 @@ IndentWidth: 4
 ---
 Language: Cpp
 AccessModifierOffset: -2
-AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments: false
-AlignConsecutiveDeclarations: false
+AlignAfterOpenBracket: true
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: true
 AlignEscapedNewlines: Right
 AlignOperands:   true
 AlignTrailingComments: true

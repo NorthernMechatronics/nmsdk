@@ -338,8 +338,8 @@ pin
 pin
     name            = IOM2_CS
     desc            = I/O Master 2 chip select.
-    pinnum          = 15
-    func_sel        = AM_HAL_PIN_15_NCE15
+    pinnum          = 34
+    func_sel        = AM_HAL_PIN_34_NCE34
     drvstrength     = 12
     intdir          = lo2hi
     GPOutcfg        = pushpull
