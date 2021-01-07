@@ -121,7 +121,6 @@ int8_t bmi2_interface_init(struct bmi2_dev *bmi, uint8_t intf)
         }
         else if (intf == BMI2_SPI_INTF)
         {
-            am_util_stdio_printf("SPI Interface \n");
             dev_addr = 0x00;
             bmi->intf = BMI2_SPI_INTF;
             bmi->read = bmi2_spi_read;

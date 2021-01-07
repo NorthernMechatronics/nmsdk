@@ -111,7 +111,6 @@ int8_t bme68x_interface_init(struct bme68x_dev *bme, uint8_t intf)
     {
         if (intf == BME68X_I2C_INTF)
         {
-            am_util_stdio_printf("I2C Interface\n");
             dev_addr = BME68X_I2C_ADDR_LOW;
             bme->read = bme68x_i2c_read;
             bme->write = bme68x_i2c_write;
