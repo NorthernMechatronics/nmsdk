@@ -32,7 +32,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <am_bsp.h>
 #include <am_mcu_apollo.h>
 #include <am_util.h>
 
