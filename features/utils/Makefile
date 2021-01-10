@@ -20,6 +20,8 @@ INCLUDES += -I$(AMBIQ_SDK)/CMSIS/ARM/Include
 VPATH  = $(AMBIQ_SDK)/utils
 VPATH += .
 
+DEFINES += -DAM_PRINTF_BUFSIZE=512
+
 SRC  = am_util_ble.c
 SRC += am_util_debug.c
 SRC += am_util_delay.c
