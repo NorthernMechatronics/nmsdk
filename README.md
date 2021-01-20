@@ -35,7 +35,7 @@ For more details on building the SDK on a host platform, please check the **User
 * Clone the [NMSDK](https://github.com/NorthernMechatronics/nmsdk).
 
 ```git clone https://github.com/NorthernMechatronics/nmsdk.git```
-```git checkout LoRaWAN_v1.0.3
+```git checkout LoRaWAN_v1.0.3```
 
 * Download and install the [AmbiqSuite](https://ambiq.com/wp-content/uploads/2020/09/AmbiqSuite-R2.5.1.zip).
 
