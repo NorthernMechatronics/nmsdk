@@ -4,9 +4,8 @@ License : [![License](https://img.shields.io/badge/license-BSD_3-blue.svg)](http
 Platform Details: [![Hardware](https://img.shields.io/badge/hardware-wiki-green.svg)](https://www.northernmechatronics.com/nm180100)
 
 ## Attention
-This branch is configured for the LoRaWAN L2 v1.0.3 specifications.  The corresponding
-release tag for the LoRaMac-node is v4.4.6 (final release).  Please make sure that you switch
-to the proper release tag before building this SDK.
+This is the master branch.  Please checkout the LoRaWAN_v1.0.3 brnach for the LoRaWAN L2 v1.0.3 specifications.  The corresponding
+release tag for the LoRaMac-node is v4.4.6 (final release).  Please make sure that you switch to the proper release tag before building this SDK.
 
 ## Overview
 The NMSDK is a platform library for the Northern Mechatronics NM180100 LoRa BLE module.  It provides support for LoRa direct, LoRa real-time, LoRaWAN, and BLE wireless connectivity as well as a FreeRTOS framework for rapid application development across a wide range of use cases and environments.
@@ -36,6 +35,7 @@ For more details on building the SDK on a host platform, please check the **User
 * Clone the [NMSDK](https://github.com/NorthernMechatronics/nmsdk).
 
 ```git clone https://github.com/NorthernMechatronics/nmsdk.git```
+```git checkout LoRaWAN_v1.0.3
 
 * Download and install the [AmbiqSuite](https://ambiq.com/wp-content/uploads/2020/09/AmbiqSuite-R2.5.1.zip).
 
