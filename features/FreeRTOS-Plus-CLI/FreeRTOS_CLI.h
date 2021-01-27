@@ -89,6 +89,7 @@ char *FreeRTOS_CLIGetOutputBuffer( void );
  */
 const char *FreeRTOS_CLIGetParameter( const char *pcCommandString, UBaseType_t uxWantedParameter, BaseType_t *pxParameterStringLength );
 int8_t FreeRTOS_CLIGetNumberOfParameters( const char *pcCommandString );
+void FreeRTOS_CLIExtractParameters(char *pcCommandString, size_t *argc, char **argv);
 
 #endif /* COMMAND_INTERPRETER_H */
 
