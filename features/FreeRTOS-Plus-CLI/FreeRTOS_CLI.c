@@ -368,3 +368,45 @@ BaseType_t xLastCharacterWasSpace = pdFALSE;
 	return cParameters;
 }
 
+void FreeRTOS_CLIExtractParameters(char *pcCommandString, size_t *argc, char **argv)
+{
+    *argc = 0;
+
+    /* Find the start of the next string. */
+    while( ( *pcCommandString ) == ' ' )
+    {
+        pcCommandString++;
+    }
+
+    /* Was a string found? */
+    while( *pcCommandString != 0x00 )
+    {
+        /* How long is the parameter? */
+        argv[*argc] = pcCommandString;
+
+        char termination = ' ';
+        if ((*pcCommandString == '\"') || (*pcCommandString == '\''))
+        {
+            termination = *pcCommandString;
+            pcCommandString++;
+            argv[*argc] = pcCommandString;
+        }
+        (*argc)++;
+
+        while( ( ( *pcCommandString ) != 0x00 ) && ( ( *pcCommandString ) != termination ) )
+        {
+            pcCommandString++;
+        }
+
+        if ((*pcCommandString) != 0x00)
+        {
+            *pcCommandString = 0;
+            pcCommandString++;
+        }
+
+        while( ( ( *pcCommandString ) != 0x00 ) && ( ( *pcCommandString ) == ' ' ) )
+        {
+            pcCommandString++;
+        }
+    }
+}

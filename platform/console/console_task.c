@@ -38,8 +38,7 @@
 
 #include <FreeRTOS.h>
 #include <FreeRTOS_CLI.h>
-#include <queue.h>
-#include <semphr.h>
+#include <stream_buffer.h>
 #include <task.h>
 
 #include "build_timestamp.h"
@@ -51,9 +50,13 @@
 #define MAX_CMD_HIST_LEN (8)
 #define MAX_INPUT_LEN    (128)
 
+#define STREAM_BUFFER_SIZE  64
+
 /******************************************************************************
  * Local declarations
  ******************************************************************************/
+static StreamBufferHandle_t stream_buffer;
+
 static char    in_str[MAX_INPUT_LEN];
 static uint8_t in_len = 0;
 
@@ -178,22 +181,9 @@ void nm_console_print_prompt() { am_util_stdio_printf(cmd_prompt); }
 
 char nm_console_read()
 {
-    uint32_t received = 0;
-    uint8_t  ch;
+    uint8_t ch;
 
-    am_hal_uart_transfer_t sUartRead = {
-        .ui32Direction         = AM_HAL_UART_READ,
-        .pui8Data              = &ch,
-        .ui32NumBytes          = 1,
-        .ui32TimeoutMs         = 0,
-        .pui32BytesTransferred = &received,
-    };
-
-    am_bsp_com_uart_transfer(&sUartRead);
-    while (received == 0) {
-        taskYIELD();
-        am_bsp_com_uart_transfer(&sUartRead);
-    }
+    xStreamBufferReceive(stream_buffer, &ch, 1, portMAX_DELAY );
 
     return ch;
 }
@@ -207,8 +197,13 @@ char nm_console_read()
 void g_console_task_setup(void)
 {
     am_bsp_buffered_uart_printf_enable();
+    NVIC_SetPriority((IRQn_Type)(UART0_IRQn + AM_BSP_UART_PRINT_INST), 4);
 
     memset(cmd_hist, 0, MAX_CMD_HIST_LEN * MAX_INPUT_LEN);
+
+    stream_buffer = xStreamBufferCreate (
+            STREAM_BUFFER_SIZE,
+            1);
 }
 
 /******************************************************************************
@@ -317,4 +312,27 @@ void nm_console_task(void *pvp)
     }
 }
 
-void am_uart_isr() { am_bsp_buffered_uart_service(); }
+void am_uart_isr()
+{
+    am_bsp_buffered_uart_service();
+
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    uint32_t received = 0;
+    uint8_t  buffer[32];
+
+    am_hal_uart_transfer_t uart_transfer = {
+        .ui32Direction         = AM_HAL_UART_READ,
+        .pui8Data              = buffer,
+        .ui32NumBytes          = 32,
+        .ui32TimeoutMs         = 0,
+        .pui32BytesTransferred = &received,
+    };
+    am_bsp_com_uart_transfer(&uart_transfer);
+
+    if (received > 0)
+    {
+        xStreamBufferSendFromISR(stream_buffer, (void*)buffer, received, &xHigherPriorityTaskWoken);
+    }
+
+    portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+}

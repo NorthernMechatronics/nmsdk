@@ -47,11 +47,9 @@ DEPS+= $(ASRC:%.s=$(CONFIG)/%.d)
 CFLAGS += $(INCLUDES)
 CFLAGS += $(DEFINES)
 
-all: directories $(CONFIG)/$(TARGET)
+all: $(CONFIG) $(CONFIG)/$(TARGET)
 
-directories: $(CONFIG)
-
-$(CONFIG): $(TARGET_H) $(TARGET_C)
+$(CONFIG):
 	@$(MKDIR) $@
 
 $(TARGET_H): bsp_pins.src
@@ -60,11 +58,11 @@ $(TARGET_H): bsp_pins.src
 $(TARGET_C): bsp_pins.src
 	python $(BSP_GENERATOR) $< c > $@
 
-$(CONFIG)/%.o: %.c $(CONFIG)/%.d
+$(CONFIG)/%.o: %.c $(CONFIG)/%.d $(TARGET_H) $(TARGET_C)
 	@echo "Compiling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) $< -o $@
 
-$(CONFIG)/%.o: %.s $(CONFIG)/%.d
+$(CONFIG)/%.o: %.s $(CONFIG)/%.d $(TARGET_H) $(TARGET_C)
 	@echo "Assembling $(COMPILERNAME) $<"
 	$(CC) -c $(CFLAGS) $< -o $@
 

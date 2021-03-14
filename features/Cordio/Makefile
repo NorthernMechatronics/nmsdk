@@ -350,10 +350,10 @@ SRC += uECC_ll.c
 
 DEFINES += -DSEC_ECC_CFG=SEC_ECC_CFG_UECC
 DEFINES += -DAM_CUSTOM_BDADDR
-ifdef DEBUG
-    DEFINES += -DAM_DEBUG_PRINTF
-    DEFINES += -DWSF_TRACE_ENABLED
-endif
+#ifdef DEBUG
+#    DEFINES += -DAM_DEBUG_PRINTF
+#    DEFINES += -DWSF_TRACE_ENABLED
+#endif
 
 CSRC = $(filter %.c, $(SRC))
 ASRC = $(filter %.s, $(SRC))
