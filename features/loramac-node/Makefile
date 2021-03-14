@@ -68,10 +68,10 @@ SRC += RegionAS923.c
 SRC += RegionAU915.c
 SRC += RegionBaseUS.c
 SRC += Region.c
-SRC += RegionCN470.c
-SRC += RegionCN779.c
+#SRC += RegionCN470.c
+#SRC += RegionCN779.c
 SRC += RegionCommon.c
-SRC += RegionEU433.c
+#SRC += RegionEU433.c
 SRC += RegionEU868.c
 SRC += RegionIN865.c
 SRC += RegionKR920.c
@@ -83,6 +83,8 @@ SRC += delay-board.c
 SRC += eeprom-board.c
 SRC += rtc-board.c
 SRC += sx1262-board.c
+
+SRC += eeprom_emulation.c
 
 SRC += delay.c
 SRC += nvmm.c

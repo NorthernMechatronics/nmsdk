@@ -22,20 +22,33 @@
  */
 #include "utilities.h"
 #include "eeprom-board.h"
+#include "eeprom_emulation.h"
+#include "eeprom_emulation_conf.h"
+
+void EepromMcuInit(void)
+{
+    if (!eeprom_init(EEPROM_EMULATION_FLASH_PAGES))
+    {
+        eeprom_format(EEPROM_EMULATION_FLASH_PAGES);
+    }
+}
 
 uint8_t EepromMcuWriteBuffer( uint16_t addr, uint8_t *buffer, uint16_t size )
 {
-    uint8_t status = FAIL;
+    eeprom_write_array(addr, buffer, size);
 
-    return 1;
+    return SUCCESS;
 }
 
 uint8_t EepromMcuReadBuffer( uint16_t addr, uint8_t *buffer, uint16_t size )
 {
-    for (uint32_t i = 0; i < size; i++)
-    {
-    }
-    return SUCCESS;
+    uint8_t len;
+    eeprom_read_array(addr, buffer, &len);
+
+    if (len == size)
+        return SUCCESS;
+
+    return FAIL;
 }
 
 void EepromMcuSetDeviceAddr( uint8_t addr )
@@ -44,5 +57,5 @@ void EepromMcuSetDeviceAddr( uint8_t addr )
 
 uint8_t EepromMcuGetDeviceAddr( void )
 {
-    return 0;
+    return FAIL;
 }

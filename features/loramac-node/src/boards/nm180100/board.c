@@ -1,6 +1,7 @@
 #include <am_mcu_apollo.h>
 #include <am_util.h>
 
+#include "eeprom-board.h"
 #include "board.h"
 
 
@@ -32,6 +33,7 @@ void BoardInitPeriph(void)
 
 void BoardInitMcu(void)
 {
+    EepromMcuInit();
 	SX126xIoInit();
 }
 
