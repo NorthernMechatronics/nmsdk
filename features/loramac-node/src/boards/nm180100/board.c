@@ -1,8 +1,8 @@
 #include <am_mcu_apollo.h>
 #include <am_util.h>
 
+#include <sx126x-board.h>
 #include "board.h"
-
 
 /******************************************************************************
  * Global functions
@@ -27,7 +27,7 @@ void BoardCriticalSectionEnd(uint32_t *mask)
 
 void BoardInitPeriph(void)
 {
-	RtcInit();
+//	RtcInit();
 }
 
 void BoardInitMcu(void)

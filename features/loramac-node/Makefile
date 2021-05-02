@@ -44,6 +44,9 @@ VPATH += $(LORAMAC)/src/apps/LoRaMac/common
 VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler
 VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages
 
+INCLUDES += -I$(FREERTOS)/Source/include
+INCLUDES += -I$(SDKROOT)/features/FreeRTOS
+INCLUDES += -I$(SDKROOT)/features/FreeRTOS-Plus-CLI
 
 INCLUDES += -I./src/boards/nm180100
 INCLUDES += -I.
@@ -68,7 +71,7 @@ SRC += RegionAS923.c
 SRC += RegionAU915.c
 SRC += RegionBaseUS.c
 SRC += Region.c
-SRC += RegionCN470.c
+#SRC += RegionCN470.c
 SRC += RegionCN779.c
 SRC += RegionCommon.c
 SRC += RegionEU433.c
@@ -87,7 +90,7 @@ SRC += sx1262-board.c
 SRC += delay.c
 SRC += nvmm.c
 SRC += systime.c
-SRC += timer.c
+SRC += ostimer.c
 
 # LoRaMAC Application Layer Handler
 SRC += NvmDataMgmt.c

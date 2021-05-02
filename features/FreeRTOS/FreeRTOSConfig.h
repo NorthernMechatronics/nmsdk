@@ -90,15 +90,15 @@ extern "C"
 
 /* Software timer related definitions. */
 #define configUSE_TIMERS                        1
-#define configTIMER_TASK_PRIORITY               3
-#define configTIMER_QUEUE_LENGTH                5
+#define configTIMER_TASK_PRIORITY               (configMAX_PRIORITIES - 1)
+#define configTIMER_QUEUE_LENGTH                16
 #define configTIMER_TASK_STACK_DEPTH            configMINIMAL_STACK_SIZE
 
 /* Interrupt nesting behaviour configuration. */
 #define configKERNEL_INTERRUPT_PRIORITY         (0x7 << 5)
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY    (0x4 << 5)
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY    (configMAX_PRIORITIES << 5)
 #define NVIC_configKERNEL_INTERRUPT_PRIORITY        (0x7)
-#define NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY   (0x4)
+#define NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY   (configMAX_PRIORITIES)
 
 /* Define to trap errors during development. */
 #define configASSERT(x)     if (( x ) == 0) while(1);
