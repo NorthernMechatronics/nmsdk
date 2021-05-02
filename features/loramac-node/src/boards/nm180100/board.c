@@ -27,7 +27,7 @@ void BoardCriticalSectionEnd(uint32_t *mask)
 
 void BoardInitPeriph(void)
 {
-//	RtcInit();
+	RtcInit();
 }
 
 void BoardInitMcu(void)

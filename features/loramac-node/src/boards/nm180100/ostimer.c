@@ -67,8 +67,9 @@ void TimerSetContext( TimerEvent_t *obj, void* context )
 
 void TimerStart( TimerEvent_t *obj )
 {
+    TimerHandle_t handle = (TimerHandle_t)obj->Next;
     obj->IsStarted = true;
-    xTimerStart((TimerHandle_t)obj->Next, TIMER_CALL_BLOCKTIME);
+    xTimerChangePeriod(handle, obj->ReloadValue, TIMER_CALL_BLOCKTIME);
 }
 
 bool TimerIsStarted( TimerEvent_t *obj )
@@ -90,7 +91,7 @@ void TimerReset( TimerEvent_t *obj )
 
 void TimerSetValue( TimerEvent_t *obj, uint32_t value )
 {
-    obj->Timestamp = xTaskGetTickCount();
+    obj->Timestamp = value;
     obj->ReloadValue = value;
 }
 
