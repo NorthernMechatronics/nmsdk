@@ -47,8 +47,11 @@
 // MCU wake up time in ticks
 #define MIN_ALARM_DELAY     (3)
 
-#define TICK_DURATION_MS ((uint32_t)1U)
-#define TICKS_IN_1SECOND (1000 / TICK_DURATION_MS)
+#define CLOCK_PERIOD    32768
+#define CLOCK_SHIFT     15
+#define CLOCK_MS_MASK   0x7FFF
+#define TICKS_IN_MS     (CLOCK_PERIOD * 1e-3)
+#define CLOCK_SOURCE    AM_HAL_STIMER_XTAL_32KHZ
 
 static bool    RtcInitialized           = false;
 static bool    McuWakeUpTimeInitialized = false;
@@ -61,17 +64,17 @@ typedef struct {
 } RtcTimerContext_t;
 
 static RtcTimerContext_t RtcTimerContext;
-static uint64_t          DeviceEpoch = 0LL;
 
 static uint32_t RtcBackupRegisters[] = {0, 0};
 
-static TimerHandle_t timer_handle;
-
-void vTimerCallback(TimerHandle_t handle)
+void
+am_stimer_cmpr0_isr(void)
 {
+    am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREA);
+
     if (RtcTimerContext.Running)
     {
-        if (xTaskGetTickCount() >= RtcTimerContext.Alarm_Ticks)
+        if (am_hal_stimer_counter_get() >= RtcTimerContext.Alarm_Ticks)
         {
             RtcTimerContext.Running = false;
             TimerIrqHandler();
@@ -82,49 +85,41 @@ void vTimerCallback(TimerHandle_t handle)
 void RtcInit(void)
 {
     if (RtcInitialized == false) {
-        RtcTimerContext.Running = false;
+        am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREA);
+        NVIC_EnableIRQ(STIMER_CMPR0_IRQn);
 
-        timer_handle = xTimerCreate(
-                "LoRaWAN",
-                100,
-                pdTRUE,
-                (void *)0,
-                vTimerCallback
-                );
-        xTimerStart(timer_handle, 0);
-
+        am_hal_stimer_config(AM_HAL_STIMER_CFG_CLEAR | AM_HAL_STIMER_CFG_FREEZE);
+        am_hal_stimer_config(CLOCK_SOURCE |
+                             AM_HAL_STIMER_CFG_COMPARE_A_ENABLE);
 
         RtcSetTimerContext();
-
         RtcInitialized = true;
     }
 }
 
-uint32_t RtcGetMinimumTimeout(void) { return MIN_ALARM_DELAY; }
+uint32_t RtcGetMinimumTimeout(void)
+{
+    return MIN_ALARM_DELAY;
+}
 
 uint32_t RtcMs2Tick(uint32_t milliseconds)
 {
-    return (uint32_t)(milliseconds / TICK_DURATION_MS);
+    return (uint32_t)(milliseconds);
 }
 
 uint32_t RtcTick2Ms(uint32_t tick)
 {
-    return (uint32_t)(tick * TICK_DURATION_MS);
+    return (uint32_t)((tick >> CLOCK_SHIFT) * 1000);
 }
 
 void RtcDelayMs(uint32_t delay)
 {
-    uint32_t refTicks   = RtcGetTimerValue();
-    uint32_t delayTicks = RtcMs2Tick(delay);
-
-    while ((RtcGetTimerValue() - refTicks) < delayTicks) {
-        __NOP();
-    }
+    am_util_delay_ms(delay);
 }
 
 uint32_t RtcSetTimerContext(void)
 {
-    RtcTimerContext.Ref_Ticks = xTaskGetTickCount();
+    RtcTimerContext.Ref_Ticks = am_hal_stimer_counter_get();
 
     return (uint32_t)RtcTimerContext.Ref_Ticks;
 }
@@ -135,7 +130,6 @@ void RtcSetAlarm(uint32_t timeout) { RtcStartAlarm(timeout); }
 
 void RtcStopAlarm(void)
 {
-//    xTimerStop(timer_handle, 0);
     RtcTimerContext.Running = false;
 }
 
@@ -143,20 +137,19 @@ void RtcStartAlarm(uint32_t timeout)
 {
     RtcStopAlarm();
 
-    RtcTimerContext.Alarm_Ticks = xTaskGetTickCount() + (timeout);
-
+    RtcTimerContext.Alarm_Ticks = am_hal_stimer_counter_get() + timeout;
     RtcTimerContext.Running = true;
-//    xTimerChangePeriod(timer_handle, timeout, 0);
+    am_hal_stimer_compare_delta_set(0, timeout * TICKS_IN_MS);
 }
 
 uint32_t RtcGetTimerValue(void)
 {
-    return (uint32_t)xTaskGetTickCount();
+    return (uint32_t)am_hal_stimer_counter_get();
 }
 
 uint32_t RtcGetTimerElapsedTime(void)
 {
-    uint64_t current = xTaskGetTickCount();
+    uint64_t current = am_hal_stimer_counter_get();
     return (uint32_t)(current - RtcTimerContext.Ref_Ticks);
 }
 
@@ -170,10 +163,10 @@ int16_t RtcGetMcuWakeUpTime(void) { return McuWakeUpTimeCal; }
 
 uint32_t RtcGetCalendarTime(uint16_t *milliseconds)
 {
-    uint64_t ticks   = xTaskGetTickCount();
-    uint32_t seconds = ticks / TICKS_IN_1SECOND;
+    uint64_t value   = am_hal_stimer_counter_get();
+    uint32_t seconds = (value >> CLOCK_SHIFT);
 
-    uint32_t ticks_remainder = ticks - seconds * TICKS_IN_1SECOND;
+    uint32_t ticks_remainder = value & CLOCK_MS_MASK;
     *milliseconds            = RtcTick2Ms(ticks_remainder);
 
     return seconds;
@@ -191,7 +184,10 @@ void RtcBkupRead(uint32_t *data0, uint32_t *data1)
     *data1 = RtcBackupRegisters[1];
 }
 
-void RtcProcess(void) {}
+void RtcProcess(void)
+{
+
+}
 
 TimerTime_t RtcTempCompensation(TimerTime_t period, float temperature)
 {

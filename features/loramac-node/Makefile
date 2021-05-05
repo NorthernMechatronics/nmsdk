@@ -84,7 +84,7 @@ SRC += RegionUS915.c
 SRC += board.c
 SRC += delay-board.c
 SRC += eeprom-board.c
-SRC += rtc-board.c
+#SRC += rtc-board.c
 SRC += sx1262-board.c
 
 SRC += delay.c
