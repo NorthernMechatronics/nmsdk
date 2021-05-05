@@ -90,7 +90,7 @@ SRC += sx1262-board.c
 SRC += delay.c
 SRC += nvmm.c
 SRC += systime.c
-SRC += ostimer.c
+SRC += timer.c
 
 # LoRaMAC Application Layer Handler
 SRC += NvmDataMgmt.c
@@ -111,9 +111,10 @@ OBJS += $(ASRC:%.s=$(CONFIG)/%.o)
 DEPS  = $(CSRC:%.c=$(CONFIG)/%.d)
 DEPS += $(ASRC:%.s=$(CONFIG)/%.d)
 
-SPECIAL_SRC = LmHandlerMsgDisplay.c
-SPECIAL_OBJ = $(CONFIG)/LmHandlerMsgDisplay.o
-SPECIAL_DEP = $(CONFIG)/LmHandlerMsgDisplay.d
+SPECIAL_SRC = $(LORAMAC)/src/apps/LoRaMac/common/LmHandlerMsgDisplay.c
+SPECIAL_PROC = $(CONFIG)/LmHandlerMsgDisplay_proc.c
+SPECIAL_OBJ = $(CONFIG)/LmHandlerMsgDisplay_proc.o
+SPECIAL_DEP = $(CONFIG)/LmHandlerMsgDisplay_proc.d
 
 DEPS += $(SPECIAL_DEP)
 
@@ -128,7 +129,8 @@ $(CONFIG):
 
 $(SPECIAL_OBJ): $(SPECIAL_SRC) $(SPECIAL_DEP) $(INCS)
 	@echo "Compiling $(COMPILERNAME) $<"
-	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $< -o $@
+	sed "s/\\n/\\r\\n/g" $(SPECIAL_SRC) > $(SPECIAL_PROC)
+	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $(SPECIAL_PROC) -o $@
 
 $(CONFIG)/%.o: %.c $(CONFIG)/%.d $(INCS)
 	@echo "Compiling $(COMPILERNAME) $<"
