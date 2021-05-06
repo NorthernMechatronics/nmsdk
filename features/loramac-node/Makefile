@@ -116,6 +116,7 @@ SPECIAL_PROC = $(CONFIG)/LmHandlerMsgDisplay_proc.c
 SPECIAL_OBJ = $(CONFIG)/LmHandlerMsgDisplay_proc.o
 SPECIAL_DEP = $(CONFIG)/LmHandlerMsgDisplay_proc.d
 
+OBJS += $(SPECIAL_OBJ)
 DEPS += $(SPECIAL_DEP)
 
 CFLAGS += $(INCLUDES)
@@ -129,7 +130,7 @@ $(CONFIG):
 
 $(SPECIAL_OBJ): $(SPECIAL_SRC) $(SPECIAL_DEP) $(INCS)
 	@echo "Compiling $(COMPILERNAME) $<"
-	sed "s/\\n/\\r\\n/g" $(SPECIAL_SRC) > $(SPECIAL_PROC)
+	$(SED) "s/\\n/\\r\\n/g" $(SPECIAL_SRC) > $(SPECIAL_PROC)
 	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $(SPECIAL_PROC) -o $@
 
 $(CONFIG)/%.o: %.c $(CONFIG)/%.d $(INCS)

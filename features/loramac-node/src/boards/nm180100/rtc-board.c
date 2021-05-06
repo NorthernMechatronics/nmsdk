@@ -29,29 +29,29 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <math.h>
 #include <stdbool.h>
 #include <string.h>
 
 #include <am_mcu_apollo.h>
 #include <am_util.h>
 
-#include <FreeRTOS.h>
-#include <FreeRTOS_CLI.h>
-#include <queue.h>
-#include <timers.h>
-
 #include <rtc-board.h>
 #include <systime.h>
 #include <timer.h>
 
-// MCU wake up time in ticks
-#define MIN_ALARM_DELAY     (3)
+// The typical transition time from deep-sleep to run mode is 25us (Chapter 22.4).
+// A single alarm tick using a 32.768kHz crystal is about 30.5us.  At the nominal
+// processor clock speed (48MHz), 1525 instructions can be processed in one alarm
+// tick.  A delay of three alarm ticks (about 96us) will be sufficient to wake-up
+// and restore context.
+#define MIN_ALARM_DELAY (3)
 
-#define CLOCK_PERIOD    32768
-#define CLOCK_SHIFT     15
-#define CLOCK_MS_MASK   0x7FFF
-#define TICKS_IN_MS     (CLOCK_PERIOD * 1e-3)
-#define CLOCK_SOURCE    AM_HAL_STIMER_XTAL_32KHZ
+#define CLOCK_PERIOD  32768
+#define CLOCK_SHIFT   15
+#define CLOCK_MS_MASK 0x7FFF
+#define TICKS_IN_MS   (CLOCK_PERIOD * 1e-3)
+#define CLOCK_SOURCE  AM_HAL_STIMER_XTAL_32KHZ
 
 static bool    RtcInitialized           = false;
 static bool    McuWakeUpTimeInitialized = false;
@@ -59,23 +59,18 @@ static int16_t McuWakeUpTimeCal         = 0;
 
 typedef struct {
     bool     Running;
-    uint64_t Ref_Ticks;
-    uint64_t Alarm_Ticks;
+    uint32_t Ref_Ticks;
+    uint32_t Alarm_Ticks;
 } RtcTimerContext_t;
 
 static RtcTimerContext_t RtcTimerContext;
 
-static uint32_t RtcBackupRegisters[] = {0, 0};
-
-void
-am_stimer_cmpr0_isr(void)
+void am_stimer_cmpr0_isr(void)
 {
     am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREA);
 
-    if (RtcTimerContext.Running)
-    {
-        if (am_hal_stimer_counter_get() >= RtcTimerContext.Alarm_Ticks)
-        {
+    if (RtcTimerContext.Running) {
+        if (am_hal_stimer_counter_get() >= RtcTimerContext.Alarm_Ticks) {
             RtcTimerContext.Running = false;
             TimerIrqHandler();
         }
@@ -88,64 +83,57 @@ void RtcInit(void)
         am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREA);
         NVIC_EnableIRQ(STIMER_CMPR0_IRQn);
 
-        am_hal_stimer_config(AM_HAL_STIMER_CFG_CLEAR | AM_HAL_STIMER_CFG_FREEZE);
-        am_hal_stimer_config(CLOCK_SOURCE |
-                             AM_HAL_STIMER_CFG_COMPARE_A_ENABLE);
+        am_hal_stimer_config(AM_HAL_STIMER_CFG_CLEAR |
+                             AM_HAL_STIMER_CFG_FREEZE);
+        am_hal_stimer_config(CLOCK_SOURCE | AM_HAL_STIMER_CFG_COMPARE_A_ENABLE);
 
         RtcSetTimerContext();
         RtcInitialized = true;
     }
 }
 
-uint32_t RtcGetMinimumTimeout(void)
-{
-    return MIN_ALARM_DELAY;
-}
+uint32_t RtcGetMinimumTimeout(void) { return MIN_ALARM_DELAY; }
 
 uint32_t RtcMs2Tick(uint32_t milliseconds)
 {
+    // FIXME:  While the observed behavior is correct,  it is
+    // in conflict to the Semtech's documentation (inline comment
+    // in rtc-board.h).  However, if the implementation is done
+    // based on the documentation the timing is no longer correct.
+    // This is also observed on other platforms (issue #1046).
+    //
+    // It is suspected that the upper layer assumes there is an
+    // approximate equivalence between milliseconds and ticks.
     return (uint32_t)(milliseconds);
 }
 
-uint32_t RtcTick2Ms(uint32_t tick)
-{
-    return (uint32_t)((tick >> CLOCK_SHIFT) * 1000);
-}
+uint32_t RtcTick2Ms(uint32_t tick) { return ((tick >> CLOCK_SHIFT) * 1000); }
 
-void RtcDelayMs(uint32_t delay)
-{
-    am_util_delay_ms(delay);
-}
+void RtcDelayMs(uint32_t delay) { am_util_delay_ms(delay); }
 
 uint32_t RtcSetTimerContext(void)
 {
     RtcTimerContext.Ref_Ticks = am_hal_stimer_counter_get();
 
-    return (uint32_t)RtcTimerContext.Ref_Ticks;
+    return RtcTimerContext.Ref_Ticks;
 }
 
 uint32_t RtcGetTimerContext(void) { return RtcTimerContext.Ref_Ticks; }
 
 void RtcSetAlarm(uint32_t timeout) { RtcStartAlarm(timeout); }
 
-void RtcStopAlarm(void)
-{
-    RtcTimerContext.Running = false;
-}
+void RtcStopAlarm(void) { RtcTimerContext.Running = false; }
 
 void RtcStartAlarm(uint32_t timeout)
 {
     RtcStopAlarm();
 
     RtcTimerContext.Alarm_Ticks = am_hal_stimer_counter_get() + timeout;
-    RtcTimerContext.Running = true;
+    RtcTimerContext.Running     = true;
     am_hal_stimer_compare_delta_set(0, timeout * TICKS_IN_MS);
 }
 
-uint32_t RtcGetTimerValue(void)
-{
-    return (uint32_t)am_hal_stimer_counter_get();
-}
+uint32_t RtcGetTimerValue(void) { return am_hal_stimer_counter_get(); }
 
 uint32_t RtcGetTimerElapsedTime(void)
 {
@@ -174,22 +162,43 @@ uint32_t RtcGetCalendarTime(uint16_t *milliseconds)
 
 void RtcBkupWrite(uint32_t data0, uint32_t data1)
 {
-    RtcBackupRegisters[0] = data0;
-    RtcBackupRegisters[1] = data1;
+    am_hal_stimer_nvram_set(0, data0);
+    am_hal_stimer_nvram_set(1, data1);
 }
 
 void RtcBkupRead(uint32_t *data0, uint32_t *data1)
 {
-    *data0 = RtcBackupRegisters[0];
-    *data1 = RtcBackupRegisters[1];
+    *data0 = am_hal_stimer_nvram_get(0);
+    *data1 = am_hal_stimer_nvram_get(1);
 }
 
-void RtcProcess(void)
-{
-
-}
+void RtcProcess(void) {}
 
 TimerTime_t RtcTempCompensation(TimerTime_t period, float temperature)
 {
-    return (TimerTime_t)period;
+    // The drift equation of a tuning fork crystal over temperature is
+    //
+    //   delta_f / f_0 = k * (T - T_0) ^ 2
+    //
+    // As the crystal is external to the module, typical values range
+    // from 0.03 to 0.04.  For the NKG crystal used in the NM180100EVB
+    // and NM180310 feather board, k is 0.034 nominal and T_0 is at 25C
+    // nominal.
+    float T_0 = 25.0f;
+    float k   = -0.034f;
+    float dev = 0.0f;
+
+    dev = k * (temperature - T_0) * (temperature - T_0);
+
+    // for component accuracy in the ppb range, change
+    // the divisor to 1.0e9f
+    float correction = ((float)period * dev) / 1.0e6f;
+
+    // This would never happen practically, but for the sake of
+    // mathematical correctness we should use a signed integer to
+    // accommodate negative value correction
+    int32_t corrected_period = (int32_t)period + round(correction);
+
+    // re-cast the value back to uint32_t (TimerTime_t)
+    return (TimerTime_t)corrected_period;
 }
