@@ -3,6 +3,9 @@
 
 #include <sx126x-board.h>
 #include "board.h"
+#include "rtc-board.h"
+#include "eeprom_emulation_conf.h"
+#include "eeprom_emulation.h"
 
 /******************************************************************************
  * Global functions
@@ -28,6 +31,10 @@ void BoardCriticalSectionEnd(uint32_t *mask)
 void BoardInitPeriph(void)
 {
 	RtcInit();
+    if (!eeprom_init(EEPROM_EMULATION_FLASH_PAGES))
+    {
+        eeprom_format(EEPROM_EMULATION_FLASH_PAGES);
+    }
 }
 
 void BoardInitMcu(void)
