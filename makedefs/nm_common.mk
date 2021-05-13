@@ -25,6 +25,7 @@ OD   = $(TOOLCHAIN)-objdump
 RD   = $(TOOLCHAIN)-readelf
 AR   = $(TOOLCHAIN)-ar
 SIZE = $(TOOLCHAIN)-size
+SED  = sed
 
 ifeq ($(OS), Windows_NT)
   $(info Windows Platform Detected)

@@ -20,22 +20,24 @@
  *
  * \author    Gregory Cristian ( Semtech )
  */
+#include <am_mcu_apollo.h>
 #include "utilities.h"
 #include "eeprom-board.h"
 
 uint8_t EepromMcuWriteBuffer( uint16_t addr, uint8_t *buffer, uint16_t size )
 {
-    uint8_t status = FAIL;
-
+    eeprom_write_array_len(addr + 1, buffer, size);
     return 1;
 }
 
 uint8_t EepromMcuReadBuffer( uint16_t addr, uint8_t *buffer, uint16_t size )
 {
-    for (uint32_t i = 0; i < size; i++)
+    if (!eeprom_read_array_len(addr + 1, buffer, size))
     {
+        return 0;
     }
-    return SUCCESS;
+
+    return 1;
 }
 
 void EepromMcuSetDeviceAddr( uint8_t addr )

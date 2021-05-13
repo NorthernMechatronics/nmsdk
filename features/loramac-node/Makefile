@@ -44,6 +44,9 @@ VPATH += $(LORAMAC)/src/apps/LoRaMac/common
 VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler
 VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages
 
+INCLUDES += -I$(FREERTOS)/Source/include
+INCLUDES += -I$(SDKROOT)/features/FreeRTOS
+INCLUDES += -I$(SDKROOT)/features/FreeRTOS-Plus-CLI
 
 INCLUDES += -I./src/boards/nm180100
 INCLUDES += -I.
@@ -68,7 +71,7 @@ SRC += RegionAS923.c
 SRC += RegionAU915.c
 SRC += RegionBaseUS.c
 SRC += Region.c
-SRC += RegionCN470.c
+#SRC += RegionCN470.c
 SRC += RegionCN779.c
 SRC += RegionCommon.c
 SRC += RegionEU433.c
@@ -81,6 +84,7 @@ SRC += RegionUS915.c
 SRC += board.c
 SRC += delay-board.c
 SRC += eeprom-board.c
+SRC += eeprom_emulation.c
 SRC += rtc-board.c
 SRC += sx1262-board.c
 
@@ -108,10 +112,12 @@ OBJS += $(ASRC:%.s=$(CONFIG)/%.o)
 DEPS  = $(CSRC:%.c=$(CONFIG)/%.d)
 DEPS += $(ASRC:%.s=$(CONFIG)/%.d)
 
-SPECIAL_SRC = LmHandlerMsgDisplay.c
-SPECIAL_OBJ = $(CONFIG)/LmHandlerMsgDisplay.o
-SPECIAL_DEP = $(CONFIG)/LmHandlerMsgDisplay.d
+SPECIAL_SRC = $(LORAMAC)/src/apps/LoRaMac/common/LmHandlerMsgDisplay.c
+SPECIAL_PROC = $(CONFIG)/LmHandlerMsgDisplay_proc.c
+SPECIAL_OBJ = $(CONFIG)/LmHandlerMsgDisplay_proc.o
+SPECIAL_DEP = $(CONFIG)/LmHandlerMsgDisplay_proc.d
 
+OBJS += $(SPECIAL_OBJ)
 DEPS += $(SPECIAL_DEP)
 
 CFLAGS += $(INCLUDES)
@@ -125,7 +131,8 @@ $(CONFIG):
 
 $(SPECIAL_OBJ): $(SPECIAL_SRC) $(SPECIAL_DEP) $(INCS)
 	@echo "Compiling $(COMPILERNAME) $<"
-	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $< -o $@
+	$(SED) "s/\\n/\\r\\n/g" $(SPECIAL_SRC) > $(SPECIAL_PROC)
+	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $(SPECIAL_PROC) -o $@
 
 $(CONFIG)/%.o: %.c $(CONFIG)/%.d $(INCS)
 	@echo "Compiling $(COMPILERNAME) $<"
