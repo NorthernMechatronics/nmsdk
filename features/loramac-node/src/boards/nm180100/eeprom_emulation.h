@@ -1,7 +1,7 @@
 /*
  * BSD 3-Clause License
  *
- * Copyright (c) 2020, Northern Mechatronics, Inc.
+ * Copyright (c) 2021, Northern Mechatronics, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,72 +29,28 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _EEPROM_EMULATION_H_
+#define _EEPROM_EMULATION_H_
 
-#include <am_mcu_apollo.h>
-#include <am_util.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include "board.h"
-#include "eeprom_emulation.h"
-#include "eeprom_emulation_conf.h"
-#include "rtc-board.h"
-#include <sx126x-board.h>
+bool eeprom_init(uint32_t);
+bool eeprom_format(uint32_t);
+bool eeprom_read(uint16_t address, uint16_t *data);
+bool eeprom_read_array(uint16_t address, uint8_t *data, uint8_t *len);
+bool eeprom_read_array_len(uint16_t address, uint8_t *data, uint16_t size);
+void eeprom_write(uint16_t address, uint16_t data);
+void eeprom_write_array(uint16_t address, uint8_t *data, uint8_t len);
+void eeprom_write_array_len(uint16_t address, uint8_t *data, uint16_t size);
+bool eeprom_delete(uint16_t virtual_address);
+bool eeprom_delete_array(uint16_t virtual_address);
 
-void BoardCriticalSectionBegin(uint32_t *mask)
-{
-    *mask = am_hal_interrupt_master_disable();
+uint32_t eeprom_erase_counter(void);
+
+#ifdef __cplusplus
 }
+#endif
 
-void BoardCriticalSectionEnd(uint32_t *mask)
-{
-    am_hal_interrupt_master_set(*mask);
-}
-
-void BoardInitPeriph(void)
-{
-    RtcInit();
-    if (!eeprom_init(EEPROM_EMULATION_FLASH_PAGES)) {
-        eeprom_format(EEPROM_EMULATION_FLASH_PAGES);
-    }
-}
-
-void BoardInitMcu(void) { SX126xIoInit(); }
-
-void BoardResetMcu(void)
-{
-    CRITICAL_SECTION_BEGIN();
-    NVIC_SystemReset();
-}
-
-void BoardDeInitMcu(void) { SX126xIoDeInit(); }
-
-uint32_t BoardGetRandomSeed(void)
-{
-    am_util_id_t i;
-    uint32_t     ret;
-
-    am_util_id_device(&i);
-    ret = ~(i.sMcuCtrlDevice.ui32ChipID0);
-    ret ^= i.sMcuCtrlDevice.ui32ChipID1;
-    ret ^= i.sMcuCtrlDevice.ui32ChipRev << 3;
-    ret ^= i.sMcuCtrlDevice.ui32VendorID >> 3;
-    ret ^= i.sMcuCtrlDevice.ui32SKU << 6;
-    ret ^= i.sMcuCtrlDevice.ui32Qualified >> 6;
-
-    return ret;
-}
-
-uint16_t BoardBatteryMeasureVolage(void) { return 0; }
-
-uint32_t BoardGetBatteryVoltage(void) { return 0; }
-
-uint8_t BoardGetBatteryLevel(void) { return 0; }
-
-uint8_t GetBoardPowerSource(void) { return USB_POWER; }
-
-void LpmEnterStopMode(void) {}
-
-void LpmExitStopMode(void) {}
-
-void LpmEnterSleepMode(void) {}
-
-void BoardLowPowerHandler(void) {}
+#endif /* _EEPROM_EMULATION_H_ */
