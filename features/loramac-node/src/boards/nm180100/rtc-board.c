@@ -182,8 +182,8 @@ TimerTime_t RtcTempCompensation(TimerTime_t period, float temperature)
     //
     // As the crystal is external to the module, typical values range
     // from 0.03 to 0.04.  For the NKG crystal used in the NM180100EVB
-    // and NM180310 feather board, k is 0.034 nominal and T_0 is at 25C
-    // nominal.
+    // and the NM180310 feather board, k is -0.034 nominal and T_0 is
+    // at 25C nominal.
     float T_0 = 25.0f;
     float k   = -0.034f;
     float dev = 0.0f;
