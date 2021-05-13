@@ -4,7 +4,7 @@ License : [![License](https://img.shields.io/badge/license-BSD_3-blue.svg)](http
 Platform Details: [![Hardware](https://img.shields.io/badge/hardware-wiki-green.svg)](https://www.northernmechatronics.com/nm180100)
 
 ## Attention
-This is the master branch.  Please checkout the LoRaWAN_v1.0.3 brnach for the LoRaWAN L2 v1.0.3 specifications.  The corresponding
+This is the master branch.  Please checkout the LoRaWAN_v1.0.3 branch for the LoRaWAN L2 v1.0.3 specifications.  The corresponding
 release tag for the LoRaMac-node is v4.4.7 (final release).  Please make sure that you switch to the proper release tag before building this SDK.
 
 ## Overview
