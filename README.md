@@ -31,6 +31,7 @@ For more details on building the SDK on a host platform, please check the **User
 ### Pre-requisites
 * git
 * make
+* sed
 
 ### Installation
 * Clone the [NMSDK](https://github.com/NorthernMechatronics/nmsdk).
@@ -56,7 +57,7 @@ L2 v1.0.3 tag
 
 ```cd <LoRaMac-node directory>```
 
-```git checkout v4.4.6```
+```git checkout v4.4.7```
 
 ### Build Setup
 * Open the Makefile
