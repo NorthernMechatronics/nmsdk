@@ -9,7 +9,14 @@ release tag for the LoRaMac-node is v4.4.7 (final release).  Please make sure th
 to the proper release tag before building this SDK.
 
 ## Overview
-The NMSDK is a platform library for the Northern Mechatronics NM180100 LoRa BLE module.  It provides support for LoRa direct, LoRa real-time, LoRaWAN, and BLE wireless connectivity as well as a FreeRTOS framework for rapid application development across a wide range of use cases and environments.
+The NMSDK is a platform library for the Northern Mechatronics NM180100 LoRa BLE module.
+It provides support for LoRa direct, LoRa real-time, LoRaWAN, and BLE wireless connectivity as well
+as a FreeRTOS framework for rapid application development across a wide range of use cases and environments.
+As of May 2021, NVM context management (a mandatory feature in v1.0.4 but supported in v1.0.3) is enabled by default.
+Two flash pages located at the end of the flash memory are used for context storage.  If you wish to disable this feature,
+remove the following define in ./makedefs/nm_loramac.mk   
+
+```DEFINES += -DCONTEXT_MANAGEMENT_ENABLED```    
 
 Architecturally speaking, the SDK consists of three layers
 ![architecture](doc/SDK_architecture.png)
