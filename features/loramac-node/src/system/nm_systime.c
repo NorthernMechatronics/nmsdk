@@ -127,6 +127,7 @@ void SysTimeSet( SysTime_t sysTime )
         hal_rtc_time.ui32Hour       = ts.tm_hour; // 0 to 23
         hal_rtc_time.ui32Minute     = ts.tm_min; // 0 to 59
         hal_rtc_time.ui32Second     = ts.tm_sec; // 0 to 59
+        hal_rtc_time.ui32Hundredths = sysTime.SubSeconds / 10;
 
         hal_rtc_time.ui32DayOfMonth = ts.tm_mday; // 1 to 31
         hal_rtc_time.ui32Month      = ts.tm_mon; // 0 to 11
