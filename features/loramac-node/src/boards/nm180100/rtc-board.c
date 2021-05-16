@@ -88,6 +88,34 @@ void RtcInit(void)
         am_hal_stimer_config(CLOCK_SOURCE | AM_HAL_STIMER_CFG_COMPARE_A_ENABLE);
 
         RtcSetTimerContext();
+
+        am_hal_rtc_time_t hal_rtc_time;
+
+        am_hal_clkgen_control(AM_HAL_CLKGEN_CONTROL_XTAL_START, 0);
+        am_hal_rtc_osc_select(AM_HAL_RTC_OSC_XT);
+        am_hal_rtc_osc_enable();
+
+        hal_rtc_time.ui32Hour       = 0; // 0 to 23
+        hal_rtc_time.ui32Minute     = 0; // 0 to 59
+        hal_rtc_time.ui32Second     = 0; // 0 to 59
+        hal_rtc_time.ui32Hundredths = 00;
+
+        hal_rtc_time.ui32DayOfMonth = 1; // 1 to 31
+        hal_rtc_time.ui32Month      = 0; // 0 to 11
+        hal_rtc_time.ui32Year       = 0; // years since 2000
+        hal_rtc_time.ui32Century    = 0;
+
+        am_hal_rtc_time_set(&hal_rtc_time);
+
+        struct tm ts;
+
+        ts.tm_hour = hal_rtc_time.ui32Hour;
+        ts.tm_min = hal_rtc_time.ui32Minute;
+        ts.tm_sec = hal_rtc_time.ui32Second;
+        ts.tm_mday = hal_rtc_time.ui32DayOfMonth;
+        ts.tm_mon = hal_rtc_time.ui32Month;
+        ts.tm_year = hal_rtc_time.ui32Year + 2000 - 1900;
+
         RtcInitialized = true;
     }
 }

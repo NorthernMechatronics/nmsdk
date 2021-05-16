@@ -30,8 +30,9 @@ INCLUDES += -I$(LORAMAC)/src/system
 INCLUDES += -I$(LORAMAC)/src/peripherals/soft-se
 
 INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common
-INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common/LmHandler
+#INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common/LmHandler
 INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages
+INCLUDES += -I$(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler
 
 VPATH  = $(LORAMAC)/src/radio/sx126x
 VPATH += $(LORAMAC)/src/boards/mcu
@@ -43,15 +44,20 @@ VPATH += $(LORAMAC)/src/peripherals/soft-se
 VPATH += $(LORAMAC)/src/apps/LoRaMac/common
 VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler
 VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages
+VPATH += $(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler
 
 INCLUDES += -I$(FREERTOS)/Source/include
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS-Plus-CLI
 
+INCLUDES += -I./src/apps/LoRaMac/common
 INCLUDES += -I./src/boards/nm180100
+INCLUDES += -I./src/system
 INCLUDES += -I.
 
+VPATH += ./src/apps/LoRaMac/common
 VPATH += ./src/boards/nm180100
+VPATH += ./src/system
 VPATH += .
 
 SRC  = radio.c
@@ -90,17 +96,19 @@ SRC += sx1262-board.c
 
 SRC += delay.c
 SRC += nvmm.c
-SRC += systime.c
+#SRC += systime.c
+SRC += nm_systime.c
 SRC += timer.c
 
 # LoRaMAC Application Layer Handler
 SRC += NvmDataMgmt.c
-SRC += LmHandler.c
+#SRC += LmHandler.c
 SRC += FragDecoder.c
 SRC += LmhpClockSync.c
 SRC += LmhpCompliance.c
 SRC += LmhpFragmentation.c
 SRC += LmhpRemoteMcastSetup.c
+SRC += nm_LmHandler.c
 
 
 CSRC = $(filter %.c, $(SRC))
@@ -112,13 +120,20 @@ OBJS += $(ASRC:%.s=$(CONFIG)/%.o)
 DEPS  = $(CSRC:%.c=$(CONFIG)/%.d)
 DEPS += $(ASRC:%.s=$(CONFIG)/%.d)
 
-SPECIAL_SRC = $(LORAMAC)/src/apps/LoRaMac/common/LmHandlerMsgDisplay.c
-SPECIAL_PROC = $(CONFIG)/LmHandlerMsgDisplay_proc.c
-SPECIAL_OBJ = $(CONFIG)/LmHandlerMsgDisplay_proc.o
-SPECIAL_DEP = $(CONFIG)/LmHandlerMsgDisplay_proc.d
+MSGDISPLAY_SRC = $(LORAMAC)/src/apps/LoRaMac/common/LmHandlerMsgDisplay.c
+MSGDISPLAY_PROC = $(CONFIG)/LmHandlerMsgDisplay_proc.c
+MSGDISPLAY_OBJ = $(CONFIG)/LmHandlerMsgDisplay_proc.o
+MSGDISPLAY_DEP = $(CONFIG)/LmHandlerMsgDisplay_proc.d
 
-OBJS += $(SPECIAL_OBJ)
-DEPS += $(SPECIAL_DEP)
+MCAST_SRC = $(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages/LmhpRemoteMcastSetup.c
+MCAST_PROC = $(CONFIG)/LmHandlerRemoteMcastSetup_proc.c
+MCAST_OBJ = $(CONFIG)/LmHandlerRemoteMcastSetup_proc.o
+MCAST_DEP = $(CONFIG)/LmHandlerRemoteMcastSetup_proc.d
+
+OBJS += $(MSGDISPLAY_OBJ)
+OBJS += $(MCAST_OBJ)
+DEPS += $(MSGDISPLAY_DEP)
+DEPS += $(MCAST_DEP)
 
 CFLAGS += $(INCLUDES)
 
@@ -129,10 +144,15 @@ directories: $(CONFIG)
 $(CONFIG):
 	@$(MKDIR) $@
 
-$(SPECIAL_OBJ): $(SPECIAL_SRC) $(SPECIAL_DEP) $(INCS)
+$(MSGDISPLAY_OBJ): $(MSGDISPLAY_SRC) $(MSGDISPLAY_DEP) $(INCS)
 	@echo "Compiling $(COMPILERNAME) $<"
-	$(SED) "s/\\n/\\r\\n/g" $(SPECIAL_SRC) > $(SPECIAL_PROC)
-	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $(SPECIAL_PROC) -o $@
+	$(SED) "s/\\n/\\r\\n/g" $(MSGDISPLAY_SRC) > $(MSGDISPLAY_PROC)
+	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $(MSGDISPLAY_PROC) -o $@
+
+$(MCAST_OBJ): $(MCAST_SRC) $(MCAST_DEP) $(INCS)
+	@echo "Compiling $(COMPILERNAME) $<"
+	$(SED) "s/\\n/\\r\\n/g" $(MCAST_SRC) > $(MCAST_PROC)
+	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $(MCAST_PROC) -o $@
 
 $(CONFIG)/%.o: %.c $(CONFIG)/%.d $(INCS)
 	@echo "Compiling $(COMPILERNAME) $<"
