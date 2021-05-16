@@ -64,6 +64,7 @@ typedef struct {
 } RtcTimerContext_t;
 
 static RtcTimerContext_t RtcTimerContext;
+static uint32_t rtc_backup[2];
 
 void am_stimer_cmpr0_isr(void)
 {
@@ -106,15 +107,6 @@ void RtcInit(void)
         hal_rtc_time.ui32Century    = 0;
 
         am_hal_rtc_time_set(&hal_rtc_time);
-
-        struct tm ts;
-
-        ts.tm_hour = hal_rtc_time.ui32Hour;
-        ts.tm_min = hal_rtc_time.ui32Minute;
-        ts.tm_sec = hal_rtc_time.ui32Second;
-        ts.tm_mday = hal_rtc_time.ui32DayOfMonth;
-        ts.tm_mon = hal_rtc_time.ui32Month;
-        ts.tm_year = hal_rtc_time.ui32Year + 2000 - 1900;
 
         RtcInitialized = true;
     }
@@ -190,14 +182,22 @@ uint32_t RtcGetCalendarTime(uint16_t *milliseconds)
 
 void RtcBkupWrite(uint32_t data0, uint32_t data1)
 {
+    /*
     am_hal_stimer_nvram_set(0, data0);
     am_hal_stimer_nvram_set(1, data1);
+    */
+    rtc_backup[0] = data0;
+    rtc_backup[1] = data1;
 }
 
 void RtcBkupRead(uint32_t *data0, uint32_t *data1)
 {
+    /*
     *data0 = am_hal_stimer_nvram_get(0);
     *data1 = am_hal_stimer_nvram_get(1);
+    */
+    *data0 = rtc_backup[0];
+    *data1 = rtc_backup[1];
 }
 
 void RtcProcess(void) {}

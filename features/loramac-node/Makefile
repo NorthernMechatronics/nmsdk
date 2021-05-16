@@ -96,18 +96,18 @@ SRC += sx1262-board.c
 
 SRC += delay.c
 SRC += nvmm.c
+SRC += timer.c
 #SRC += systime.c
 SRC += nm_systime.c
-SRC += timer.c
 
 # LoRaMAC Application Layer Handler
 SRC += NvmDataMgmt.c
-#SRC += LmHandler.c
 SRC += FragDecoder.c
 SRC += LmhpClockSync.c
 SRC += LmhpCompliance.c
 SRC += LmhpFragmentation.c
 SRC += LmhpRemoteMcastSetup.c
+#SRC += LmHandler.c
 SRC += nm_LmHandler.c
 
 
