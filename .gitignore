@@ -1,3 +1,16 @@
+build/
+features/loramac-node/debug/
+features/loramac-node/release/
+features/Cordio/debug/
+features/Cordio/release/
+features/FreeRTOS/debug/
+features/FreeRTOS/release/
+features/FreeRTOS-Plus-CLI/debug/
+features/FreeRTOS-Plus-CLI/release/
+features/hal/debug/
+features/hal/release/
+features/utils/debug/
+features/utils/release/
 .settings/
 .cproject
 .project
