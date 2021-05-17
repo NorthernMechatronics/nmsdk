@@ -106,7 +106,7 @@ SRC += FragDecoder.c
 SRC += LmhpClockSync.c
 SRC += LmhpCompliance.c
 SRC += LmhpFragmentation.c
-SRC += LmhpRemoteMcastSetup.c
+#SRC += LmhpRemoteMcastSetup.c
 #SRC += LmHandler.c
 SRC += nm_LmHandler.c
 
