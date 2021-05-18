@@ -31,8 +31,9 @@ INCLUDES += -I$(LORAMAC)/src/peripherals/soft-se
 
 INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common
 #INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common/LmHandler
-INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages
+#INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages
 INCLUDES += -I$(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler
+INCLUDES += -I$(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler/packages
 
 VPATH  = $(LORAMAC)/src/radio/sx126x
 VPATH += $(LORAMAC)/src/boards/mcu
@@ -42,9 +43,10 @@ VPATH += $(LORAMAC)/src/system
 VPATH += $(LORAMAC)/src/peripherals/soft-se
 
 VPATH += $(LORAMAC)/src/apps/LoRaMac/common
-VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler
-VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages
+#VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler
+#VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages
 VPATH += $(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler
+VPATH += $(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler/packages
 
 INCLUDES += -I$(FREERTOS)/Source/include
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
@@ -106,9 +108,8 @@ SRC += FragDecoder.c
 SRC += LmhpClockSync.c
 SRC += LmhpCompliance.c
 SRC += LmhpFragmentation.c
-#SRC += LmhpRemoteMcastSetup.c
-#SRC += LmHandler.c
-SRC += nm_LmHandler.c
+SRC += LmhpRemoteMcastSetup.c
+SRC += LmHandler.c
 
 
 CSRC = $(filter %.c, $(SRC))
@@ -125,15 +126,8 @@ MSGDISPLAY_PROC = $(CONFIG)/LmHandlerMsgDisplay_proc.c
 MSGDISPLAY_OBJ = $(CONFIG)/LmHandlerMsgDisplay_proc.o
 MSGDISPLAY_DEP = $(CONFIG)/LmHandlerMsgDisplay_proc.d
 
-MCAST_SRC = $(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages/LmhpRemoteMcastSetup.c
-MCAST_PROC = $(CONFIG)/LmHandlerRemoteMcastSetup_proc.c
-MCAST_OBJ = $(CONFIG)/LmHandlerRemoteMcastSetup_proc.o
-MCAST_DEP = $(CONFIG)/LmHandlerRemoteMcastSetup_proc.d
-
 OBJS += $(MSGDISPLAY_OBJ)
-OBJS += $(MCAST_OBJ)
 DEPS += $(MSGDISPLAY_DEP)
-DEPS += $(MCAST_DEP)
 
 CFLAGS += $(INCLUDES)
 
@@ -148,11 +142,6 @@ $(MSGDISPLAY_OBJ): $(MSGDISPLAY_SRC) $(MSGDISPLAY_DEP) $(INCS)
 	@echo "Compiling $(COMPILERNAME) $<"
 	$(SED) "s/\\n/\\r\\n/g" $(MSGDISPLAY_SRC) > $(MSGDISPLAY_PROC)
 	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $(MSGDISPLAY_PROC) -o $@
-
-$(MCAST_OBJ): $(MCAST_SRC) $(MCAST_DEP) $(INCS)
-	@echo "Compiling $(COMPILERNAME) $<"
-	$(SED) "s/\\n/\\r\\n/g" $(MCAST_SRC) > $(MCAST_PROC)
-	$(CC) -c $(CFLAGS) -Dprintf=am_util_stdio_printf $(MCAST_PROC) -o $@
 
 $(CONFIG)/%.o: %.c $(CONFIG)/%.d $(INCS)
 	@echo "Compiling $(COMPILERNAME) $<"
