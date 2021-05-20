@@ -64,6 +64,7 @@ typedef struct {
 } RtcTimerContext_t;
 
 static RtcTimerContext_t RtcTimerContext;
+static uint32_t rtc_backup[2];
 
 void am_stimer_cmpr0_isr(void)
 {
@@ -77,17 +78,51 @@ void am_stimer_cmpr0_isr(void)
     }
 }
 
+void am_stimer_cmpr1_isr(void)
+{
+    am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREB);
+
+    if (RtcTimerContext.Running) {
+        if (am_hal_stimer_counter_get() >= RtcTimerContext.Alarm_Ticks) {
+            RtcTimerContext.Running = false;
+            TimerIrqHandler();
+        }
+    }
+}
+
 void RtcInit(void)
 {
     if (RtcInitialized == false) {
-        am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREA);
+        am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREA | AM_HAL_STIMER_INT_COMPAREB);
         NVIC_EnableIRQ(STIMER_CMPR0_IRQn);
+        NVIC_EnableIRQ(STIMER_CMPR1_IRQn);
 
         am_hal_stimer_config(AM_HAL_STIMER_CFG_CLEAR |
                              AM_HAL_STIMER_CFG_FREEZE);
-        am_hal_stimer_config(CLOCK_SOURCE | AM_HAL_STIMER_CFG_COMPARE_A_ENABLE);
+        am_hal_stimer_config(CLOCK_SOURCE |
+                AM_HAL_STIMER_CFG_COMPARE_A_ENABLE |
+                AM_HAL_STIMER_CFG_COMPARE_B_ENABLE);
 
         RtcSetTimerContext();
+
+        am_hal_rtc_time_t hal_rtc_time;
+
+        am_hal_clkgen_control(AM_HAL_CLKGEN_CONTROL_XTAL_START, 0);
+        am_hal_rtc_osc_select(AM_HAL_RTC_OSC_XT);
+        am_hal_rtc_osc_enable();
+
+        hal_rtc_time.ui32Hour       = 0; // 0 to 23
+        hal_rtc_time.ui32Minute     = 0; // 0 to 59
+        hal_rtc_time.ui32Second     = 0; // 0 to 59
+        hal_rtc_time.ui32Hundredths = 00;
+
+        hal_rtc_time.ui32DayOfMonth = 1; // 1 to 31
+        hal_rtc_time.ui32Month      = 0; // 0 to 11
+        hal_rtc_time.ui32Year       = 0; // years since 2000
+        hal_rtc_time.ui32Century    = 0;
+
+        am_hal_rtc_time_set(&hal_rtc_time);
+
         RtcInitialized = true;
     }
 }
@@ -122,7 +157,14 @@ uint32_t RtcGetTimerContext(void) { return RtcTimerContext.Ref_Ticks; }
 
 void RtcSetAlarm(uint32_t timeout) { RtcStartAlarm(timeout); }
 
-void RtcStopAlarm(void) { RtcTimerContext.Running = false; }
+void RtcStopAlarm(void)
+{
+    am_hal_stimer_int_disable(AM_HAL_STIMER_INT_COMPAREA);
+    am_hal_stimer_int_disable(AM_HAL_STIMER_INT_COMPAREB);
+    am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREA);
+    am_hal_stimer_int_clear(AM_HAL_STIMER_INT_COMPAREB);
+    RtcTimerContext.Running = false;
+}
 
 void RtcStartAlarm(uint32_t timeout)
 {
@@ -131,6 +173,9 @@ void RtcStartAlarm(uint32_t timeout)
     RtcTimerContext.Alarm_Ticks = am_hal_stimer_counter_get() + timeout;
     RtcTimerContext.Running     = true;
     am_hal_stimer_compare_delta_set(0, timeout * TICKS_IN_MS);
+    am_hal_stimer_compare_delta_set(0, timeout * TICKS_IN_MS + 1);
+    am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREA);
+    am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREB);
 }
 
 uint32_t RtcGetTimerValue(void) { return am_hal_stimer_counter_get(); }
@@ -162,14 +207,22 @@ uint32_t RtcGetCalendarTime(uint16_t *milliseconds)
 
 void RtcBkupWrite(uint32_t data0, uint32_t data1)
 {
+    /*
     am_hal_stimer_nvram_set(0, data0);
     am_hal_stimer_nvram_set(1, data1);
+    */
+    rtc_backup[0] = data0;
+    rtc_backup[1] = data1;
 }
 
 void RtcBkupRead(uint32_t *data0, uint32_t *data1)
 {
+    /*
     *data0 = am_hal_stimer_nvram_get(0);
     *data1 = am_hal_stimer_nvram_get(1);
+    */
+    *data0 = rtc_backup[0];
+    *data1 = rtc_backup[1];
 }
 
 void RtcProcess(void) {}
