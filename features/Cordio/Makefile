@@ -22,7 +22,7 @@ INCLUDES += -I$(FREERTOS)/Source/include
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
 
 INCLUDES += -I$(CORDIO_STACK)/include
-INCLUDES += -I$(CORDIO_STACK)/sources/hci/common
+INCLUDES += -I$(SDKROOT)/features/Cordio/ble-host/sources/hci/common
 INCLUDES += -I$(CORDIO_STACK)/sources/hci/dual_chip
 
 INCLUDES += -I$(CORDIO_STACK)/sources/sec/common
@@ -88,7 +88,8 @@ INCLUDES += -I.
 INCLUDES += -I./ble-host/sources/hci/ambiq
 INCLUDES += -I./platform
 
-VPATH  = $(CORDIO_STACK)/sources/hci/common
+#VPATH  = $(CORDIO_STACK)/sources/hci/common
+VPATH += $(SDKROOT)/features/Cordio/ble-host/sources/hci/common
 VPATH += $(CORDIO_STACK)/sources/hci/dual_chip
 
 VPATH += $(CORDIO_STACK)/sources/sec/common

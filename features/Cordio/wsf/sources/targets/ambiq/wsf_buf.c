@@ -91,6 +91,9 @@ uint8_t wsfPoolOverFlowCount[WSF_BUF_STATS_MAX_POOL];
 static WsfBufDiagCback_t wsfBufDiagCback = NULL;
 #endif
 
+#define HEAP_SIZE (4192)
+static uint32_t pui32Heap[HEAP_SIZE];
+
 /*************************************************************************************************/
 /*!
  *  \brief  Calculate size required by the buffer pool.
@@ -168,7 +171,7 @@ uint32_t WsfBufInit(uint8_t numPools, wsfBufPoolDesc_t *pDesc)
   uint16_t      len;
   uint8_t       i;
 
-  wsfBufMem = (wsfBufMem_t *) WsfHeapGetFreeStartAddress();
+  wsfBufMem = (wsfBufMem_t *) pui32Heap;
   pPool = (wsfBufPool_t *) wsfBufMem;
 
   /* Buffer storage starts after the pool structs. */
@@ -180,7 +183,7 @@ uint32_t WsfBufInit(uint8_t numPools, wsfBufPoolDesc_t *pDesc)
   while (TRUE)
   {
     /* Verify we didn't overrun memory; if we did, abort. */
-    if (pStart > &wsfBufMem[WsfHeapCountAvailable() / sizeof(wsfBufMem_t)])
+    if (pStart > &wsfBufMem[HEAP_SIZE / sizeof(wsfBufMem_t)])
     {
       WSF_ASSERT(FALSE);
       return 0;
@@ -225,7 +228,7 @@ uint32_t WsfBufInit(uint8_t numPools, wsfBufPoolDesc_t *pDesc)
     for (i = pPool->desc.num; i > 1; i--)
     {
       /* Verify we didn't overrun memory; if we did, abort. */
-      if (pStart > &wsfBufMem[WsfHeapCountAvailable() / sizeof(wsfBufMem_t)])
+      if (pStart > &wsfBufMem[HEAP_SIZE / sizeof(wsfBufMem_t)])
       {
         WSF_ASSERT(FALSE);
         return 0;
@@ -236,7 +239,7 @@ uint32_t WsfBufInit(uint8_t numPools, wsfBufPoolDesc_t *pDesc)
     }
 
     /* Verify we didn't overrun memory; if we did, abort. */
-    if (pStart > &wsfBufMem[WsfHeapCountAvailable() / sizeof(wsfBufMem_t)])
+    if (pStart > &wsfBufMem[HEAP_SIZE / sizeof(wsfBufMem_t)])
     {
       WSF_ASSERT(FALSE);
       return 0;

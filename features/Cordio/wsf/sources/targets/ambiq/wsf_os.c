@@ -4,21 +4,19 @@
  *
  *  \brief  Software foundation OS main module.
  *
- *  Copyright (c) 2009-2019 Arm Ltd. All Rights Reserved.
+ *          $Date: 2015-09-09 09:35:06 -0700 (Wed, 09 Sep 2015) $
+ *          $Revision: 3809 $
  *
- *  Copyright (c) 2019-2020 Packetcraft, Inc.
- *  
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *  
- *      http://www.apache.org/licenses/LICENSE-2.0
- *  
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  Copyright (c) 2009 Wicentric, Inc., all rights reserved.
+ *  Wicentric confidential and proprietary.
+ *
+ *  IMPORTANT.  Your use of this file is governed by a Software License Agreement
+ *  ("Agreement") that must be accepted in order to download or otherwise receive a
+ *  copy of this file.  You may not use or copy this file for any purpose other than
+ *  as described in the Agreement.  If you do not agree to all of the terms of the
+ *  Agreement do not use this file and delete all copies in your possession or control;
+ *  if you do not have a copy of the Agreement, you must contact Wicentric, Inc. prior
+ *  to any use, copying or further distribution of this software.
  */
 /*************************************************************************************************/
 
@@ -36,10 +34,6 @@
 #include "wsf_msg.h"
 #include "wsf_cs.h"
 
-#if defined (RTOS_CMSIS_RTX) && (RTOS_CMSIS_RTX == 1)
-#include "cmsis_os2.h"
-#endif
-
 /**************************************************************************************************
   Compile time assert checks
 **************************************************************************************************/
@@ -54,28 +48,14 @@ WSF_CT_ASSERT(sizeof(uint32_t) == 4);
 
 /* maximum number of event handlers per task */
 #ifndef WSF_MAX_HANDLERS
-#define WSF_MAX_HANDLERS                          16
+#define WSF_MAX_HANDLERS      9
 #endif
-
-#if WSF_OS_DIAG == TRUE
-#define WSF_OS_SET_ACTIVE_HANDLER_ID(id)          (WsfActiveHandler = id);
-#else
-#define WSF_OS_SET_ACTIVE_HANDLER_ID(id)
-#endif /* WSF_OS_DIAG */
-
-#if defined (RTOS_CMSIS_RTX) && (RTOS_CMSIS_RTX == 1)
-/*! \brief Thread sleep flag */
-#define WSF_OS_THREAD_SLEEP_WAKEUP_FLAG           0x0001
-#endif
-
-/*! \brief OS serivice function number */
-#define WSF_OS_MAX_SERVICE_FUNCTIONS                  3
 
 /**************************************************************************************************
   Data Types
 **************************************************************************************************/
 
-/*! \brief  Task structure */
+/* Task structure */
 typedef struct
 {
   wsfEventHandler_t     handler[WSF_MAX_HANDLERS];
@@ -85,33 +65,87 @@ typedef struct
   uint8_t               numHandler;
 } wsfOsTask_t;
 
-/*! \brief  OS structure */
+/* OS structure */
 typedef struct
 {
-  wsfOsTask_t                 task;
-  WsfOsIdleCheckFunc_t        sleepCheckFuncs[WSF_OS_MAX_SERVICE_FUNCTIONS];
-  uint8_t                     numFunc;
+  wsfOsTask_t           task;
 } wsfOs_t;
 
 /**************************************************************************************************
   Local Variables
 **************************************************************************************************/
 
-/*! \brief  OS context. */
+uint8_t csNesting = 0;
+
 wsfOs_t wsfOs;
 
-#if WSF_OS_DIAG == TRUE
-/*! Active task handler ID. */
-wsfHandlerId_t WsfActiveHandler;
-#endif /* WSF_OS_DIAG */
-
-#if defined (RTOS_CMSIS_RTX) && (RTOS_CMSIS_RTX == 1)
-static osThreadId_t wsfOsThreadId;
-#endif
+#include "FreeRTOS.h"
+#include "event_groups.h"
+EventGroupHandle_t xRadioTaskEventObject = NULL;
 
 /*************************************************************************************************/
 /*!
+ *  \fn     WsfCsEnter
+ *
+ *  \brief  Enter a critical section.
+ *
+ *  \return None.
+ */
+/*************************************************************************************************/
+void WsfCsEnter(void)
+{
+  if (csNesting == 0)
+  {
+#ifdef __IAR_SYSTEMS_ICC__
+    __disable_interrupt();
+#endif
+#ifdef __GNUC__
+    __asm volatile ("cpsid i");
+#endif
+#ifdef __CC_ARM
+  __disable_irq();
+#endif
+
+  }
+  csNesting++;
+}
+
+/*************************************************************************************************/
+/*!
+ *  \fn     WsfCsEnter
+ *
+ *  \brief  Enter a critical section.
+ *
+ *  \return None.
+ */
+/*************************************************************************************************/
+void WsfCsExit(void)
+{
+  WSF_ASSERT(csNesting != 0);
+
+  csNesting--;
+  if (csNesting == 0)
+  {
+#ifdef __IAR_SYSTEMS_ICC__
+    __enable_interrupt();
+#endif
+#ifdef __GNUC__
+    __asm volatile ("cpsie i");
+#endif
+#ifdef __CC_ARM
+      __enable_irq();
+#endif
+
+  }
+}
+
+/*************************************************************************************************/
+/*!
+ *  \fn     WsfTaskLock
+ *
  *  \brief  Lock task scheduling.
+ *
+ *  \return None.
  */
 /*************************************************************************************************/
 void WsfTaskLock(void)
@@ -121,7 +155,11 @@ void WsfTaskLock(void)
 
 /*************************************************************************************************/
 /*!
+ *  \fn     WsfTaskUnlock
+ *
  *  \brief  Unock task scheduling.
+ *
+ *  \return None.
  */
 /*************************************************************************************************/
 void WsfTaskUnlock(void)
@@ -129,12 +167,59 @@ void WsfTaskUnlock(void)
   WsfCsExit();
 }
 
+void WsfSetOsSpecificEvent(void)
+{
+  if(xRadioTaskEventObject != NULL) 
+  {
+
+      BaseType_t xHigherPriorityTaskWoken, xResult;
+
+      if(xPortIsInsideInterrupt() == pdTRUE) {
+
+          //
+          // Send an event to the main radio task
+          //
+          xHigherPriorityTaskWoken = pdFALSE;
+
+          xResult = xEventGroupSetBitsFromISR(xRadioTaskEventObject, 1,
+                                              &xHigherPriorityTaskWoken);
+
+          //
+          // If the radio task is higher-priority than the context we're currently
+          // running from, we should yield now and run the radio task.
+          //
+          if ( xResult != pdFAIL )
+          {
+              portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+          }    
+
+      }
+      else {
+
+          xResult = xEventGroupSetBits(xRadioTaskEventObject, 1);
+          //
+          // If the radio task is higher priority than the context we're currently
+          // running from, we should yield now and run the radio task.
+          //
+          if ( xResult != pdFAIL )
+          {
+              portYIELD();
+          }
+      }
+
+  }    
+}
+
 /*************************************************************************************************/
 /*!
+ *  \fn     WsfSetEvent
+ *
  *  \brief  Set an event for an event handler.
  *
  *  \param  handlerId   Handler ID.
  *  \param  event       Event or events to set.
+ *
+ *  \return None.
  */
 /*************************************************************************************************/
 void WsfSetEvent(wsfHandlerId_t handlerId, wsfEventMask_t event)
@@ -151,14 +236,20 @@ void WsfSetEvent(wsfHandlerId_t handlerId, wsfEventMask_t event)
   WSF_CS_EXIT(cs);
 
   /* set event in OS */
+
+  WsfSetOsSpecificEvent();
 }
 
 /*************************************************************************************************/
 /*!
+ *  \fn     WsfTaskSetReady
+ *
  *  \brief  Set the task used by the given handler as ready to run.
  *
  *  \param  handlerId   Event handler ID.
  *  \param  event       Task event mask.
+ *
+ *  \return None.
  */
 /*************************************************************************************************/
 void WsfTaskSetReady(wsfHandlerId_t handlerId, wsfTaskEvent_t event)
@@ -173,10 +264,14 @@ void WsfTaskSetReady(wsfHandlerId_t handlerId, wsfTaskEvent_t event)
   WSF_CS_EXIT(cs);
 
   /* set event in OS */
+
+  WsfSetOsSpecificEvent();
 }
 
 /*************************************************************************************************/
 /*!
+ *  \fn     WsfTaskMsgQueue
+ *
  *  \brief  Return the message queue used by the given handler.
  *
  *  \param  handlerId   Event handler ID.
@@ -194,6 +289,8 @@ wsfQueue_t *WsfTaskMsgQueue(wsfHandlerId_t handlerId)
 
 /*************************************************************************************************/
 /*!
+ *  \fn     WsfOsSetNextHandler
+ *
  *  \brief  Set the next WSF handler function in the WSF OS handler array.  This function
  *          should only be called as part of the stack initialization procedure.
  *
@@ -215,8 +312,12 @@ wsfHandlerId_t WsfOsSetNextHandler(wsfEventHandler_t handler)
 
 /*************************************************************************************************/
 /*!
+ *  \fn     wsfOsReadyToSleep
+ *
  *  \brief  Check if WSF is ready to sleep.  This function should be called when interrupts
  *          are disabled.
+ *
+ *  \param  None.
  *
  *  \return Return TRUE if there are no pending WSF task events set, FALSE otherwise.
  */
@@ -225,6 +326,7 @@ bool_t wsfOsReadyToSleep(void)
 {
   return (wsfOs.task.taskEventMask == 0);
 }
+
 
 /*************************************************************************************************/
 /*!
@@ -237,14 +339,23 @@ void WsfOsInit(void)
 {
   memset(&wsfOs, 0, sizeof(wsfOs));
 
-#if defined (RTOS_CMSIS_RTX) && (RTOS_CMSIS_RTX == 1)
-  osKernelInitialize();                        /* Initialize CMSIS-RTOS. */
-#endif
+  if( xRadioTaskEventObject == NULL)
+  {
+    xRadioTaskEventObject = xEventGroupCreate();
+
+    WSF_ASSERT(xRadioTaskEventObject != NULL);
+  }
 }
 
 /*************************************************************************************************/
 /*!
+ *  \fn     wsfOsDispatcher
+ *
  *  \brief  Event dispatched.  Designed to be called repeatedly from infinite loop.
+ *
+ *  \param  None.
+ *
+ *  \return None.
  */
 /*************************************************************************************************/
 void wsfOsDispatcher(void)
@@ -261,147 +372,62 @@ void wsfOsDispatcher(void)
 
   pTask = &wsfOs.task;
 
-  /* get and then clear task event mask */
-  WSF_CS_ENTER(cs);
-  taskEventMask = pTask->taskEventMask;
-  pTask->taskEventMask = 0;
-  WSF_CS_EXIT(cs);
+  WsfTimerUpdateTicks();
 
-  if (taskEventMask & WSF_MSG_QUEUE_EVENT)
+  while (pTask->taskEventMask)
   {
-    /* handle msg queue */
-    while ((pMsg = WsfMsgDeq(&pTask->msgQueue, &handlerId)) != NULL)
-    {
-      WSF_ASSERT(handlerId < WSF_MAX_HANDLERS);
-      WSF_OS_SET_ACTIVE_HANDLER_ID(handlerId);
-      (*pTask->handler[handlerId])(0, pMsg);
-      WsfMsgFree(pMsg);
-    }
-  }
+    /* get and then clear task event mask */
+    WSF_CS_ENTER(cs);
+    taskEventMask = pTask->taskEventMask;
+    pTask->taskEventMask = 0;
+    WSF_CS_EXIT(cs);
 
-  if (taskEventMask & WSF_TIMER_EVENT)
-  {
-    /* service timers */
-    while ((pTimer = WsfTimerServiceExpired(0)) != NULL)
+    if (taskEventMask & WSF_MSG_QUEUE_EVENT)
     {
-      WSF_ASSERT(pTimer->handlerId < WSF_MAX_HANDLERS);
-      WSF_OS_SET_ACTIVE_HANDLER_ID(pTimer->handlerId);
-      (*pTask->handler[pTimer->handlerId])(0, &pTimer->msg);
-    }
-  }
-
-  if (taskEventMask & WSF_HANDLER_EVENT)
-  {
-    /* service handlers */
-    for (i = 0; i < WSF_MAX_HANDLERS; i++)
-    {
-      if ((pTask->handlerEventMask[i] != 0) && (pTask->handler[i] != NULL))
+      /* handle msg queue */
+      while ((pMsg = WsfMsgDeq(&pTask->msgQueue, &handlerId)) != NULL)
       {
-        WSF_CS_ENTER(cs);
-        eventMask = pTask->handlerEventMask[i];
-        pTask->handlerEventMask[i] = 0;
-        WSF_OS_SET_ACTIVE_HANDLER_ID(i);
-        WSF_CS_EXIT(cs);
-
-        (*pTask->handler[i])(eventMask, NULL);
-      }
-    }
-  }
-}
-
-#if defined (RTOS_CMSIS_RTX) && (RTOS_CMSIS_RTX == 1)
-/*************************************************************************************************/
-/*!
- *  \brief  Idle thread.
- *
- *  \param  pArg   Pointer to argument.
- */
-/*************************************************************************************************/
-void osRtxIdleThread(void *pArg)
-{
-  bool_t activeFlag = FALSE;
-
-  (void) pArg;
-
-  while(TRUE)
-  {
-    activeFlag = FALSE;
-
-    for (unsigned int i = 0; i < wsfOs.numFunc; i++)
-    {
-      if (wsfOs.sleepCheckFuncs[i])
-      {
-        activeFlag |= wsfOs.sleepCheckFuncs[i]();
+        WSF_ASSERT(handlerId < WSF_MAX_HANDLERS);
+        (*pTask->handler[handlerId])(0, pMsg);
+        WsfMsgFree(pMsg);
       }
     }
 
-    if (!activeFlag)
+    if (taskEventMask & WSF_TIMER_EVENT)
     {
-      WsfTimerSleep();
-    }
-    osThreadFlagsSet(wsfOsThreadId, WSF_OS_THREAD_SLEEP_WAKEUP_FLAG);
-  }
-}
-
-/*************************************************************************************************/
-/*!
- *  \brief  Main thread.
- *
- *  \param  pArg   Pointer to argument.
- */
-/*************************************************************************************************/
-void wsfThread(void *pArg)
-{
-  (void) pArg;
-
-  while(TRUE)
-  {
-    WsfTimerSleepUpdate();
-    wsfOsDispatcher();
-    osThreadFlagsWait(WSF_OS_THREAD_SLEEP_WAKEUP_FLAG, osFlagsWaitAny ,osWaitForever);
-  }
-}
-#endif
-
-/*************************************************************************************************/
-/*!
- *  \brief  Register service check functions.
- *
- *  \param  func   Service function.
- */
-/*************************************************************************************************/
-void WsfOsRegisterSleepCheckFunc(WsfOsIdleCheckFunc_t func)
-{
-  wsfOs.sleepCheckFuncs[wsfOs.numFunc++] = func;
-}
-
-/*************************************************************************************************/
-/*!
- *  \brief  OS starts main loop
- */
-/*************************************************************************************************/
-void WsfOsEnterMainLoop(void)
-{
-  bool_t activeFlag = FALSE;
-
-  while (TRUE)
-  {
-    WsfTimerSleepUpdate();
-    wsfOsDispatcher();
-
-    activeFlag = FALSE;
-
-    for (unsigned int i = 0; i < wsfOs.numFunc; i++)
-    {
-      if (wsfOs.sleepCheckFuncs[i])
+      /* service timers */
+      while ((pTimer = WsfTimerServiceExpired(0)) != NULL)
       {
-        activeFlag |= wsfOs.sleepCheckFuncs[i]();
+        WSF_ASSERT(pTimer->handlerId < WSF_MAX_HANDLERS);
+        (*pTask->handler[pTimer->handlerId])(0, &pTimer->msg);
       }
     }
 
-    if (!activeFlag)
+    if (taskEventMask & WSF_HANDLER_EVENT)
     {
-      WsfTimerSleep();
+      /* service handlers */
+      for (i = 0; i < WSF_MAX_HANDLERS; i++)
+      {
+        if ((pTask->handlerEventMask[i] != 0) && (pTask->handler[i] != NULL))
+        {
+          WSF_CS_ENTER(cs);
+          eventMask = pTask->handlerEventMask[i];
+          pTask->handlerEventMask[i] = 0;
+          WSF_CS_EXIT(cs);
+
+          (*pTask->handler[i])(eventMask, NULL);
+        }
+      }
     }
   }
+
+  WsfTimerUpdateTicks();
+
+  if (wsfOsReadyToSleep())
+  {
+    xEventGroupWaitBits(xRadioTaskEventObject, 1, pdTRUE,
+                      pdFALSE, portMAX_DELAY);
+  }
+
 }
+
