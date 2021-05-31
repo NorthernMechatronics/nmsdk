@@ -22,8 +22,8 @@ INCLUDES += -I$(FREERTOS)/Source/include
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
 
 INCLUDES += -I$(CORDIO_STACK)/include
-INCLUDES += -I$(CORDIO_STACK)/sources/hci/ambiq
-INCLUDES += -I$(CORDIO_STACK)/sources/hci/ambiq/apollo3
+INCLUDES += -I$(CORDIO_STACK)/sources/hci/common
+INCLUDES += -I$(CORDIO_STACK)/sources/hci/dual_chip
 
 INCLUDES += -I$(CORDIO_STACK)/sources/sec/common
 INCLUDES += -I$(CORDIO_STACK)/sources/sec/uecc
@@ -37,11 +37,12 @@ INCLUDES += -I$(CORDIO_STACK)/sources/stack/l2c
 INCLUDES += -I$(CORDIO_STACK)/sources/stack/smp
 
 INCLUDES += -I$(CORDIO_WSF)/include
+INCLUDES += -I$(CORDIO_WSF)/include/util
 INCLUDES += -I$(CORDIO_WSF)/sources
-INCLUDES += -I$(CORDIO_WSF)/sources/port/freertos
 INCLUDES += -I$(CORDIO_WSF)/sources/util
 
-INCLUDES += -I$(CORDIO_PROFILES)/include/app
+INCLUDES += -I$(CORDIO_PROFILES)/include
+INCLUDES += -I$(CORDIO_PROFILES)/sources/af
 INCLUDES += -I$(CORDIO_PROFILES)/sources/services
 INCLUDES += -I$(CORDIO_PROFILES)/sources/profiles
 INCLUDES += -I$(CORDIO_PROFILES)/sources/profiles/anpc
@@ -84,9 +85,11 @@ INCLUDES += -I$(CORDIO_PROFILES)/sources/apps/app
 INCLUDES += -I$(CORDIO_PROFILES)/sources/apps/app/common
 
 INCLUDES += -I.
+INCLUDES += -I./ble-host/sources/hci/ambiq
+INCLUDES += -I./platform
 
-VPATH  = $(CORDIO_STACK)/sources/hci/ambiq
-VPATH += $(CORDIO_STACK)/sources/hci/ambiq/apollo3
+VPATH  = $(CORDIO_STACK)/sources/hci/common
+VPATH += $(CORDIO_STACK)/sources/hci/dual_chip
 
 VPATH += $(CORDIO_STACK)/sources/sec/common
 VPATH += $(CORDIO_STACK)/sources/sec/uecc
@@ -99,7 +102,7 @@ VPATH += $(CORDIO_STACK)/sources/stack/hci
 VPATH += $(CORDIO_STACK)/sources/stack/l2c
 VPATH += $(CORDIO_STACK)/sources/stack/smp
 
-VPATH += $(CORDIO_WSF)/sources/port/freertos
+VPATH += $(CORDIO_WSF)/sources/targets/ambiq
 VPATH += $(CORDIO_WSF)/sources/util
 
 VPATH += $(CORDIO_PROFILES)/sources/profiles
@@ -138,27 +141,33 @@ VPATH += $(CORDIO_PROFILES)/sources/profiles/wpc
 VPATH += $(CORDIO_PROFILES)/sources/profiles/wspc
 VPATH += $(CORDIO_PROFILES)/sources/profiles/wsps
 
-VPATH += $(CORDIO_PROFILES)/sources/apps/app
-VPATH += $(CORDIO_PROFILES)/sources/apps/app/common
+VPATH += $(CORDIO_PROFILES)/sources/af
+VPATH += $(CORDIO_PROFILES)/sources/af/common
 
 VPATH += $(CORDIO_PROFILES)/sources/services
 
 VPATH += .
+VPATH += ./ble-host/sources/hci/ambiq
+VPATH += ./ble-host/sources/sec
+VPATH += ./wsf/sources/targets/ambiq
 
 SRC  = hci_core.c
+SRC += hci_tr.c
 SRC += hci_drv_apollo3.c
 
 SRC += hci_cmd.c
 SRC += hci_cmd_ae.c
+SRC += hci_cmd_bis.c
+SRC += hci_cmd_cis.c
 SRC += hci_cmd_cte.c
+SRC += hci_cmd_iso.c
 SRC += hci_cmd_past.c
 SRC += hci_cmd_phy.c
-SRC += hci_core.c
 SRC += hci_core_ps.c
 SRC += hci_evt.c
-SRC += hci_tr.c
-SRC += hci_vs_apollo3.c
 SRC += hci_vs_ae.c
+
+SRC += hci_vs_apollo3.c
 
 SRC += sec_aes.c
 SRC += sec_aes_rev.c
@@ -170,6 +179,9 @@ SRC += sec_main.c
 
 SRC += sec_ecc.c
 
+SRC += att_eatt.c
+SRC += att_main.c
+SRC += att_uuid.c
 SRC += attc_disc.c
 SRC += attc_main.c
 SRC += attc_proc.c
@@ -179,20 +191,22 @@ SRC += attc_write.c
 SRC += atts_ccc.c
 SRC += atts_csf.c
 SRC += atts_dyn.c
+SRC += atts_eatt.c
 SRC += atts_ind.c
 SRC += atts_main.c
 SRC += atts_proc.c
 SRC += atts_read.c
 SRC += atts_sign.c
 SRC += atts_write.c
-SRC += att_main.c
-SRC += att_uuid.c
 
 SRC += cfg_stack.c
 
 SRC += dm_adv.c
 SRC += dm_adv_ae.c
 SRC += dm_adv_leg.c
+SRC += dm_bis_master.c
+SRC += dm_bis_slave.c
+SRC += dm_cis_sm.c
 SRC += dm_conn.c
 SRC += dm_conn_cte.c
 SRC += dm_conn_master.c
@@ -204,6 +218,7 @@ SRC += dm_conn_slave_leg.c
 SRC += dm_conn_sm.c
 SRC += dm_dev.c
 SRC += dm_dev_priv.c
+SRC += dm_iso.c
 SRC += dm_main.c
 SRC += dm_past.c
 SRC += dm_phy.c
@@ -224,6 +239,12 @@ SRC += l2c_main.c
 SRC += l2c_master.c
 SRC += l2c_slave.c
 
+SRC += smp_act.c
+SRC += smp_db.c
+SRC += smp_main.c
+SRC += smp_non.c
+SRC += smp_sc_act.c
+SRC += smp_sc_main.c
 SRC += smpi_act.c
 SRC += smpi_sc_act.c
 SRC += smpi_sc_sm.c
@@ -232,18 +253,14 @@ SRC += smpr_act.c
 SRC += smpr_sc_act.c
 SRC += smpr_sc_sm.c
 SRC += smpr_sm.c
-SRC += smp_act.c
-SRC += smp_db.c
-SRC += smp_main.c
-SRC += smp_non.c
-SRC += smp_sc_act.c
-SRC += smp_sc_main.c
 
+SRC += svc_alert.c
 SRC += svc_batt.c
 SRC += svc_bps.c
 SRC += svc_core.c
 SRC += svc_cps.c
 SRC += svc_cscs.c
+SRC += svc_cte.c
 SRC += svc_dis.c
 SRC += svc_gls.c
 SRC += svc_gyro.c
@@ -256,17 +273,16 @@ SRC += svc_px.c
 SRC += svc_rscs.c
 SRC += svc_scpss.c
 SRC += svc_temp.c
+SRC += svc_time.c
 SRC += svc_uricfg.c
 SRC += svc_wdxs.c
 SRC += svc_wp.c
 SRC += svc_wss.c
 
-
-
 SRC += wsf_assert.c
 SRC += wsf_buf.c
 SRC += wsf_efs.c
-SRC += wsf_math.c
+#SRC += wsf_math.c
 SRC += wsf_msg.c
 SRC += wsf_os.c
 SRC += wsf_queue.c
@@ -350,10 +366,10 @@ SRC += uECC_ll.c
 
 DEFINES += -DSEC_ECC_CFG=SEC_ECC_CFG_UECC
 DEFINES += -DAM_CUSTOM_BDADDR
-#ifdef DEBUG
-#    DEFINES += -DAM_DEBUG_PRINTF
-#    DEFINES += -DWSF_TRACE_ENABLED
-#endif
+ifdef DEBUG
+    DEFINES += -DAM_DEBUG_PRINTF
+    DEFINES += -DWSF_TRACE_ENABLED
+endif
 
 CSRC = $(filter %.c, $(SRC))
 ASRC = $(filter %.s, $(SRC))
