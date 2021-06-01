@@ -44,13 +44,19 @@ For more details on building the SDK on a host platform, please check the **User
 
 ```git clone https://github.com/NorthernMechatronics/nmsdk.git```
 
+```cd nmsdk```
+
 ```git checkout LoRaWAN_v1.0.3```
 
 * Download and install the [AmbiqSuite](https://ambiq.com/wp-content/uploads/2020/09/AmbiqSuite-R2.5.1.zip).
 
-* Clone [FreeRTOS](https://github.com/FreeRTOS/FreeRTOS).  Make sure to clone with the `--recurse-submodules` argument.
+* Clone [FreeRTOS](https://github.com/FreeRTOS/FreeRTOS-Kernel).
 
-```git clone https://github.com/FreeRTOS/FreeRTOS.git --recurse-submodules```  
+```git clone https://github.com/FreeRTOS/FreeRTOS-Kernel.git```
+
+```cd FreeRTOS-Kernel```
+
+```git checkout V10.3.0```
 
 * If the bundled BLE stack from Ambiq is not used, then clone [Cordio](https://github.com/packetcraft-inc/stacks).  This will require additional porting effort which is currently not supported.  However, this enables BLE mesh networking on the NM180100 which is not available with the bundled stack from Ambiq.
 
