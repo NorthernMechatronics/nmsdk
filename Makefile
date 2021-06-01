@@ -1,5 +1,5 @@
 AMBIQ_SDK ?= $(shell pwd)/../AmbiqSuite-R2.5.1
-FREERTOS  ?= $(shell pwd)/../FreeRTOS/FreeRTOS
+FREERTOS  ?= $(shell pwd)/../FreeRTOS-Kernel/FreeRTOS
 CORDIO    ?= $(shell pwd)/../AmbiqSuite-R2.5.1/third_party/cordio
 UECC      ?= $(shell pwd)/../AmbiqSuite-R2.5.1/third_party/uecc
 LORAMAC   ?= $(shell pwd)/../LoRaMac-node
