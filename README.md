@@ -3,19 +3,14 @@ License : [![License](https://img.shields.io/badge/license-BSD_3-blue.svg)](http
 
 Platform Details: [![Hardware](https://img.shields.io/badge/hardware-wiki-green.svg)](https://www.northernmechatronics.com/nm180100)
 
-## Attention
-This is the master branch.  Please checkout the LoRaWAN_v1.0.3 branch for the LoRaWAN L2 v1.0.3 specifications.  The corresponding
-release tag for the LoRaMac-node is v4.4.7 (final release).  Please make sure that you switch to the proper release tag before building this SDK.
-
 ## Overview
 The NMSDK is a platform library for the Northern Mechatronics NM180100 LoRa BLE module.
 It provides support for LoRa direct, LoRa real-time, LoRaWAN, and BLE wireless connectivity as well
 as a FreeRTOS framework for rapid application development across a wide range of use cases and environments.
 As of May 2021, NVM context management (a mandatory feature in v1.0.4 but supported in v1.0.3) is enabled by default.
-Two flash pages located at the end of the flash memory are used for context storage.  If you wish to disable this feature,
-remove the following define in ./makedefs/nm_loramac.mk   
-
-```DEFINES += -DCONTEXT_MANAGEMENT_ENABLED```    
+Two flash pages located at the end of the flash memory are used for LoRaWAN context storage.  If your application uses
+the on-chip secure storage space, the master key location is defined to be stored in the third last page of the
+flash memory.
 
 Architecturally speaking, the SDK consists of three layers
 ![architecture](doc/SDK_architecture.png)
@@ -44,10 +39,6 @@ For more details on building the SDK on a host platform, please check the **User
 
 ```git clone https://github.com/NorthernMechatronics/nmsdk.git```
 
-```cd nmsdk```
-
-```git checkout LoRaWAN_v1.0.3```
-
 * Download and install the [AmbiqSuite](https://ambiq.com/wp-content/uploads/2020/09/AmbiqSuite-R2.5.1.zip).
 
 * Clone [FreeRTOS](https://github.com/FreeRTOS/FreeRTOS-Kernel).
@@ -74,8 +65,7 @@ L2 v1.0.3 tag
 ```git checkout v4.4.7```
 
 ### Build Setup
-* Open the Makefile
-* Modify the following variables to point to the location where you have cloned or downloaded the various SDKs:
+* If you did not use the default locations, open the Makefile and modify the following variables to point to the location where you have cloned or downloaded the various SDKs:
     - AMBIQ_SDK
     - FREERTOS
     - CORDIO
