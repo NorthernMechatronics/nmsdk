@@ -56,9 +56,47 @@ static void secure_store_master_key_read(uint8_t *key)
     }
 }
 
+uint8_t secure_store_master_key_status()
+{
+    uint8_t master_key[MASTER_KEY_SIZE];
+
+    secure_store_master_key_read(master_key);
+
+    for (int i = 0; i < MASTER_KEY_SIZE; i++)
+    {
+        if (master_key[i] != 0xFF)
+            return 1;
+    }
+
+    // erase the RAM to prevent in memory sniffing
+    memset(master_key, 0, MASTER_KEY_SIZE);
+
+    return 0;
+}
+
 void secure_store_unlock()
 {
     uint8_t master_key[MASTER_KEY_SIZE];
+    uint32_t *address, *value;
+
+    secure_store_master_key_read(master_key);
+    address = (uint32_t *)SECURE_STORE_UNLOCK_CMD_ADDR;
+    am_hal_flash_store_ui32(address, 0x01);
+
+    address = (uint32_t *)SECURE_STORE_UNLOCK_KEY_ADDR;
+    for (int i = 0; i < MASTER_KEY_SIZE; i += 4)
+    {
+        value = (uint32_t *)(&(master_key[i]));
+        am_hal_flash_store_ui32(address, *value);
+        address++;
+    }
+ 
+    // erase the RAM to prevent in memory sniffing
+    memset(master_key, 0, MASTER_KEY_SIZE);
+}
+
+void secure_store_unlock_with_key(uint8_t *master_key)
+{
     uint32_t *address, *value;
 
     secure_store_master_key_read(master_key);
