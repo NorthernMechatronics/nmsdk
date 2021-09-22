@@ -35,25 +35,16 @@
 #include <string.h>
 
 #include <am_mcu_apollo.h>
-#include "secure_store_config.h"
 #include "secure_store.h"
 
-#define MASTER_KEY_SIZE 16
 #define SECURE_STORE_UNLOCK_CMD_ADDR  0x40030078
 #define SECURE_STORE_UNLOCK_KEY_ADDR  0x40030080
 
-static void secure_store_master_key_read(uint8_t *key)
-{
-    uint32_t *address = (uint32_t *)key;
-    uint32_t *source = (uint32_t *)MASTER_KEY_ADDRESS;
-    for (int i = 0; i < MASTER_KEY_SIZE; i += 4)
-    {
-        uint32_t value = am_hal_flash_load_ui32(source);
-        memcpy(address, (uint8_t *)(&value), 4);
+extern void secure_store_master_key_read(uint8_t *key) __attribute((weak, alias("secure_store_default_master_key_read")));
 
-        address++;
-        source++;
-    }
+void secure_store_default_master_key_read(uint8_t *key)
+{
+    memset(key, 0xFF, MASTER_KEY_SIZE);
 }
 
 uint8_t secure_store_master_key_status()

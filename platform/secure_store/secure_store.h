@@ -33,12 +33,15 @@
 #ifndef __SECURE_STORE_H__
 #define __SECURE_STORE_H__
 
-uint8_t secure_store_master_key_status();
+#define MASTER_KEY_SIZE 16
 
-void secure_store_unlock();
-void secure_store_unlock_with_key(uint8_t *master_key);
-void secure_store_lock();
+extern void secure_store_master_key_read(uint8_t *key);
+extern uint8_t secure_store_master_key_status();
 
-void secure_store_read(uint32_t addr, uint8_t *target, size_t len);
+extern void secure_store_unlock();
+extern void secure_store_unlock_with_key(uint8_t *master_key);
+extern void secure_store_lock();
+
+extern void secure_store_read(uint32_t addr, uint8_t *target, size_t len);
 
 #endif
