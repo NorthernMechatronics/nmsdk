@@ -9,8 +9,12 @@ It provides support for LoRa direct, LoRa real-time, LoRaWAN, and BLE wireless c
 as a FreeRTOS framework for rapid application development across a wide range of use cases and environments.
 As of May 2021, NVM context management (a mandatory feature in v1.0.4 but supported in v1.0.3) is enabled by default.
 Two flash pages located at the end of the flash memory are used for LoRaWAN context storage.  If your application uses
-the on-chip secure storage space, the master key location is defined to be stored in the third last page of the
-flash memory.
+the on-chip secure storage space, please ensure that you implement
+
+```secure_store_master_key_read```
+
+The default key is
+```0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF```
 
 Architecturally speaking, the SDK consists of three layers
 ![architecture](doc/SDK_architecture.png)
