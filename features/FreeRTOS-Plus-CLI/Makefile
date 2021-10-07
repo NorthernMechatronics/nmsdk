@@ -11,7 +11,7 @@ endif
 COMPILERNAME := gcc
 PROJECT      := libfreertos-cli_gcc
 
-INCLUDES  = -I$(FREERTOS)/Source/include
+INCLUDES  = -I$(FREERTOS)/include
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS-Plus-CLI
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
 

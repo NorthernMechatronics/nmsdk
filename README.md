@@ -56,12 +56,6 @@ For more details on building the SDK on a host platform, please check the **User
 
 ```cd FreeRTOS-Kernel```
 
-```git checkout V10.3.0```
-
-* If the bundled BLE stack from Ambiq is not used, then clone [Cordio](https://github.com/packetcraft-inc/stacks).  This will require additional porting effort which is currently not supported.  However, this enables BLE mesh networking on the NM180100 which is not available with the bundled stack from Ambiq.
-
-```git clone https://github.com/packetcraft-inc/stacks.git```
-
 * Clone the [LoRaWAN](https://github.com/Lora-net/LoRaMac-node) stack
 
 ```git clone https://github.com/Lora-net/LoRaMac-node.git```

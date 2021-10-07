@@ -14,11 +14,11 @@ PROJECT      := libfreertos_gcc
 INCLUDES  = -I$(AMBIQ_SDK)/mcu/apollo3
 INCLUDES += -I$(AMBIQ_SDK)/CMSIS/AmbiqMicro/Include
 INCLUDES += -I$(AMBIQ_SDK)/CMSIS/ARM/Include
-INCLUDES += -I$(FREERTOS)/Source/include
+INCLUDES += -I$(FREERTOS)/include
 
-VPATH  = $(FREERTOS)/Source
-VPATH += $(FREERTOS)/Source/portable/Common
-VPATH += $(FREERTOS)/Source/portable/MemMang
+VPATH  = $(FREERTOS)
+VPATH += $(FREERTOS)/portable/Common
+VPATH += $(FREERTOS)/portable/MemMang
 
 INCLUDES += -I.
 VPATH    += .

@@ -18,7 +18,7 @@ INCLUDES += -I$(AMBIQ_SDK)/CMSIS/AmbiqMicro/Include
 INCLUDES += -I$(AMBIQ_SDK)/CMSIS/ARM/Include
 INCLUDES += -I$(AMBIQ_SDK)/utils
 
-INCLUDES += -I$(FREERTOS)/Source/include
+INCLUDES += -I$(FREERTOS)/include
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
 
 INCLUDES += -I$(CORDIO_STACK)/include
