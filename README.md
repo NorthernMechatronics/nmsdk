@@ -13,7 +13,9 @@ the on-chip secure storage space, please ensure that you implement
 
 ```secure_store_master_key_read```
 
-The default key is
+If the function is not implemented, the default master key for the secured
+storage space is
+
 ```0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF 0xFF```
 
 Architecturally speaking, the SDK consists of three layers
