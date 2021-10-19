@@ -51,8 +51,6 @@ For more details on building the SDK on a host platform, please check the **User
 
 ```git clone https://github.com/FreeRTOS/FreeRTOS-Kernel.git```
 
-```cd FreeRTOS-Kernel```
-
 * Clone the [LoRaWAN](https://github.com/Lora-net/LoRaMac-node) stack
 
 ```git clone https://github.com/Lora-net/LoRaMac-node.git```
