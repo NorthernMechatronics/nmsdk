@@ -51,16 +51,15 @@ For more details on building the SDK on a host platform, please check the **User
 
 ```git clone https://github.com/FreeRTOS/FreeRTOS-Kernel.git```
 
-* Clone the [LoRaWAN](https://github.com/Lora-net/LoRaMac-node) stack
+* Clone the [LoRaWAN](https://github.com/NorthernMechatronics/LoRaMac-node-NMI) stack
 
-```git clone https://github.com/Lora-net/LoRaMac-node.git```
+```git clone https://github.com/NorthernMechatronics/LoRaMac-node-NMI.git```
 
-* Change to the project directory and switch to the final release of the LoRaWAN
-L2 v1.0.3 tag
+* Change to the project directory and switch to the helium-dev branch 
 
 ```cd <LoRaMac-node directory>```
 
-```git checkout v4.4.7```
+```git checkout helium-dev```
 
 ### Build Setup
 * If you did not use the default locations, open the Makefile and modify the following variables to point to the location where you have cloned or downloaded the various SDKs:
