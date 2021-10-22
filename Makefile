@@ -2,7 +2,7 @@ AMBIQ_SDK ?= $(shell pwd)/../AmbiqSuite-R2.5.1
 FREERTOS  ?= $(shell pwd)/../FreeRTOS-Kernel
 CORDIO    ?= $(shell pwd)/../AmbiqSuite-R2.5.1/third_party/cordio
 UECC      ?= $(shell pwd)/../AmbiqSuite-R2.5.1/third_party/uecc
-LORAMAC   ?= $(shell pwd)/../LoRaMac-node
+LORAMAC   ?= $(shell pwd)/../LoRaMac-node-NMI
 
 ifndef AMBIQ_SDK
     $(error AmbiqSuite SDK location not defined)
