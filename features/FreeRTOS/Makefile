@@ -11,9 +11,13 @@ endif
 COMPILERNAME := gcc
 PROJECT      := libfreertos_gcc
 
-INCLUDES  = -I$(AMBIQ_SDK)/mcu/apollo3
-INCLUDES += -I$(AMBIQ_SDK)/CMSIS/AmbiqMicro/Include
-INCLUDES += -I$(AMBIQ_SDK)/CMSIS/ARM/Include
+INCLUDES  = -I../ambiq
+INCLUDES += -I../ambiq/mcu
+INCLUDES += -I../ambiq/mcu/apollo3
+INCLUDES += -I../ambiq/mcu/apollo3/hal
+INCLUDES += -I../ambiq/mcu/apollo3/hal/regs
+INCLUDES += -I../ambiq/CMSIS/AmbiqMicro/Include
+INCLUDES += -I../ambiq/CMSIS/ARM/Include
 INCLUDES += -I$(FREERTOS)/include
 
 VPATH  = $(FREERTOS)

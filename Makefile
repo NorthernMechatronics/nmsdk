@@ -1,12 +1,13 @@
-AMBIQ_SDK ?= $(shell pwd)/../AmbiqSuite-R2.5.1
+#AMBIQ_SDK ?= $(shell pwd)/../AmbiqSuite-R2.5.1
+#AMBIQ_SDK ?= ./features/ambiq
 FREERTOS  ?= $(shell pwd)/../FreeRTOS-Kernel
 CORDIO    ?= $(shell pwd)/../AmbiqSuite-R2.5.1/third_party/cordio
 UECC      ?= $(shell pwd)/../AmbiqSuite-R2.5.1/third_party/uecc
 LORAMAC   ?= $(shell pwd)/../LoRaMac-node
 
-ifndef AMBIQ_SDK
-    $(error AmbiqSuite SDK location not defined)
-endif
+#ifndef AMBIQ_SDK
+#    $(error AmbiqSuite SDK location not defined)
+#endif
 
 ifndef CORDIO
     $(error ARM BLE Cordio Stack location not defined)
@@ -29,8 +30,8 @@ include $(SDKROOT)/makedefs/nm_common.mk
 
 BUILDDIR := $(SDKROOT)/build
 
-AM_HAL_DIR    := $(SDKROOT)/features/hal
-AM_UTILS_DIR  := $(SDKROOT)/features/utils
+AM_HAL_DIR    := $(SDKROOT)/features/ambiq
+AM_UTILS_DIR  := $(SDKROOT)/features/ambiq/utils
 
 FREERTOS_DIR     := $(SDKROOT)/features/FreeRTOS
 FREERTOS-CLI_DIR := $(SDKROOT)/features/FreeRTOS-Plus-CLI

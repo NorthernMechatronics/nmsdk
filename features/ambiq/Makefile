@@ -13,14 +13,16 @@ endif
 COMPILERNAME := gcc
 PROJECT      := libam_hal_gcc
 
-INCLUDES = -I$(AMBIQ_SDK)/CMSIS/AmbiqMicro/Include
-INCLUDES+= -I$(AMBIQ_SDK)/CMSIS/ARM/Include
-INCLUDES+= -I$(AMBIQ_SDK)/mcu/apollo3
-INCLUDES+= -I$(AMBIQ_SDK)/mcu/apollo3/hal
-INCLUDES+= -I$(AMBIQ_SDK)/mcu/apollo3/regs
+INCLUDES  = -I./CMSIS/AmbiqMicro/Include
+INCLUDES += -I./CMSIS/ARM/Include
+INCLUDES += -I./
+INCLUDES += -I./mcu
+INCLUDES += -I./mcu/apollo3
+INCLUDES += -I./mcu/apollo3/hal
+INCLUDES += -I./mcu/apollo3/regs
 
-VPATH  = $(AMBIQ_SDK)/mcu/apollo3/hal
-VPATH += $(AMBIQ_SDK)/mcu/apollo3/regs
+VPATH  = ./mcu/apollo3/hal
+VPATH += ./mcu/apollo3/regs
 
 SRC  = am_hal_adc.c
 SRC += am_hal_ble.c

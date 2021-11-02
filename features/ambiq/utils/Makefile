@@ -1,4 +1,4 @@
-SDKROOT?=../..
+SDKROOT?=../../..
 include $(SDKROOT)/makedefs/nm_common.mk
 
 ifdef DEBUG
@@ -12,13 +12,15 @@ endif
 COMPILERNAME := gcc
 PROJECT      := libam_utils_gcc
 
-INCLUDES  = -I$(AMBIQ_SDK)/utils
-INCLUDES += -I$(AMBIQ_SDK)/mcu/apollo3
-INCLUDES += -I$(AMBIQ_SDK)/CMSIS/AmbiqMicro/Include
-INCLUDES += -I$(AMBIQ_SDK)/CMSIS/ARM/Include
+INCLUDES  = -I./utils
+INCLUDES += -I../mcu
+INCLUDES += -I../mcu/apollo3
+INCLUDES += -I../mcu/apollo3/hal
+INCLUDES += -I../mcu/apollo3/regs
+INCLUDES += -I../CMSIS/AmbiqMicro/Include
+INCLUDES += -I../CMSIS/ARM/Include
 
-VPATH  = $(AMBIQ_SDK)/utils
-VPATH += .
+VPATH = .
 
 DEFINES += -DAM_PRINTF_BUFSIZE=512
 
@@ -27,8 +29,7 @@ SRC += am_util_debug.c
 SRC += am_util_delay.c
 SRC += am_util_faultisr.c
 SRC += am_util_id.c
-# FIXME Currently broken due to incorrect DEFINES by Ambiq
-# SRC += am_util_regdump.c
+SRC += am_util_regdump.c
 SRC += am_util_stdio.c
 SRC += am_util_string.c
 SRC += am_util_time.c

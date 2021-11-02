@@ -13,10 +13,12 @@ endif
 COMPILERNAME := gcc
 PROJECT      := libcordio_gcc
 
-INCLUDES  = -I$(AMBIQ_SDK)/mcu/apollo3
-INCLUDES += -I$(AMBIQ_SDK)/CMSIS/AmbiqMicro/Include
-INCLUDES += -I$(AMBIQ_SDK)/CMSIS/ARM/Include
-INCLUDES += -I$(AMBIQ_SDK)/utils
+INCLUDES  = -I../ambiq/mcu/apollo3
+INCLUDES += -I../ambiq/mcu/apollo3/hal
+INCLUDES += -I../ambiq/mcu/apollo3/regs
+INCLUDES += -I../ambiq/CMSIS/AmbiqMicro/Include
+INCLUDES += -I../ambiq/CMSIS/ARM/Include
+INCLUDES += -I../ambiq/utils
 
 INCLUDES += -I$(FREERTOS)/include
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
