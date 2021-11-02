@@ -55,13 +55,13 @@
 /******************************************************************************
  * Local declarations
  ******************************************************************************/
-static StreamBufferHandle_t stream_buffer;
+static volatile StreamBufferHandle_t stream_buffer;
 
 static char    in_str[MAX_INPUT_LEN];
 static uint8_t in_len = 0;
 
-static const char *cmd_prompt  = "> ";
-static const char *welcome_msg = "\r\n"
+static const char * const cmd_prompt  = "> ";
+static const char * const welcome_msg = "\r\n"
                                  "Northern Mechatronics\r\n\r\n"
                                  "NM180100 Command Console\r\n";
 
@@ -71,7 +71,7 @@ static uint8_t cmd_hist_first = 0;
 static uint8_t cmd_hist_last  = 0;
 static uint8_t cmd_hist_cur   = 0;
 
-static const char *crlf = "\r\n";
+static const char * const crlf = "\r\n";
 
 /******************************************************************************
  * Global declarations
@@ -276,10 +276,11 @@ void nm_console_task(void *pvp)
 
         case '\r':
         case '\n':
-            am_util_stdio_printf(crlf);
-
+            //am_util_stdio_printf(crlf);
+            am_bsp_uart_string_print(crlf);
             if (in_len == 0) {
-                am_util_stdio_printf(cmd_prompt);
+                //am_util_stdio_printf(cmd_prompt);
+                am_bsp_uart_string_print(cmd_prompt);
                 cmd_hist_cur = cmd_hist_last;
                 break;
             }
