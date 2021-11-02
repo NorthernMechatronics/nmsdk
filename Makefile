@@ -1,13 +1,7 @@
-#AMBIQ_SDK ?= $(shell pwd)/../AmbiqSuite-R2.5.1
-#AMBIQ_SDK ?= ./features/ambiq
 FREERTOS  ?= $(shell pwd)/../FreeRTOS-Kernel
 CORDIO    ?= $(shell pwd)/../AmbiqSuite-R2.5.1/third_party/cordio
 UECC      ?= $(shell pwd)/../AmbiqSuite-R2.5.1/third_party/uecc
 LORAMAC   ?= $(shell pwd)/../LoRaMac-node
-
-#ifndef AMBIQ_SDK
-#    $(error AmbiqSuite SDK location not defined)
-#endif
 
 ifndef CORDIO
     $(error ARM BLE Cordio Stack location not defined)

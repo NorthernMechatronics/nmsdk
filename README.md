@@ -45,8 +45,6 @@ For more details on building the SDK on a host platform, please check the **User
 
 ```git clone https://github.com/NorthernMechatronics/nmsdk.git```
 
-* Download and install the [AmbiqSuite](https://ambiq.com/wp-content/uploads/2020/09/AmbiqSuite-R2.5.1.zip).
-
 * Clone [FreeRTOS](https://github.com/FreeRTOS/FreeRTOS-Kernel).
 
 ```git clone https://github.com/FreeRTOS/FreeRTOS-Kernel.git```
@@ -64,7 +62,6 @@ L2 v1.0.3 tag
 
 ### Build Setup
 * If you did not use the default locations, open the Makefile and modify the following variables to point to the location where you have cloned or downloaded the various SDKs:
-    - AMBIQ_SDK
     - FREERTOS
     - CORDIO
     - UECC
