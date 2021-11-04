@@ -100,6 +100,7 @@ static void s_cmd_hist_add(const char *cmd, size_t len)
         next = (cmd_hist_last + 1) % MAX_CMD_HIST_LEN;
     }
     strncpy(cmd_hist[next], cmd, len);
+    cmd_hist[next][len] = '\x0';
     cmd_hist_last = next;
     cmd_hist_cur  = next;
     // wrap-around
