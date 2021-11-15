@@ -297,7 +297,7 @@ static void LmhpFragmentationOnMcpsIndication( McpsIndication_t *mcpsIndication 
                 if( mcpsIndication->Multicast == 1 )
                 {
                     // Multicast channel. Don't process command.
-                    //break;
+                    break;
                 }
                 LmhpFragmentationState.DataBuffer[dataBufferIndex++] = FRAGMENTATION_PKG_VERSION_ANS;
                 LmhpFragmentationState.DataBuffer[dataBufferIndex++] = FRAGMENTATION_ID;
@@ -333,7 +333,7 @@ static void LmhpFragmentationOnMcpsIndication( McpsIndication_t *mcpsIndication 
                 if( mcpsIndication->Multicast == 1 )
                 {
                     // Multicast channel. Don't process command.
-                    //break;
+                    break;
                 }
                 FragSessionData_t fragSessionData;
                 uint8_t status = 0x00;
@@ -415,7 +415,7 @@ static void LmhpFragmentationOnMcpsIndication( McpsIndication_t *mcpsIndication 
                 if( mcpsIndication->Multicast == 1 )
                 {
                     // Multicast channel. Don't process command.
-                    //break;
+                    break;
                 }
                 uint8_t status = 0x00;
                 uint8_t id = mcpsIndication->Buffer[cmdIndex++] & 0x03;
