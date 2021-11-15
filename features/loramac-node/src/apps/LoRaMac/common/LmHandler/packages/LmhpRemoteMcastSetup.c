@@ -397,7 +397,7 @@ static void LmhpRemoteMcastSetupOnMcpsIndication( McpsIndication_t *mcpsIndicati
                         TimerSetValue( &SessionStartTimer, timeToSessionStart * 1000 );
                         TimerStart( &SessionStartTimer );
 
-                        DBG( "Time2SessionStart: %ld ms\r\n", timeToSessionStart * 1000 );
+                        DBG( "\r\n\r\nTime to Multicast Session: %ld s\r\n", timeToSessionStart );
 
                         LmhpRemoteMcastSetupState.DataBuffer[dataBufferIndex++] = status;
                         LmhpRemoteMcastSetupState.DataBuffer[dataBufferIndex++] = ( timeToSessionStart >> 0  ) & 0xFF;
