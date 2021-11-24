@@ -607,6 +607,7 @@ bool RegionIsActive( LoRaMacRegion_t region )
         KR920_IS_ACTIVE( );
         IN865_IS_ACTIVE( );
         US915_IS_ACTIVE( );
+        US915_HELIUM_IS_ACTIVE( );
         RU864_IS_ACTIVE( );
         default:
         {
@@ -629,6 +630,7 @@ PhyParam_t RegionGetPhyParam( LoRaMacRegion_t region, GetPhyParams_t* getPhy )
         KR920_GET_PHY_PARAM( );
         IN865_GET_PHY_PARAM( );
         US915_GET_PHY_PARAM( );
+        US915_HELIUM_GET_PHY_PARAM( );
         RU864_GET_PHY_PARAM( );
         default:
         {
@@ -650,6 +652,7 @@ void RegionSetBandTxDone( LoRaMacRegion_t region, SetBandTxDoneParams_t* txDone 
         KR920_SET_BAND_TX_DONE( );
         IN865_SET_BAND_TX_DONE( );
         US915_SET_BAND_TX_DONE( );
+        US915_HELIUM_SET_BAND_TX_DONE( );
         RU864_SET_BAND_TX_DONE( );
         default:
         {
@@ -671,6 +674,7 @@ void RegionInitDefaults( LoRaMacRegion_t region, InitDefaultsParams_t* params )
         KR920_INIT_DEFAULTS( );
         IN865_INIT_DEFAULTS( );
         US915_INIT_DEFAULTS( );
+        US915_HELIUM_INIT_DEFAULTS( );
         RU864_INIT_DEFAULTS( );
         default:
         {
@@ -692,6 +696,7 @@ bool RegionVerify( LoRaMacRegion_t region, VerifyParams_t* verify, PhyAttribute_
         KR920_VERIFY( );
         IN865_VERIFY( );
         US915_VERIFY( );
+        US915_HELIUM_VERIFY( );
         RU864_VERIFY( );
         default:
         {
@@ -713,6 +718,7 @@ void RegionApplyCFList( LoRaMacRegion_t region, ApplyCFListParams_t* applyCFList
         KR920_APPLY_CF_LIST( );
         IN865_APPLY_CF_LIST( );
         US915_APPLY_CF_LIST( );
+        US915_HELIUM_APPLY_CF_LIST( );
         RU864_APPLY_CF_LIST( );
         default:
         {
@@ -734,6 +740,7 @@ bool RegionChanMaskSet( LoRaMacRegion_t region, ChanMaskSetParams_t* chanMaskSet
         KR920_CHAN_MASK_SET( );
         IN865_CHAN_MASK_SET( );
         US915_CHAN_MASK_SET( );
+        US915_HELIUM_CHAN_MASK_SET( );
         RU864_CHAN_MASK_SET( );
         default:
         {
@@ -755,6 +762,7 @@ void RegionComputeRxWindowParameters( LoRaMacRegion_t region, int8_t datarate, u
         KR920_COMPUTE_RX_WINDOW_PARAMETERS( );
         IN865_COMPUTE_RX_WINDOW_PARAMETERS( );
         US915_COMPUTE_RX_WINDOW_PARAMETERS( );
+        US915_HELIUM_COMPUTE_RX_WINDOW_PARAMETERS( );
         RU864_COMPUTE_RX_WINDOW_PARAMETERS( );
         default:
         {
@@ -776,6 +784,7 @@ bool RegionRxConfig( LoRaMacRegion_t region, RxConfigParams_t* rxConfig, int8_t*
         KR920_RX_CONFIG( );
         IN865_RX_CONFIG( );
         US915_RX_CONFIG( );
+        US915_HELIUM_RX_CONFIG( );
         RU864_RX_CONFIG( );
         default:
         {
@@ -797,6 +806,7 @@ bool RegionTxConfig( LoRaMacRegion_t region, TxConfigParams_t* txConfig, int8_t*
         KR920_TX_CONFIG( );
         IN865_TX_CONFIG( );
         US915_TX_CONFIG( );
+        US915_HELIUM_TX_CONFIG( );
         RU864_TX_CONFIG( );
         default:
         {
@@ -818,6 +828,7 @@ uint8_t RegionLinkAdrReq( LoRaMacRegion_t region, LinkAdrReqParams_t* linkAdrReq
         KR920_LINK_ADR_REQ( );
         IN865_LINK_ADR_REQ( );
         US915_LINK_ADR_REQ( );
+        US915_HELIUM_LINK_ADR_REQ( );
         RU864_LINK_ADR_REQ( );
         default:
         {
@@ -839,6 +850,7 @@ uint8_t RegionRxParamSetupReq( LoRaMacRegion_t region, RxParamSetupReqParams_t* 
         KR920_RX_PARAM_SETUP_REQ( );
         IN865_RX_PARAM_SETUP_REQ( );
         US915_RX_PARAM_SETUP_REQ( );
+        US915_HELIUM_RX_PARAM_SETUP_REQ( );
         RU864_RX_PARAM_SETUP_REQ( );
         default:
         {
@@ -860,6 +872,7 @@ int8_t RegionNewChannelReq( LoRaMacRegion_t region, NewChannelReqParams_t* newCh
         KR920_NEW_CHANNEL_REQ( );
         IN865_NEW_CHANNEL_REQ( );
         US915_NEW_CHANNEL_REQ( );
+        US915_HELIUM_NEW_CHANNEL_REQ( );
         RU864_NEW_CHANNEL_REQ( );
         default:
         {
@@ -881,6 +894,7 @@ int8_t RegionTxParamSetupReq( LoRaMacRegion_t region, TxParamSetupReqParams_t* t
         KR920_TX_PARAM_SETUP_REQ( );
         IN865_TX_PARAM_SETUP_REQ( );
         US915_TX_PARAM_SETUP_REQ( );
+        US915_HELIUM_TX_PARAM_SETUP_REQ( );
         RU864_TX_PARAM_SETUP_REQ( );
         default:
         {
@@ -902,6 +916,7 @@ int8_t RegionDlChannelReq( LoRaMacRegion_t region, DlChannelReqParams_t* dlChann
         KR920_DL_CHANNEL_REQ( );
         IN865_DL_CHANNEL_REQ( );
         US915_DL_CHANNEL_REQ( );
+        US915_HELIUM_DL_CHANNEL_REQ( );
         RU864_DL_CHANNEL_REQ( );
         default:
         {
@@ -923,6 +938,7 @@ int8_t RegionAlternateDr( LoRaMacRegion_t region, int8_t currentDr, AlternateDrT
         KR920_ALTERNATE_DR( );
         IN865_ALTERNATE_DR( );
         US915_ALTERNATE_DR( );
+        US915_HELIUM_ALTERNATE_DR( );
         RU864_ALTERNATE_DR( );
         default:
         {
@@ -944,6 +960,7 @@ LoRaMacStatus_t RegionNextChannel( LoRaMacRegion_t region, NextChanParams_t* nex
         KR920_NEXT_CHANNEL( );
         IN865_NEXT_CHANNEL( );
         US915_NEXT_CHANNEL( );
+        US915_HELIUM_NEXT_CHANNEL( );
         RU864_NEXT_CHANNEL( );
         default:
         {
@@ -965,6 +982,7 @@ LoRaMacStatus_t RegionChannelAdd( LoRaMacRegion_t region, ChannelAddParams_t* ch
         KR920_CHANNEL_ADD( );
         IN865_CHANNEL_ADD( );
         US915_CHANNEL_ADD( );
+        US915_HELIUM_CHANNEL_ADD( );
         RU864_CHANNEL_ADD( );
         default:
         {
@@ -986,6 +1004,7 @@ bool RegionChannelsRemove( LoRaMacRegion_t region, ChannelRemoveParams_t* channe
         KR920_CHANNEL_REMOVE( );
         IN865_CHANNEL_REMOVE( );
         US915_CHANNEL_REMOVE( );
+        US915_HELIUM_CHANNEL_REMOVE( );
         RU864_CHANNEL_REMOVE( );
         default:
         {
@@ -1007,6 +1026,7 @@ void RegionSetContinuousWave( LoRaMacRegion_t region, ContinuousWaveParams_t* co
         KR920_SET_CONTINUOUS_WAVE( );
         IN865_SET_CONTINUOUS_WAVE( );
         US915_SET_CONTINUOUS_WAVE( );
+        US915_HELIUM_SET_CONTINUOUS_WAVE( );
         RU864_SET_CONTINUOUS_WAVE( );
         default:
         {
@@ -1028,6 +1048,7 @@ uint8_t RegionApplyDrOffset( LoRaMacRegion_t region, uint8_t downlinkDwellTime, 
         KR920_APPLY_DR_OFFSET( );
         IN865_APPLY_DR_OFFSET( );
         US915_APPLY_DR_OFFSET( );
+        US915_HELIUM_APPLY_DR_OFFSET( );
         RU864_APPLY_DR_OFFSET( );
         default:
         {
@@ -1049,6 +1070,7 @@ void RegionRxBeaconSetup( LoRaMacRegion_t region, RxBeaconSetup_t* rxBeaconSetup
         KR920_RX_BEACON_SETUP( );
         IN865_RX_BEACON_SETUP( );
         US915_RX_BEACON_SETUP( );
+        US915_HELIUM_RX_BEACON_SETUP( );
         RU864_RX_BEACON_SETUP( );
         default:
         {
