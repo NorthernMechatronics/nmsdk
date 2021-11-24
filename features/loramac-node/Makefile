@@ -24,8 +24,10 @@ INCLUDES += -I$(SDKROOT)/features/FreeRTOS
 INCLUDES += -I$(LORAMAC)/src/radio
 INCLUDES += -I$(LORAMAC)/src/radio/sx126x
 INCLUDES += -I$(LORAMAC)/src/boards
-INCLUDES += -I$(LORAMAC)/src/mac
-INCLUDES += -I$(LORAMAC)/src/mac/region
+#INCLUDES += -I$(LORAMAC)/src/mac
+#INCLUDES += -I$(LORAMAC)/src/mac/region
+INCLUDES += -I$(SDKROOT)/features/loramac-node/src/mac
+INCLUDES += -I$(SDKROOT)/features/loramac-node/src/mac/region
 INCLUDES += -I$(LORAMAC)/src/system
 INCLUDES += -I$(LORAMAC)/src/peripherals/soft-se
 
@@ -37,8 +39,10 @@ INCLUDES += -I$(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler
 
 VPATH  = $(LORAMAC)/src/radio/sx126x
 VPATH += $(LORAMAC)/src/boards/mcu
-VPATH += $(LORAMAC)/src/mac
-VPATH += $(LORAMAC)/src/mac/region
+#VPATH += $(LORAMAC)/src/mac
+#VPATH += $(LORAMAC)/src/mac/region
+VPATH += $(SDKROOT)/features/loramac-node/src/mac
+VPATH += $(SDKROOT)/features/loramac-node/src/mac/region
 VPATH += $(LORAMAC)/src/system
 VPATH += $(LORAMAC)/src/peripherals/soft-se
 
