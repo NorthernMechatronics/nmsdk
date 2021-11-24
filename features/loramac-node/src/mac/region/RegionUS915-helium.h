@@ -46,7 +46,7 @@ extern "C"
 
 #define US915_HELIUM_RECEIVE_DELAY1              2000
 #define US915_HELIUM_RECEIVE_DELAY2              (US915_HELIUM_RECEIVE_DELAY1 + 1000)
-#define US915_HELIUM_JOIN_ACCEPT_DELAY1          5000
+#define US915_HELIUM_JOIN_ACCEPT_DELAY1          3000  // Helium transmit join accept 2 seconds earlier than the specifications.
 #define US915_HELIUM_JOIN_ACCEPT_DELAY2          (US915_HELIUM_JOIN_ACCEPT_DELAY1 + 1000)
 
 /*!
