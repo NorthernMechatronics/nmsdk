@@ -92,6 +92,7 @@ SRC += RegionIN865.c
 SRC += RegionKR920.c
 SRC += RegionRU864.c
 SRC += RegionUS915.c
+SRC += RegionUS915-helium.c
 
 SRC += board.c
 SRC += delay-board.c
