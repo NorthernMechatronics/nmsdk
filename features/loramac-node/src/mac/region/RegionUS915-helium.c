@@ -180,12 +180,12 @@ PhyParam_t RegionUS915HeliumGetPhyParam( GetPhyParams_t* getPhy )
         }
         case PHY_JOIN_ACCEPT_DELAY1:
         {
-            phyParam.Value = REGION_COMMON_DEFAULT_JOIN_ACCEPT_DELAY1;
+            phyParam.Value = US915_HELIUM_JOIN_ACCEPT_DELAY1;
             break;
         }
         case PHY_JOIN_ACCEPT_DELAY2:
         {
-            phyParam.Value = REGION_COMMON_DEFAULT_JOIN_ACCEPT_DELAY2;
+            phyParam.Value = US915_HELIUM_JOIN_ACCEPT_DELAY2;
             break;
         }
         case PHY_MAX_FCNT_GAP:
