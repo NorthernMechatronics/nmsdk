@@ -170,12 +170,12 @@ PhyParam_t RegionUS915HeliumGetPhyParam( GetPhyParams_t* getPhy )
         }
         case PHY_RECEIVE_DELAY1:
         {
-            phyParam.Value = REGION_COMMON_DEFAULT_RECEIVE_DELAY1;
+            phyParam.Value = US915_HELIUM_RECEIVE_DELAY1;
             break;
         }
         case PHY_RECEIVE_DELAY2:
         {
-            phyParam.Value = REGION_COMMON_DEFAULT_RECEIVE_DELAY2;
+            phyParam.Value = US915_HELIUM_RECEIVE_DELAY2;
             break;
         }
         case PHY_JOIN_ACCEPT_DELAY1:
@@ -434,6 +434,24 @@ bool RegionUS915HeliumVerify( VerifyParams_t* verify, PhyAttribute_t phyAttribut
 
 void RegionUS915HeliumApplyCFList( ApplyCFListParams_t* applyCFList )
 {
+    // Workaround:
+    // Hardcode the channel mask as the Helium network does not send channel mask on join
+    RegionNvmGroup2->ChannelsMask[0] = (uint16_t)0xFF00;
+    RegionNvmGroup1->ChannelsMaskRemaining[0] = (uint16_t)0xFF00;
+
+    RegionNvmGroup2->ChannelsMask[1] = (uint16_t)0x0000;
+    RegionNvmGroup1->ChannelsMaskRemaining[1] = (uint16_t)0x0000;
+
+    RegionNvmGroup2->ChannelsMask[2] = (uint16_t)0x0000;
+    RegionNvmGroup1->ChannelsMaskRemaining[2] = (uint16_t)0x0000;
+
+    RegionNvmGroup2->ChannelsMask[3] = (uint16_t)0x0000;
+    RegionNvmGroup1->ChannelsMaskRemaining[3] = (uint16_t)0x0000;
+
+    RegionNvmGroup2->ChannelsMask[4] = (uint16_t)0x00FF & CHANNELS_MASK_500KHZ_MASK;
+    RegionNvmGroup1->ChannelsMaskRemaining[4] = (uint16_t)0x00FF  & CHANNELS_MASK_500KHZ_MASK;
+
+    /*
     // Size of the optional CF list must be 16 byte
     if( applyCFList->Size != 16 )
     {
@@ -458,6 +476,7 @@ void RegionUS915HeliumApplyCFList( ApplyCFListParams_t* applyCFList )
         // Set the channel mask to the remaining
         RegionNvmGroup1->ChannelsMaskRemaining[chMaskItr] &= RegionNvmGroup2->ChannelsMask[chMaskItr];
     }
+    */
 }
 
 bool RegionUS915HeliumChanMaskSet( ChanMaskSetParams_t* chanMaskSet )
