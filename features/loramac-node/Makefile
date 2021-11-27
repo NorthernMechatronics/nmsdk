@@ -21,8 +21,8 @@ INCLUDES += -I$(SDKROOT)/bsp/nm180100evb
 INCLUDES += -I$(SDKROOT)/bsp/devices
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
 
-INCLUDES += -I$(LORAMAC)/src/radio
-INCLUDES += -I$(LORAMAC)/src/radio/sx126x
+INCLUDES += -I$(SDKROOT)/features/loramac-node/src/radio
+INCLUDES += -I$(SDKROOT)/features/loramac-node/src/radio/sx126x
 INCLUDES += -I$(LORAMAC)/src/boards
 #INCLUDES += -I$(LORAMAC)/src/mac
 #INCLUDES += -I$(LORAMAC)/src/mac/region
@@ -37,7 +37,7 @@ INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common
 INCLUDES += -I$(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler
 INCLUDES += -I$(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler/packages
 
-VPATH  = $(LORAMAC)/src/radio/sx126x
+VPATH  = $(SDKROOT)/features/loramac-node/src/radio/sx126x
 VPATH += $(LORAMAC)/src/boards/mcu
 #VPATH += $(LORAMAC)/src/mac
 #VPATH += $(LORAMAC)/src/mac/region
