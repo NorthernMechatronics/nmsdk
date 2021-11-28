@@ -21,36 +21,28 @@ INCLUDES += -I$(SDKROOT)/bsp/nm180100evb
 INCLUDES += -I$(SDKROOT)/bsp/devices
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
 
-INCLUDES += -I$(SDKROOT)/features/loramac-node/src/radio
-INCLUDES += -I$(SDKROOT)/features/loramac-node/src/radio/sx126x
+INCLUDES += -I./src/radio
+INCLUDES += -I./src/radio/sx126x
 INCLUDES += -I$(LORAMAC)/src/boards
-#INCLUDES += -I$(LORAMAC)/src/mac
-#INCLUDES += -I$(LORAMAC)/src/mac/region
-INCLUDES += -I$(SDKROOT)/features/loramac-node/src/mac
-INCLUDES += -I$(SDKROOT)/features/loramac-node/src/mac/region
+INCLUDES += -I./src/mac
+INCLUDES += -I./src/mac/region
 INCLUDES += -I$(LORAMAC)/src/system
 INCLUDES += -I$(LORAMAC)/src/peripherals/soft-se
 
-INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common
-#INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common/LmHandler
-#INCLUDES += -I$(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages
-INCLUDES += -I$(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler
-INCLUDES += -I$(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler/packages
+INCLUDES += -I./src/apps/LoRaMac/common
+INCLUDES += -I./src/apps/LoRaMac/common/LmHandler
+INCLUDES += -I./src/apps/LoRaMac/common/LmHandler/packages
 
-VPATH  = $(SDKROOT)/features/loramac-node/src/radio/sx126x
+VPATH  = ./src/radio/sx126x
 VPATH += $(LORAMAC)/src/boards/mcu
-#VPATH += $(LORAMAC)/src/mac
-#VPATH += $(LORAMAC)/src/mac/region
-VPATH += $(SDKROOT)/features/loramac-node/src/mac
-VPATH += $(SDKROOT)/features/loramac-node/src/mac/region
+VPATH += ./src/mac
+VPATH += ./src/mac/region
 VPATH += $(LORAMAC)/src/system
 VPATH += $(LORAMAC)/src/peripherals/soft-se
 
-VPATH += $(LORAMAC)/src/apps/LoRaMac/common
-#VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler
-#VPATH += $(LORAMAC)/src/apps/LoRaMac/common/LmHandler/packages
-VPATH += $(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler
-VPATH += $(SDKROOT)/features/loramac-node/src/apps/LoRaMac/common/LmHandler/packages
+VPATH += ./src/apps/LoRaMac/common
+VPATH += ./src/apps/LoRaMac/common/LmHandler
+VPATH += ./src/apps/LoRaMac/common/LmHandler/packages
 
 INCLUDES += -I$(FREERTOS)/Source/include
 INCLUDES += -I$(SDKROOT)/features/FreeRTOS
@@ -126,7 +118,7 @@ OBJS += $(ASRC:%.s=$(CONFIG)/%.o)
 DEPS  = $(CSRC:%.c=$(CONFIG)/%.d)
 DEPS += $(ASRC:%.s=$(CONFIG)/%.d)
 
-MSGDISPLAY_SRC = $(LORAMAC)/src/apps/LoRaMac/common/LmHandlerMsgDisplay.c
+MSGDISPLAY_SRC = ./src/apps/LoRaMac/common/LmHandlerMsgDisplay.c
 MSGDISPLAY_PROC = $(CONFIG)/LmHandlerMsgDisplay_proc.c
 MSGDISPLAY_OBJ = $(CONFIG)/LmHandlerMsgDisplay_proc.o
 MSGDISPLAY_DEP = $(CONFIG)/LmHandlerMsgDisplay_proc.d
