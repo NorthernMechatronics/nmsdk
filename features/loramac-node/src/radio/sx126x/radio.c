@@ -1214,14 +1214,7 @@ void RadioIrqProcess( void )
 {
     if( IrqFired == true )
     {
-        CRITICAL_SECTION_BEGIN( );
-        // Clear IRQ flag
-        IrqFired = false;
-        CRITICAL_SECTION_END( );
-
         uint16_t irqRegs = SX126xGetIrqStatus( );
-        SX126xClearIrqStatus( irqRegs );
-
         if( ( irqRegs & IRQ_TX_DONE ) == IRQ_TX_DONE )
         {
             TimerStop( &TxTimeoutTimer );
@@ -1335,5 +1328,11 @@ void RadioIrqProcess( void )
                 RadioEvents->RxTimeout( );
             }
         }
+
+        SX126xClearIrqStatus( irqRegs );
+        CRITICAL_SECTION_BEGIN( );
+        // Clear IRQ flag
+        IrqFired = false;
+        CRITICAL_SECTION_END( );
     }
 }
