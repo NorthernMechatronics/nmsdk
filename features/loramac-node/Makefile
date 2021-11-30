@@ -109,6 +109,7 @@ SRC += LmhpFragmentation.c
 SRC += LmhpRemoteMcastSetup.c
 SRC += LmHandler.c
 
+SRC += LoRaMacDebug.c
 
 CSRC = $(filter %.c, $(SRC))
 ASRC = $(filter %.s, $(SRC))
