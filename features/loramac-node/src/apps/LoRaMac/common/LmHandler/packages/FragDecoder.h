@@ -36,14 +36,14 @@
  *
  * \remark This parameter has an impact on the memory footprint.
  */
-#define FRAG_MAX_NB                                 4096
+#define FRAG_MAX_NB                                 21
 
 /*!
  * Maximum fragment size that can be handled.
  *
  * \remark This parameter has an impact on the memory footprint.
  */
-#define FRAG_MAX_SIZE                               242
+#define FRAG_MAX_SIZE                               50
 
 /*!
  * Maximum number of extra frames that can be handled.
@@ -87,8 +87,6 @@ typedef struct sFragDecoderCallbacks
      * \retval status Read operation status [0: Success, -1 Fail]
      */
     int8_t ( *FragDecoderRead )( uint32_t addr, uint8_t *data, uint32_t size );
-
-    int8_t ( *FragDecoderErase )( uint32_t addr, uint32_t size);
 }FragDecoderCallbacks_t;
 #endif
 

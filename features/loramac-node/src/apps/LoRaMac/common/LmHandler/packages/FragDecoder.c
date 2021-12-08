@@ -22,7 +22,6 @@
  */
 #include <stddef.h>
 #include <stdbool.h>
-#include <am_mcu_apollo.h>
 #include "utilities.h"
 #include "FragDecoder.h"
 
@@ -240,12 +239,6 @@ static void FragPushLineToBinaryMatrix( uint8_t *bitArray, uint16_t rowIndex, ui
 
 static FragDecoder_t FragDecoder;
 
-static uint8_t matrixRow[(FRAG_MAX_NB >> 3 ) + 1];
-static uint8_t matrixDataTemp[FRAG_MAX_SIZE];
-static uint8_t dataTempVector[( FRAG_MAX_REDUNDANCY >> 3 ) + 1];
-static uint8_t dataTempVector2[( FRAG_MAX_REDUNDANCY >> 3 ) + 1];
-
-
 #if( FRAG_DECODER_FILE_HANDLING_NEW_API == 1 )
 void FragDecoderInit( uint16_t fragNb, uint8_t fragSize, FragDecoderCallbacks_t *callbacks )
 #else
@@ -282,11 +275,18 @@ void FragDecoderInit( uint16_t fragNb, uint8_t fragSize, uint8_t *file, uint32_t
     }
     
     // Initialize final uncoded data buffer ( FRAG_MAX_NB * FRAG_MAX_SIZE )
-    if( ( FragDecoder.Callbacks != NULL ) && ( FragDecoder.Callbacks->FragDecoderErase != NULL ) )
+    for( uint32_t i = 0; i < ( fragNb * fragSize ); i++ )
     {
-        FragDecoder.Callbacks->FragDecoderErase(0, fragNb * fragSize);
+#if( FRAG_DECODER_FILE_HANDLING_NEW_API == 1 )
+        if( ( FragDecoder.Callbacks != NULL ) && ( FragDecoder.Callbacks->FragDecoderWrite != NULL ) )
+        {
+            uint8_t buffer[1] = { 0xFF };
+            FragDecoder.Callbacks->FragDecoderWrite( i, buffer, 1 );
+        }
+#else
+        FragDecoder.File[i] = 0xFF;
+#endif
     }
-
     FragDecoder.Status.FragNbLost = 0;
     FragDecoder.Status.FragNbLastRx = 0;
 }
@@ -294,8 +294,7 @@ void FragDecoderInit( uint16_t fragNb, uint8_t fragSize, uint8_t *file, uint32_t
 #if( FRAG_DECODER_FILE_HANDLING_NEW_API == 1 )
 uint32_t FragDecoderGetMaxFileSize( void )
 {
-    //return FRAG_MAX_NB * FRAG_MAX_SIZE;
-    return AM_HAL_FLASH_TOTAL_SIZE;
+    return FRAG_MAX_NB * FRAG_MAX_SIZE;
 }
 #endif
 
@@ -304,6 +303,11 @@ int32_t FragDecoderProcess( uint16_t fragCounter, uint8_t *rawData )
     uint16_t firstOneInRow = 0;
     int32_t first = 0;
     int32_t noInfo = 0;
+
+    uint8_t matrixRow[(FRAG_MAX_NB >> 3 ) + 1];
+    uint8_t matrixDataTemp[FRAG_MAX_SIZE];
+    uint8_t dataTempVector[( FRAG_MAX_REDUNDANCY >> 3 ) + 1];
+    uint8_t dataTempVector2[( FRAG_MAX_REDUNDANCY >> 3 ) + 1];
 
     memset1( matrixRow, 0, ( FRAG_MAX_NB >> 3 ) + 1 );
     memset1( matrixDataTemp, 0, FRAG_MAX_SIZE );
@@ -585,7 +589,7 @@ static void FragGetParityMatrixRow( int32_t n, int32_t m, uint8_t *matrixRow )
     }
 
     x = 1 + ( 1001 * n );
-    for( uint8_t i = 0; i < ( ( m >> 3 ) + 1 ); i++ )
+    for( uint16_t i = 0; i < ( ( m >> 3 ) + 1 ); i++ )
     {
         matrixRow[i] = 0;
     }

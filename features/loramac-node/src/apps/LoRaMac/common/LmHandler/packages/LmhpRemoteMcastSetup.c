@@ -25,14 +25,14 @@
 #define DBG_TRACE                                   1
 
 #if DBG_TRACE == 1
-    #include <am_util_stdio.h>
+    #include <stdio.h>
     /*!
      * Works in the same way as the printf function does.
      */
     #define DBG( ... )                               \
         do                                           \
         {                                            \
-            am_util_stdio_printf( __VA_ARGS__ );     \
+            printf( __VA_ARGS__ );                   \
         }while( 0 )
 #else
     #define DBG( ... )
@@ -59,7 +59,7 @@ typedef enum LmhpRemoteMcastSetupSessionStates_e
 typedef struct LmhpRemoteMcastSetupState_s
 {
     bool Initialized;
-    bool IsRunning;
+    bool IsTxPending;
     LmhpRemoteMcastSetupSessionStates_t SessionState;
     uint8_t DataBufferMaxSize;
     uint8_t *DataBuffer;
@@ -103,12 +103,12 @@ static void LmhpRemoteMcastSetupInit( void *params, uint8_t *dataBuffer, uint8_t
 static bool LmhpRemoteMcastSetupIsInitialized( void );
 
 /*!
- * Returns the package operation status.
+ * Returns if a package transmission is pending or not.
  *
- * \retval status Package operation status
- *                [true: Running, false: Not running]
+ * \retval status Package transmission status
+ *                [true: pending, false: Not pending]
  */
-static bool LmhpRemoteMcastSetupIsRunning( void );
+static bool LmhpRemoteMcastSetupIsTxPending( void );
 
 /*!
  * Processes the internal package events.
@@ -129,7 +129,7 @@ static void OnSessionStopTimer( void *context );
 static LmhpRemoteMcastSetupState_t LmhpRemoteMcastSetupState =
 {
     .Initialized = false,
-    .IsRunning = false,
+    .IsTxPending = false,
     .SessionState = REMOTE_MCAST_SETUP_SESSION_STATE_IDLE,
 };
 
@@ -182,7 +182,7 @@ static LmhPackage_t LmhpRemoteMcastSetupPackage =
     .Port = REMOTE_MCAST_SETUP_PORT,
     .Init = LmhpRemoteMcastSetupInit,
     .IsInitialized = LmhpRemoteMcastSetupIsInitialized,
-    .IsRunning = LmhpRemoteMcastSetupIsRunning,
+    .IsTxPending = LmhpRemoteMcastSetupIsTxPending,
     .Process = LmhpRemoteMcastSetupProcess,
     .OnMcpsConfirmProcess = NULL,                              // Not used in this package
     .OnMcpsIndicationProcess = LmhpRemoteMcastSetupOnMcpsIndication,
@@ -191,7 +191,6 @@ static LmhPackage_t LmhpRemoteMcastSetupPackage =
     .OnMacMcpsRequest = NULL,                                  // To be initialized by LmHandler
     .OnMacMlmeRequest = NULL,                                  // To be initialized by LmHandler
     .OnJoinRequest = NULL,                                     // To be initialized by LmHandler
-    .OnSendRequest = NULL,                                     // To be initialized by LmHandler
     .OnDeviceTimeRequest = NULL,                               // To be initialized by LmHandler
     .OnSysTimeUpdate = NULL,                                   // To be initialized by LmHandler
 };
@@ -208,15 +207,14 @@ static void LmhpRemoteMcastSetupInit( void * params, uint8_t *dataBuffer, uint8_
         LmhpRemoteMcastSetupState.DataBuffer = dataBuffer;
         LmhpRemoteMcastSetupState.DataBufferMaxSize = dataBufferMaxSize;
         LmhpRemoteMcastSetupState.Initialized = true;
-        LmhpRemoteMcastSetupState.IsRunning = true;
         TimerInit( &SessionStartTimer, OnSessionStartTimer );
         TimerInit( &SessionStopTimer, OnSessionStopTimer );
     }
     else
     {
-        LmhpRemoteMcastSetupState.IsRunning = false;
         LmhpRemoteMcastSetupState.Initialized = false;
     }
+    LmhpRemoteMcastSetupState.IsTxPending = false;
 }
 
 static bool LmhpRemoteMcastSetupIsInitialized( void )
@@ -224,14 +222,9 @@ static bool LmhpRemoteMcastSetupIsInitialized( void )
     return LmhpRemoteMcastSetupState.Initialized;
 }
 
-static bool LmhpRemoteMcastSetupIsRunning( void )
+static bool LmhpRemoteMcastSetupIsTxPending( void )
 {
-    if( LmhpRemoteMcastSetupState.Initialized == false )
-    {
-        return false;
-    }
-
-    return LmhpRemoteMcastSetupState.IsRunning;
+    return LmhpRemoteMcastSetupState.IsTxPending;
 }
 
 static void LmhpRemoteMcastSetupProcess( void )
@@ -239,11 +232,8 @@ static void LmhpRemoteMcastSetupProcess( void )
     LmhpRemoteMcastSetupSessionStates_t state;
 
     CRITICAL_SECTION_BEGIN( );
-    if (LoRaMacIsBusy() == false)
-    {
-        state = LmhpRemoteMcastSetupState.SessionState;
-        LmhpRemoteMcastSetupState.SessionState = REMOTE_MCAST_SETUP_SESSION_STATE_IDLE;
-    }
+    state = LmhpRemoteMcastSetupState.SessionState;
+    LmhpRemoteMcastSetupState.SessionState = REMOTE_MCAST_SETUP_SESSION_STATE_IDLE;
     CRITICAL_SECTION_END( );
 
     switch( state )
@@ -252,8 +242,7 @@ static void LmhpRemoteMcastSetupProcess( void )
             // Switch to Class C
             LmHandlerRequestClass( CLASS_C );
 
-            TimerSetValue( &SessionStopTimer,
-                    ( 1 << McSessionData[(uint8_t)SessionStopTimer.Context].SessionTimeout ) * 1000 );
+            TimerSetValue( &SessionStopTimer, ( 1 << McSessionData[0].SessionTimeout ) * 1000 );
             TimerStart( &SessionStopTimer );
             break;
         case REMOTE_MCAST_SETUP_SESSION_STATE_STOP:
@@ -270,7 +259,6 @@ static void LmhpRemoteMcastSetupProcess( void )
 
 static void LmhpRemoteMcastSetupOnMcpsIndication( McpsIndication_t *mcpsIndication )
 {
-    uint8_t id = 0;
     uint8_t cmdIndex = 0;
     uint8_t dataBufferIndex = 0;
 
@@ -297,7 +285,7 @@ static void LmhpRemoteMcastSetupOnMcpsIndication( McpsIndication_t *mcpsIndicati
             }
             case REMOTE_MCAST_SETUP_MC_GROUP_SETUP_REQ:
             {
-                id = mcpsIndication->Buffer[cmdIndex++];
+                uint8_t id = mcpsIndication->Buffer[cmdIndex++];
                 McSessionData[id].McGroupData.IdHeader.Value = id;
 
                 McSessionData[id].McGroupData.McAddr =  ( mcpsIndication->Buffer[cmdIndex++] << 0  ) & 0x000000FF;
@@ -348,7 +336,7 @@ static void LmhpRemoteMcastSetupOnMcpsIndication( McpsIndication_t *mcpsIndicati
             case REMOTE_MCAST_SETUP_MC_GROUP_DELETE_REQ:
             {
                 uint8_t status = 0x00;
-                id = mcpsIndication->Buffer[cmdIndex++] & 0x03;
+                uint8_t id = mcpsIndication->Buffer[cmdIndex++] & 0x03;
 
                 status = id;
 
@@ -364,7 +352,7 @@ static void LmhpRemoteMcastSetupOnMcpsIndication( McpsIndication_t *mcpsIndicati
             case REMOTE_MCAST_SETUP_MC_GROUP_CLASS_C_SESSION_REQ:
             {
                 uint8_t status = 0x00;
-                id = mcpsIndication->Buffer[cmdIndex++] & 0x03;
+                uint8_t id = mcpsIndication->Buffer[cmdIndex++] & 0x03;
 
                 McSessionData[id].SessionTime =  ( mcpsIndication->Buffer[cmdIndex++] << 0  ) & 0x000000FF;
                 McSessionData[id].SessionTime += ( mcpsIndication->Buffer[cmdIndex++] << 8  ) & 0x0000FF00;
@@ -393,11 +381,10 @@ static void LmhpRemoteMcastSetupOnMcpsIndication( McpsIndication_t *mcpsIndicati
                     if( timeToSessionStart > 0 )
                     {
                         // Start session start timer
-                        SessionStartTimer.Context = (void *)id;
                         TimerSetValue( &SessionStartTimer, timeToSessionStart * 1000 );
                         TimerStart( &SessionStartTimer );
 
-                        DBG( "\r\n\r\nTime to Multicast Session: %ld s\r\n", timeToSessionStart );
+                        DBG( "Time2SessionStart: %ld ms\n", timeToSessionStart * 1000 );
 
                         LmhpRemoteMcastSetupState.DataBuffer[dataBufferIndex++] = status;
                         LmhpRemoteMcastSetupState.DataBuffer[dataBufferIndex++] = ( timeToSessionStart >> 0  ) & 0xFF;
@@ -435,22 +422,22 @@ static void LmhpRemoteMcastSetupOnMcpsIndication( McpsIndication_t *mcpsIndicati
             .BufferSize = dataBufferIndex,
             .Port = REMOTE_MCAST_SETUP_PORT
         };
-        LmhpRemoteMcastSetupPackage.OnSendRequest( &appData, LORAMAC_HANDLER_UNCONFIRMED_MSG );
+        LmHandlerSend( &appData, LORAMAC_HANDLER_UNCONFIRMED_MSG );
 
-        DBG( "ID          : %d\r\n", McSessionData[id].McGroupData.IdHeader.Fields.McGroupId );
-        DBG( "McAddr      : %08lX\r\n", McSessionData[id].McGroupData.McAddr );
-        DBG( "McKey       : %02X", McSessionData[id].McGroupData.McKeyEncrypted[0] );
+        DBG( "ID          : %d\n", McSessionData[0].McGroupData.IdHeader.Fields.McGroupId );
+        DBG( "McAddr      : %08lX\n", McSessionData[0].McGroupData.McAddr );
+        DBG( "McKey       : %02X", McSessionData[0].McGroupData.McKeyEncrypted[0] );
         for( int i = 1; i < 16; i++ )
         {
-            DBG( "-%02X",  McSessionData[id].McGroupData.McKeyEncrypted[i] );
+            DBG( "-%02X",  McSessionData[0].McGroupData.McKeyEncrypted[i] );
         }
-        DBG( "\r\n" );
-        DBG( "McFCountMin : %lu\r\n",  McSessionData[id].McGroupData.McFCountMin );
-        DBG( "McFCountMax : %lu\r\n",  McSessionData[id].McGroupData.McFCountMax );
-        DBG( "SessionTime : %lu\r\n",  McSessionData[id].SessionTime );
-        DBG( "SessionTimeT: %d\r\n",  McSessionData[id].SessionTimeout );
-        DBG( "Rx Freq     : %lu\r\n", McSessionData[id].RxParams.ClassC.Frequency );
-        DBG( "Rx DR       : DR_%d\r\n", McSessionData[id].RxParams.ClassC.Datarate );
+        DBG( "\n" );
+        DBG( "McFCountMin : %lu\n",  McSessionData[0].McGroupData.McFCountMin );
+        DBG( "McFCountMax : %lu\n",  McSessionData[0].McGroupData.McFCountMax );
+        DBG( "SessionTime : %lu\n",  McSessionData[0].SessionTime );
+        DBG( "SessionTimeT: %d\n",  McSessionData[0].SessionTimeout );
+        DBG( "Rx Freq     : %lu\n", McSessionData[0].RxParams.ClassC.Frequency );
+        DBG( "Rx DR       : DR_%d\n", McSessionData[0].RxParams.ClassC.Datarate );
 
     }
 }
@@ -458,7 +445,7 @@ static void LmhpRemoteMcastSetupOnMcpsIndication( McpsIndication_t *mcpsIndicati
 static void OnSessionStartTimer( void *context )
 {
     TimerStop( &SessionStartTimer );
-    SessionStopTimer.Context = SessionStartTimer.Context;
+
     LmhpRemoteMcastSetupState.SessionState = REMOTE_MCAST_SETUP_SESSION_STATE_START;
 }
 

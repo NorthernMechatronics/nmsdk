@@ -41,7 +41,7 @@
 
 #warning "No active region defined, LORAMAC_REGION_EU868 will be used as default."
 
-#define ACTIVE_REGION LORAMAC_REGION_EU868
+#define ACTIVE_REGION LORAMAC_REGION_US915
 
 #endif
 
@@ -97,10 +97,10 @@ static LmHandlerTxParams_t TxParams =
     {
         .Port = 0,
         .BufferSize = 0,
-        .Buffer = NULL
+        .Buffer = NULL,
     },
     .TxPower = TX_POWER_0,
-    .Channel = 0
+    .Channel = 0,
 };
 
 static LmHandlerRxParams_t RxParams =
@@ -109,10 +109,10 @@ static LmHandlerRxParams_t RxParams =
     .Rssi = 0,
     .Snr = 0,
     .DownlinkCounter = 0,
-    .RxSlot = -1
+    .RxSlot = -1,
 };
 
-static LoRaMAcHandlerBeaconParams_t BeaconParams =
+static LoRaMacHandlerBeaconParams_t BeaconParams =
 {
     .State = LORAMAC_HANDLER_BEACON_ACQUIRING,
     .Info =
@@ -125,9 +125,9 @@ static LoRaMAcHandlerBeaconParams_t BeaconParams =
         .GwSpecific =
         {
             .InfoDesc = 0,
-            .Info = { 0 }
-        }
-    }
+            .Info = { 0 },
+        },
+    },
 };
 
 /*!
@@ -137,6 +137,22 @@ static LoRaMAcHandlerBeaconParams_t BeaconParams =
  *       and add the below variable to it.
  */
 static bool IsClassBSwitchPending = false;
+
+/*!
+ * Stores the time to wait before next transmission
+ *
+ * TODO: Create a new structure to store the current handler states/status
+ *       and add the below variable to it.
+ */
+static TimerTime_t DutyCycleWaitTime = 0;
+
+/*!
+ * Indicates if an uplink is pending upon MAC layer request
+ * 
+ * TODO: Create a new structure to store the current handler states/status
+ *       and add the below variable to it.
+ */
+static bool IsUplinkTxPending = false;
 
 /*!
  * \brief   MCPS-Confirm event function
@@ -170,6 +186,7 @@ static void MlmeConfirm( MlmeConfirm_t *mlmeConfirm );
  */
 static void MlmeIndication( MlmeIndication_t *mlmeIndication );
 
+
 /*
  *=============================================================================
  * PACKAGES HANDLING
@@ -195,6 +212,8 @@ typedef enum PackageNotifyTypes_e
  */
 static void LmHandlerPackagesNotify( PackageNotifyTypes_t notifyType, void *params );
 
+static bool LmHandlerPackageIsTxPending( void );
+
 static void LmHandlerPackagesProcess( void );
 
 LmHandlerErrorStatus_t LmHandlerInit( LmHandlerCallbacks_t *handlerCallbacks,
@@ -216,6 +235,7 @@ LmHandlerErrorStatus_t LmHandlerInit( LmHandlerCallbacks_t *handlerCallbacks,
     LoRaMacCallbacks.MacProcessNotify = LmHandlerCallbacks->OnMacProcess;
 
     IsClassBSwitchPending = false;
+    IsUplinkTxPending = false;
 
     if( LoRaMacInitialization( &LoRaMacPrimitives, &LoRaMacCallbacks, LmHandlerParams->Region ) != LORAMAC_STATUS_OK )
     {
@@ -232,18 +252,14 @@ LmHandlerErrorStatus_t LmHandlerInit( LmHandlerCallbacks_t *handlerCallbacks,
     }
     else
     {
-        // Read secure-element DEV_EUI, JOI_EUI and SE_PIN values.
-        mibReq.Type = MIB_DEV_EUI;
-        LoRaMacMibGetRequestConfirm( &mibReq );
-        memcpy1( CommissioningParams.DevEui, mibReq.Param.DevEui, 8 );
+        // Configure the default datarate
+        mibReq.Type = MIB_CHANNELS_DEFAULT_DATARATE;
+        mibReq.Param.ChannelsDefaultDatarate = LmHandlerParams->TxDatarate;
+        LoRaMacMibSetRequestConfirm( &mibReq );
 
-        mibReq.Type = MIB_JOIN_EUI;
-        LoRaMacMibGetRequestConfirm( &mibReq );
-        memcpy1( CommissioningParams.JoinEui, mibReq.Param.JoinEui, 8 );
-
-        mibReq.Type = MIB_SE_PIN;
-        LoRaMacMibGetRequestConfirm( &mibReq );
-        memcpy1( CommissioningParams.SePin, mibReq.Param.SePin, 4 );
+        mibReq.Type = MIB_CHANNELS_DATARATE;
+        mibReq.Param.ChannelsDatarate = LmHandlerParams->TxDatarate;
+        LoRaMacMibSetRequestConfirm( &mibReq );
 
 #if( OVER_THE_AIR_ACTIVATION == 0 )
         // Tell the MAC layer which network server version are we connecting too.
@@ -267,6 +283,20 @@ LmHandlerErrorStatus_t LmHandlerInit( LmHandlerCallbacks_t *handlerCallbacks,
         LoRaMacMibSetRequestConfirm( &mibReq );
 #endif // #if( OVER_THE_AIR_ACTIVATION == 0 )
     }
+
+    // Read secure-element DEV_EUI, JOI_EUI and SE_PIN values.
+    mibReq.Type = MIB_DEV_EUI;
+    LoRaMacMibGetRequestConfirm( &mibReq );
+    memcpy1( CommissioningParams.DevEui, mibReq.Param.DevEui, 8 );
+
+    mibReq.Type = MIB_JOIN_EUI;
+    LoRaMacMibGetRequestConfirm( &mibReq );
+    memcpy1( CommissioningParams.JoinEui, mibReq.Param.JoinEui, 8 );
+
+    mibReq.Type = MIB_SE_PIN;
+    LoRaMacMibGetRequestConfirm( &mibReq );
+    memcpy1( CommissioningParams.SePin, mibReq.Param.SePin, 4 );
+
     mibReq.Type = MIB_PUBLIC_NETWORK;
     mibReq.Param.EnablePublicNetwork = LmHandlerParams->PublicNetworkEnable;
     LoRaMacMibSetRequestConfirm( &mibReq );
@@ -303,10 +333,11 @@ bool LmHandlerIsBusy( void )
         return true;
     }
 
-    if( LmHandlerPackages[PACKAGE_ID_COMPLIANCE]->IsRunning( ) == true )
+    if( LmHandlerPackageIsTxPending( ) == true )
     {
         return true;
     }
+
     return false;
 }
 
@@ -323,9 +354,6 @@ void LmHandlerProcess( void )
     // Processes the LoRaMac events
     LoRaMacProcess( );
 
-    // Call all packages process functions
-    LmHandlerPackagesProcess( );
-
     // Store to NVM if required
     size = NvmDataMgmtStore( );
 
@@ -333,6 +361,38 @@ void LmHandlerProcess( void )
     {
         LmHandlerCallbacks->OnNvmDataChange( LORAMAC_HANDLER_NVM_STORE, size );
     }
+
+    // Call all packages process functions
+    LmHandlerPackagesProcess( );
+
+    // Check if a package transmission is pending.
+    // If it is the case exit function earlier
+    if( LmHandlerPackageIsTxPending( ) == true )
+    {
+        return;
+    }
+
+    // If a MAC layer scheduled uplink is still pending try to send it.
+    if( IsUplinkTxPending == true )
+    {
+        // Send an empty message
+        LmHandlerAppData_t appData =
+        {
+            .Buffer = NULL,
+            .BufferSize = 0,
+            .Port = 0,
+        };
+
+        if( LmHandlerSend( &appData, LmHandlerParams->IsTxConfirmed ) == LORAMAC_HANDLER_SUCCESS )
+        {
+            IsUplinkTxPending = false;
+        }
+    }
+}
+
+TimerTime_t LmHandlerGetDutyCycleWaitTime( void )
+{
+    return DutyCycleWaitTime;
 }
 
 /*!
@@ -344,35 +404,26 @@ void LmHandlerProcess( void )
  */
 static void LmHandlerJoinRequest( bool isOtaa )
 {
+    MlmeReq_t mlmeReq;
+
+    mlmeReq.Type = MLME_JOIN;
+    mlmeReq.Req.Join.Datarate = LmHandlerParams->TxDatarate;
+
     if( isOtaa == true )
     {
-        MlmeReq_t mlmeReq;
-
-        mlmeReq.Type = MLME_JOIN;
-        mlmeReq.Req.Join.Datarate = LmHandlerParams->TxDatarate;
+        mlmeReq.Req.Join.NetworkActivation = ACTIVATION_TYPE_OTAA;
         // Update commissioning parameters activation type variable.
         CommissioningParams.IsOtaaActivation = true;
-
-        // Starts the OTAA join procedure
-        LmHandlerCallbacks->OnMacMlmeRequest( LoRaMacMlmeRequest( &mlmeReq ), &mlmeReq, mlmeReq.ReqReturn.DutyCycleWaitTime );
     }
     else
     {
-        MibRequestConfirm_t mibReq;
-        LmHandlerJoinParams_t joinParams =
-        {
-            .CommissioningParams = &CommissioningParams,
-            .Datarate = LmHandlerParams->TxDatarate,
-            .Status = LORAMAC_HANDLER_SUCCESS
-        };
-
-        mibReq.Type = MIB_NETWORK_ACTIVATION;
-        mibReq.Param.NetworkActivation = ACTIVATION_TYPE_ABP;
-        LoRaMacMibSetRequestConfirm( &mibReq );
-
-        // Notify upper layer
-        LmHandlerCallbacks->OnJoinRequest( &joinParams );
+        mlmeReq.Req.Join.NetworkActivation = ACTIVATION_TYPE_ABP;
+        // Update commissioning parameters activation type variable.
+        CommissioningParams.IsOtaaActivation = false;
     }
+    // Starts the join procedure
+    LmHandlerCallbacks->OnMacMlmeRequest( LoRaMacMlmeRequest( &mlmeReq ), &mlmeReq, mlmeReq.ReqReturn.DutyCycleWaitTime );
+    DutyCycleWaitTime = mlmeReq.ReqReturn.DutyCycleWaitTime;
 }
 
 void LmHandlerJoin( void )
@@ -418,35 +469,21 @@ LmHandlerErrorStatus_t LmHandlerSend( LmHandlerAppData_t *appData, LmHandlerMsgT
         return LORAMAC_HANDLER_ERROR;
     }
 
-    if( ( LmHandlerPackages[PACKAGE_ID_COMPLIANCE]->IsRunning( ) == true ) && ( appData->Port != LmHandlerPackages[PACKAGE_ID_COMPLIANCE]->Port ) && ( appData->Port != 0 ) )
-    {
-        return LORAMAC_HANDLER_ERROR;
-    }
-
+    TxParams.MsgType = isTxConfirmed;
+    mcpsReq.Type = ( isTxConfirmed == LORAMAC_HANDLER_UNCONFIRMED_MSG ) ? MCPS_UNCONFIRMED : MCPS_CONFIRMED;
     mcpsReq.Req.Unconfirmed.Datarate = LmHandlerParams->TxDatarate;
     if( LoRaMacQueryTxPossible( appData->BufferSize, &txInfo ) != LORAMAC_STATUS_OK )
     {
         // Send empty frame in order to flush MAC commands
-        TxParams.MsgType = LORAMAC_HANDLER_UNCONFIRMED_MSG;
         mcpsReq.Type = MCPS_UNCONFIRMED;
         mcpsReq.Req.Unconfirmed.fBuffer = NULL;
         mcpsReq.Req.Unconfirmed.fBufferSize = 0;
     }
     else
     {
-        TxParams.MsgType = isTxConfirmed;
         mcpsReq.Req.Unconfirmed.fPort = appData->Port;
         mcpsReq.Req.Unconfirmed.fBufferSize = appData->BufferSize;
         mcpsReq.Req.Unconfirmed.fBuffer = appData->Buffer;
-        if( isTxConfirmed == LORAMAC_HANDLER_UNCONFIRMED_MSG )
-        {
-            mcpsReq.Type = MCPS_UNCONFIRMED;
-        }
-        else
-        {
-            mcpsReq.Type = MCPS_CONFIRMED;
-            mcpsReq.Req.Confirmed.NbTrials = 8;
-        }
     }
 
     TxParams.AppData = *appData;
@@ -454,9 +491,11 @@ LmHandlerErrorStatus_t LmHandlerSend( LmHandlerAppData_t *appData, LmHandlerMsgT
 
     status = LoRaMacMcpsRequest( &mcpsReq );
     LmHandlerCallbacks->OnMacMcpsRequest( status, &mcpsReq, mcpsReq.ReqReturn.DutyCycleWaitTime );
+    DutyCycleWaitTime = mcpsReq.ReqReturn.DutyCycleWaitTime;
 
     if( status == LORAMAC_STATUS_OK )
     {
+        IsUplinkTxPending = false;
         return LORAMAC_HANDLER_SUCCESS;
     }
     else
@@ -474,6 +513,7 @@ LmHandlerErrorStatus_t LmHandlerDeviceTimeReq( void )
 
     status = LoRaMacMlmeRequest( &mlmeReq );
     LmHandlerCallbacks->OnMacMlmeRequest( status, &mlmeReq, mlmeReq.ReqReturn.DutyCycleWaitTime );
+    DutyCycleWaitTime = mlmeReq.ReqReturn.DutyCycleWaitTime;
 
     if( status == LORAMAC_STATUS_OK )
     {
@@ -494,6 +534,7 @@ LmHandlerErrorStatus_t LmHandlerBeaconReq( void )
 
     status = LoRaMacMlmeRequest( &mlmeReq );
     LmHandlerCallbacks->OnMacMlmeRequest( status, &mlmeReq, mlmeReq.ReqReturn.DutyCycleWaitTime );
+    DutyCycleWaitTime = mlmeReq.ReqReturn.DutyCycleWaitTime;
 
     if( status == LORAMAC_STATUS_OK )
     {
@@ -516,6 +557,7 @@ LmHandlerErrorStatus_t LmHandlerPingSlotReq( uint8_t periodicity )
 
     status = LoRaMacMlmeRequest( &mlmeReq );
     LmHandlerCallbacks->OnMacMlmeRequest( status, &mlmeReq, mlmeReq.ReqReturn.DutyCycleWaitTime );
+    DutyCycleWaitTime = mlmeReq.ReqReturn.DutyCycleWaitTime;
 
     if( status == LORAMAC_STATUS_OK )
     {
@@ -524,9 +566,9 @@ LmHandlerErrorStatus_t LmHandlerPingSlotReq( uint8_t periodicity )
         {
             .Buffer = NULL,
             .BufferSize = 0,
-            .Port = 0
+            .Port = 0,
         };
-        return LmHandlerSend( &appData, LORAMAC_HANDLER_UNCONFIRMED_MSG );
+        return LmHandlerSend( &appData, LmHandlerParams->IsTxConfirmed );
     }
     else
     {
@@ -697,19 +739,12 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
     // Call packages RxProcess function
     LmHandlerPackagesNotify( PACKAGE_MCPS_INDICATION, mcpsIndication );
 
-    if( ( mcpsIndication->FramePending == true ) && ( LmHandlerGetCurrentClass( ) == CLASS_A ) )
+    if( ( ( mcpsIndication->FramePending == true ) && ( LmHandlerGetCurrentClass( ) == CLASS_A ) ) ||
+        ( mcpsIndication->ResponseTimeout > 0 ) )
     {
         // The server signals that it has pending data to be sent.
         // We schedule an uplink as soon as possible to flush the server.
-
-        // Send an empty message
-        LmHandlerAppData_t appData =
-        {
-            .Buffer = NULL,
-            .BufferSize = 0,
-            .Port = 0
-        };
-        LmHandlerSend( &appData, LORAMAC_HANDLER_UNCONFIRMED_MSG );
+        IsUplinkTxPending = true;
     }
 }
 
@@ -765,7 +800,7 @@ static void MlmeConfirm( MlmeConfirm_t *mlmeConfirm )
             {
                 // Beacon has been acquired
                 // Request server for ping slot
-                LmHandlerPingSlotReq( 0 );
+                LmHandlerPingSlotReq( LmHandlerParams->PingSlotPeriodicity );
             }
             else
             {
@@ -791,7 +826,7 @@ static void MlmeConfirm( MlmeConfirm_t *mlmeConfirm )
             }
             else
             {
-                LmHandlerPingSlotReq( 0 );
+                LmHandlerPingSlotReq( LmHandlerParams->PingSlotPeriodicity );
             }
         }
         break;
@@ -815,19 +850,9 @@ static void MlmeIndication( MlmeIndication_t *mlmeIndication )
     switch( mlmeIndication->MlmeIndication )
     {
     case MLME_SCHEDULE_UPLINK:
-        {// The MAC signals that we shall provide an uplink as soon as possible
-            // Send an empty message
-            LmHandlerAppData_t appData =
-            {
-                .Buffer = NULL,
-                .BufferSize = 0,
-                .Port = 0
-            };
-
-            if( LmHandlerPackages[PACKAGE_ID_COMPLIANCE]->IsRunning( ) == false )
-            {
-                LmHandlerSend( &appData, LORAMAC_HANDLER_UNCONFIRMED_MSG );
-            }
+        {
+            // The MAC layer signals that we shall provide an uplink as soon as possible
+            IsUplinkTxPending = true;
         }
         break;
     case MLME_BEACON_LOST:
@@ -910,7 +935,6 @@ LmHandlerErrorStatus_t LmHandlerPackageRegister( uint8_t id, void *params )
         LmHandlerPackages[id]->OnMacMcpsRequest = LmHandlerCallbacks->OnMacMcpsRequest;
         LmHandlerPackages[id]->OnMacMlmeRequest = LmHandlerCallbacks->OnMacMlmeRequest;
         LmHandlerPackages[id]->OnJoinRequest = LmHandlerJoinRequest;
-        LmHandlerPackages[id]->OnSendRequest = LmHandlerSend;
         LmHandlerPackages[id]->OnDeviceTimeRequest = LmHandlerDeviceTimeReq;
         LmHandlerPackages[id]->OnSysTimeUpdate = LmHandlerCallbacks->OnSysTimeUpdate;
         LmHandlerPackages[id]->Init( params, LmHandlerParams->DataBuffer, LmHandlerParams->DataBufferMaxSize );
@@ -928,18 +952,6 @@ bool LmHandlerPackageIsInitialized( uint8_t id )
     if( LmHandlerPackages[id]->IsInitialized != NULL )
     {
         return LmHandlerPackages[id]->IsInitialized( );
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool LmHandlerPackageIsRunning( uint8_t id )
-{
-    if( LmHandlerPackages[id]->IsRunning != NULL )
-    {
-        return LmHandlerPackages[id]->IsRunning( );
     }
     else
     {
@@ -965,8 +977,7 @@ static void LmHandlerPackagesNotify( PackageNotifyTypes_t notifyType, void *para
                 }
                 case PACKAGE_MCPS_INDICATION:
                 {
-                    if( ( LmHandlerPackages[i]->OnMcpsIndicationProcess != NULL ) &&
-                        ( LmHandlerPackages[i]->Port == ( ( McpsIndication_t* )params )->Port ) )
+                    if( LmHandlerPackages[i]->OnMcpsIndicationProcess != NULL )
                     {
                         LmHandlerPackages[i]->OnMcpsIndicationProcess( ( McpsIndication_t* )params );
                     }
@@ -991,6 +1002,21 @@ static void LmHandlerPackagesNotify( PackageNotifyTypes_t notifyType, void *para
             }
         }
     }
+}
+
+static bool LmHandlerPackageIsTxPending( void )
+{
+    for( int8_t i = 0; i < PKG_MAX_NUMBER; i++ )
+    {
+        if( LmHandlerPackages[i] != NULL )
+        {
+            if( LmHandlerPackages[i]->IsTxPending( ) == true )
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 static void LmHandlerPackagesProcess( void )

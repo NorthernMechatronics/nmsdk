@@ -391,3 +391,12 @@ void SX126xAntSwOn(void) {}
 void SX126xAntSwOff(void) {}
 
 bool SX126xCheckRfFrequency(uint32_t frequency) { return true; }
+
+uint32_t SX126xGetDio1PinState( void )
+{
+    uint32_t fired;
+
+    am_hal_gpio_state_read(RADIO_DIO1, AM_HAL_GPIO_INPUT_READ, &fired);
+
+    return fired;
+}
