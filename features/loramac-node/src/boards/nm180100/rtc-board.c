@@ -131,15 +131,7 @@ uint32_t RtcGetMinimumTimeout(void) { return MIN_ALARM_DELAY; }
 
 uint32_t RtcMs2Tick(uint32_t milliseconds)
 {
-    // FIXME:  While the observed behavior is correct,  it is
-    // in conflict to the Semtech's documentation (inline comment
-    // in rtc-board.h).  However, if the implementation is done
-    // based on the documentation the timing is no longer correct.
-    // This is also observed on other platforms (issue #1046).
-    //
-    // It is suspected that the upper layer assumes there is an
-    // approximate equivalence between milliseconds and ticks.
-    return (uint32_t)(milliseconds);
+    return (uint32_t)(milliseconds * TICKS_IN_MS);
 }
 
 uint32_t RtcTick2Ms(uint32_t tick) { return ((tick >> CLOCK_SHIFT) * 1000); }
@@ -170,10 +162,12 @@ void RtcStartAlarm(uint32_t timeout)
 {
     RtcStopAlarm();
 
-    RtcTimerContext.Alarm_Ticks = am_hal_stimer_counter_get() + timeout;
+    // timeout is already in ticks
+    RtcTimerContext.Alarm_Ticks = timeout;
+
     RtcTimerContext.Running     = true;
-    am_hal_stimer_compare_delta_set(0, timeout * TICKS_IN_MS);
-    am_hal_stimer_compare_delta_set(0, timeout * TICKS_IN_MS + 1);
+    am_hal_stimer_compare_delta_set(0, RtcTimerContext.Alarm_Ticks);
+    am_hal_stimer_compare_delta_set(0, RtcTimerContext.Alarm_Ticks + 1);
     am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREA);
     am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREB);
 }
@@ -182,7 +176,7 @@ uint32_t RtcGetTimerValue(void) { return am_hal_stimer_counter_get(); }
 
 uint32_t RtcGetTimerElapsedTime(void)
 {
-    uint64_t current = am_hal_stimer_counter_get();
+    uint32_t current = am_hal_stimer_counter_get();
     return (uint32_t)(current - RtcTimerContext.Ref_Ticks);
 }
 

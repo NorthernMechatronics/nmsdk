@@ -98,7 +98,8 @@ SRC += sx1262-board.c
 
 SRC += delay.c
 SRC += nvmm.c
-SRC += timer.c
+#SRC += timer.c
+SRC += nm_timer.c
 #SRC += systime.c
 SRC += nm_systime.c
 
