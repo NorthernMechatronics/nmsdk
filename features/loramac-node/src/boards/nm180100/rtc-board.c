@@ -165,9 +165,11 @@ void RtcStartAlarm(uint32_t timeout)
     // timeout is already in ticks
     RtcTimerContext.Alarm_Ticks = timeout;
 
+    uint32_t relative = timeout - RtcGetTimerElapsedTime();
+
     RtcTimerContext.Running     = true;
-    am_hal_stimer_compare_delta_set(0, RtcTimerContext.Alarm_Ticks);
-    am_hal_stimer_compare_delta_set(0, RtcTimerContext.Alarm_Ticks + 1);
+    am_hal_stimer_compare_delta_set(0, relative);
+    am_hal_stimer_compare_delta_set(0, relative + 1);
     am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREA);
     am_hal_stimer_int_enable(AM_HAL_STIMER_INT_COMPAREB);
 }
@@ -194,7 +196,7 @@ uint32_t RtcGetCalendarTime(uint16_t *milliseconds)
     uint32_t seconds = (value >> CLOCK_SHIFT);
 
     uint32_t ticks_remainder = value & CLOCK_MS_MASK;
-    *milliseconds            = RtcTick2Ms(ticks_remainder);
+    *milliseconds            = (ticks_remainder >> CLOCK_SHIFT) * 1000;
 
     return seconds;
 }
