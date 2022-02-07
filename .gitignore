@@ -12,6 +12,7 @@ features/hal/release/
 features/utils/debug/
 features/utils/release/
 .settings/
+__pycache__/
 .cproject
 .project
 *.d
@@ -19,3 +20,4 @@ features/utils/release/
 *.a
 am_bsp_pins.c
 am_bsp_pins.h
+*.swp
