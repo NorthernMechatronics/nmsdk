@@ -126,7 +126,7 @@
 pinsrc_ver = 0x0003
 
 # *****************************************************************************
-#  LoRa Radio 
+#  LoRa Radio.
 # *****************************************************************************
 pin
     name            = RADIO_NRESET
@@ -194,7 +194,7 @@ pin
     IOMnum          = 3
 
 # *****************************************************************************
-#  LEDs and buttons
+#  LEDs and user button.
 # *****************************************************************************
 pin
     name            = BUTTON0
@@ -219,7 +219,7 @@ pin
     drvstrength     = 2
 
 # *****************************************************************************
-#  LDO Enable
+#  LDO enable - For sensors, peripherals, and LoRa radio
 # *****************************************************************************
 pin
     name            = LORA_EN
@@ -235,7 +235,7 @@ pin
 
 
 # *****************************************************************************
-#  COM UART pins (UART0).
+#  COM UART pins (UART0) - Connected to CP2102N USB/UART Bridge.
 # *****************************************************************************
 pin
     name            = COM_UART_TX
@@ -438,3 +438,251 @@ pin
     desc            = Cortex Serial Wire DIO.
     pinnum          = 21
     func_sel        = AM_HAL_PIN_21_SWDIO
+
+
+# *****************************************************************************
+#  Board-specific mappings per SCH-18310-001_RevB
+# *****************************************************************************
+#  SENSORS_SPI_* pins.
+# *****************************************************************************
+pin
+    name            = SENSORS_SPI_CSB
+    desc            = IOM2 chip select signal for BMI270
+    pinnum          = 34
+    func_sel        = AM_HAL_PIN_34_NCE34
+    drvstrength     = 12
+    intdir          = lo2hi
+    GPOutcfg        = pushpull
+    GPinput         = false
+    IOMnum          = 2
+    CEnum           = 3
+    CEpol           = low
+
+pin
+    name            = SENSORS_SPI_MISO
+    desc            = IOM2 MISO signal for BMI270
+    pinnum          = 25
+    func_sel        = AM_HAL_PIN_25_M2MISO
+    IOMnum          = 2
+
+pin
+    name            = SENSORS_SPI_MOSI
+    desc            = IOM2 MOSI signal for BMI270
+    pinnum          = 28
+    func_sel        = AM_HAL_PIN_28_M2MOSI
+    drvstrength     = 12
+    IOMnum          = 2
+
+pin
+    name            = SENSORS_SPI_SCK
+    desc            = IOM2 SCK signal for BMI270
+    pinnum          = 27
+    func_sel        = AM_HAL_PIN_27_M2SCK
+    drvstrength     = 12
+    IOMnum          = 2
+
+# *****************************************************************************
+#  SENSORS_INT* pins.
+# *****************************************************************************
+pin
+    name            = SENSORS_INT1
+    desc            = Interrupt 1 line for BMI270
+    pinnum          = 15
+    func_sel        = AM_HAL_PIN_15_GPIO
+    drvstrength     = 2
+    GPinput         = true
+    intdir          = lo2hi
+
+pin
+    name            = SENSORS_INT2
+    desc            = Interrupt 2 line for BMI270
+    pinnum          = 15
+    func_sel        = AM_HAL_PIN_15_GPIO
+    drvstrength     = 2
+    GPinput         = true
+    intdir          = lo2hi
+
+# *****************************************************************************
+#  MAG_INT pin.
+# *****************************************************************************
+pin
+    name            = MAG_INT
+    desc            = Interrupt line for BMM150
+    pinnum          = 22
+    func_sel        = AM_HAL_PIN_22_GPIO
+    drvstrength     = 2
+    GPinput         = true
+    intdir          = lo2hi
+
+# *****************************************************************************
+#  PERIPHERAL_* pins.
+# *****************************************************************************
+pin
+    name            = PERIPHERAL_SCL
+    desc            = IOM0 I2C clock signal for BME680 and ATECC608A.
+    pinnum          = 5
+    func_sel        = AM_HAL_PIN_5_M0SCL
+    GPOutcfg        = opendrain
+    drvstrength     = 12
+    pullup          = 1_5K
+    IOMnum          = 0
+
+pin
+    name            = PERIPHERAL_SDA
+    desc            = IOM0 I2C data signal for BME680 and ATECC608A.
+    pinnum          = 6
+    func_sel        = AM_HAL_PIN_6_M0SDAWIR3
+    GPOutcfg        = opendrain
+    drvstrength     = 12
+    pullup          = 1_5K
+    IOMnum          = 0
+
+# *****************************************************************************
+#  GPIO pins.
+# *****************************************************************************
+# Header Pin        Ambiq Mapping
+# J100-5            PIN_33
+# J100-6            PIN_32
+# J100-7            PIN_31
+# J100-8            PIN_16
+# J100-9            PIN_11
+# J100-10           PIN_29
+# J100-11           PIN_8
+# J100-12           PIN_10
+# J100-13           PIN_9
+# J100-14           PIN_13
+# J100-15           PIN_12
+#
+# For alternate functions, see Ambiq Apollo3 Blue MCU Datasheet
+# Chapter 11 (GPIO and Pad Configuration Module)
+#
+pin
+    name            = GPIO_33
+    pinnum          = 33
+    func_sel        = AM_HAL_PIN_33_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_32
+    pinnum          = 32
+    func_sel        = AM_HAL_PIN_32_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_31
+    pinnum          = 31
+    func_sel        = AM_HAL_PIN_31_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_16
+    pinnum          = 16
+    func_sel        = AM_HAL_PIN_16_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_11
+    pinnum          = 11
+    func_sel        = AM_HAL_PIN_11_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_29
+    pinnum          = 29
+    func_sel        = AM_HAL_PIN_29_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_8
+    pinnum          = 8
+    func_sel        = AM_HAL_PIN_8_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_10
+    pinnum          = 10
+    func_sel        = AM_HAL_PIN_10_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_9
+    pinnum          = 9
+    func_sel        = AM_HAL_PIN_9_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_13
+    pinnum          = 13
+    func_sel        = AM_HAL_PIN_13_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_12
+    pinnum          = 12
+    func_sel        = AM_HAL_PIN_12_GPIO
+    drvstrength     = 12
+
+# Header Pin        Ambiq Mapping
+# J101-4            PIN_19
+# J101-5            PIN_3
+# J101-6            PIN_45
+# J101-7            PIN_0
+# J101-8            PIN_21
+# J101-9            PIN_20
+# J101-10           PIN_41
+# J101-11           PIN_48
+# J101-12           PIN_49
+pin
+    name            = GPIO_19
+    pinnum          = 19
+    func_sel        = AM_HAL_PIN_19_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_3
+    pinnum          = 3
+    func_sel        = AM_HAL_PIN_3_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_45
+    pinnum          = 45
+    func_sel        = AM_HAL_PIN_45_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_0
+    pinnum          = 0
+    func_sel        = AM_HAL_PIN_0_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_21
+    pinnum          = 21
+    func_sel        = AM_HAL_PIN_21_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_20
+    pinnum          = 20
+    func_sel        = AM_HAL_PIN_20_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_41
+    pinnum          = 41
+    func_sel        = AM_HAL_PIN_41_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_48
+    pinnum          = 48
+    func_sel        = AM_HAL_PIN_48_GPIO
+    drvstrength     = 12
+
+pin
+    name            = GPIO_49
+    pinnum          = 49
+    func_sel        = AM_HAL_PIN_49_GPIO
+    drvstrength     = 12
+
