@@ -897,13 +897,11 @@ static void ProcessRadioRxDone( void )
                 Nvm.MacGroup2.MacParams.RxCChannel.Datarate = macMsgJoinAccept.DLSettings.Bits.RX2DataRate;
 
                 // RxDelay
-                Nvm.MacGroup2.MacParams.ReceiveDelay1 = macMsgJoinAccept.RxDelay;
-                if( Nvm.MacGroup2.MacParams.ReceiveDelay1 == 0 )
+                if (macMsgJoinAccept.RxDelay != 0)
                 {
-                    Nvm.MacGroup2.MacParams.ReceiveDelay1 = 1;
+                    Nvm.MacGroup2.MacParams.ReceiveDelay1 = macMsgJoinAccept.RxDelay * 1000;
+                    Nvm.MacGroup2.MacParams.ReceiveDelay2 = Nvm.MacGroup2.MacParams.ReceiveDelay1 + 1000;
                 }
-                Nvm.MacGroup2.MacParams.ReceiveDelay1 *= 1000;
-                Nvm.MacGroup2.MacParams.ReceiveDelay2 = Nvm.MacGroup2.MacParams.ReceiveDelay1 + 1000;
 
                 Nvm.MacGroup2.Version.Fields.Minor = 0;
 
