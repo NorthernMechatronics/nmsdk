@@ -364,10 +364,10 @@ void RegionUS915HeliumInitDefaults( InitDefaultsParams_t* params )
             }
 
             // Default ChannelsMask
-            RegionNvmGroup2->ChannelsDefaultMask[0] = 0xFFFF;
-            RegionNvmGroup2->ChannelsDefaultMask[1] = 0xFFFF;
-            RegionNvmGroup2->ChannelsDefaultMask[2] = 0xFFFF;
-            RegionNvmGroup2->ChannelsDefaultMask[3] = 0xFFFF;
+            RegionNvmGroup2->ChannelsDefaultMask[0] = 0xFF00;
+            RegionNvmGroup2->ChannelsDefaultMask[1] = 0x0000;
+            RegionNvmGroup2->ChannelsDefaultMask[2] = 0x0000;
+            RegionNvmGroup2->ChannelsDefaultMask[3] = 0x0000;
             RegionNvmGroup2->ChannelsDefaultMask[4] = 0x00FF;
             RegionNvmGroup2->ChannelsDefaultMask[5] = 0x0000;
 
