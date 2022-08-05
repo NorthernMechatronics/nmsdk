@@ -50,7 +50,7 @@
  *
  * \remark This parameter has an impact on the memory footprint.
  */
-#define FRAG_MAX_REDUNDANCY                         200 
+#define FRAG_MAX_REDUNDANCY                         500 
 
 #define FRAG_SESSION_FINISHED                       ( int32_t )0
 #define FRAG_SESSION_NOT_STARTED                    ( int32_t )-2
