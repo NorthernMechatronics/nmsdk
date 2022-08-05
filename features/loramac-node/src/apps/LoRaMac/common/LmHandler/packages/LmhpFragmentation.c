@@ -462,7 +462,10 @@ static void LmhpFragmentationOnMcpsIndication( McpsIndication_t *mcpsIndication 
                     //}
                 }
 
-                FragSessionData[fragIndex].FragDecoderPorcessStatus = FragDecoderProcess( fragCounter, &mcpsIndication->Buffer[cmdIndex] );
+                if( FragSessionData[fragIndex].FragDecoderPorcessStatus != FRAG_SESSION_FINISHED )
+                {
+                    FragSessionData[fragIndex].FragDecoderPorcessStatus = FragDecoderProcess( fragCounter, &mcpsIndication->Buffer[cmdIndex] );
+                }
                 FragSessionData[fragIndex].FragDecoderStatus = FragDecoderGetStatus( );
 
                 if( FragSessionData[fragIndex].FragDecoderPorcessStatus == FRAG_SESSION_ONGOING )
